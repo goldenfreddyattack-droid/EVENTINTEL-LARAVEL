@@ -52,7 +52,7 @@ class studmngt_controller extends Controller
         ]);
     
         studentmngt::findOrFail($id)->update($request->all());
-        return redirect()->route('student.index')->with('status', 'Student Updated Successfully!');
+        return redirect()->back()->with('status', 'Student Updated Successfully!');
     }
 public function delete(int $id){
         $student = studentmngt::findOrFail($id);
