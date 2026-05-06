@@ -50,6 +50,14 @@
             <td>{{ $student->mname }}</td>
             <td>{{ $student->add }}</td>
             <td>{{ $student->dob }}</td>
+            <td>
+                <a href="{{ route('student.edit', $student->id) }}" class="btn btn-success btn-sm"><i class="fas fa-edit"></i> Edit</a>
+                <form action="{{ route('student.delete', $student->id) }}" method="POST" style="display:inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this student?')"><i class="fas fa-trash"></i> Delete</button>
+                </form>
+            </td>
         </tr>
     @endforeach
 </tbody>
