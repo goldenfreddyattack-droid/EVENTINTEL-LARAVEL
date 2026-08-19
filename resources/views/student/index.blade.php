@@ -38,6 +38,8 @@
                                 <th>Middle Name</th>
                                 <th>Address</th>
                                 <th>Date of Birth</th>
+                                <th><a href="{{ route('student.addstud') }}" class="btn btn-success">Delete</a></th>
+    </div>
                             </tr>
                         </thead>
 

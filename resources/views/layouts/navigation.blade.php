@@ -70,6 +70,16 @@
                     </li>
                 </ul>
             </li>
+
+            <li class="nav-item mt-3 border-top">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="nav-link btn btn-link text-left w-100" style="border: none; background: transparent; color: inherit;">
+                        <i class="nav-icon fas fa-sign-out-alt"></i>
+                        <p class="mb-0">{{ __('Log Out') }}</p>
+                    </button>
+                </form>
+            </li>
         </ul>
     </nav>
     <!-- /.sidebar-menu -->

@@ -49,7 +49,7 @@
                         <div class="form-group col-12">
                            <label for="exampleInputFile">Middle Name</label>
                    
-                          <input type="text" class="form-control" id="midname" name="mname" placeholder="Enter your Middle Name"
+                          <input type="text" class="form-control" id="mname" name="mname" placeholder="Enter your Middle Name"
                           value="{{ $student->mname}}">
                         </div>
                           @error('mname') <span class="text-danger">{{$message}}</span> @enderror
@@ -57,7 +57,7 @@
 
                         <div class="form-group col-12">
                           <label for="exampleInputEmail1">Address</label>
-                          <input type="text" class="form-control" id="address" name="add" placeholder="Enter Address" value="{{ $student->add}}">
+                          <input type="text" class="form-control" id="add" name="add" placeholder="Enter Address" value="{{ $student->add}}">
                         </div>
                           @error('add') <span class="text-danger">{{$message}}</span> @enderror
 

@@ -1,0 +1,3 @@
+@extends('coordinator.layout')
+@section('title','Event Reports')
+@section('content')<section class="reviews-page"><h2>Event Reports</h2><div class="review-card"><h3>Wedding Event</h3><p class="status completed">Completed</p><p>Successfully managed full wedding event with catering and decorations delivered on time.</p></div><div class="review-card"><h3>Birthday Celebration</h3><p class="status pending">Pending Review</p><p>Waiting for final client feedback and payment confirmation.</p></div><div class="review-card"><h3>Corporate Seminar</h3><p class="status completed">Completed</p><p>Audio system, stage setup, and food service handled successfully.</p></div></section>@endsection

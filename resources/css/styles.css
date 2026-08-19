@@ -1,0 +1,678 @@
+html {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: #070707;
+}
+
+.instagram-login {
+    background: #fafafa;
+    min-height: 100vh;
+    padding: 40px 0;
+}
+
+.instagram-page {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 0 16px;
+}
+
+.instagram-card,
+.instagram-signup-card,
+.instagram-download-card {
+    width: min(100%, 380px);
+    background: #ffffff;
+    border: 1px solid #dbdbdb;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.instagram-card {
+    padding: 40px 40px 24px;
+}
+
+.instagram-logo {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 60px;
+    text-align: center;
+    margin-bottom: 18px;
+    color: #d4af37;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.instagram-title {
+    font-size: 22px;
+    text-align: center;
+    color: #262626;
+    margin-bottom: 18px;
+    font-weight: 700;
+}
+
+.notification-box {
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.instagram-card {
+    position: relative;
+    padding: 40px 40px 32px;
+    border: 1px solid #d4af37;
+}
+
+.instagram-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.2);
+    pointer-events: none;
+}
+
+.instagram-alert {
+    text-align: center;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.instagram-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.instagram-input {
+    width: 100%;
+    height: 46px;
+    padding: 0 14px;
+    border: 1px solid #d4af37;
+    border-radius: 8px;
+    background: #fff8f0;
+    color: #262626;
+    font-size: 14px;
+}
+
+.instagram-input:focus {
+    outline: 1px solid #a2a2a2;
+    background: #ffffff;
+}
+
+.instagram-submit {
+    width: 100%;
+    height: 46px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    background: linear-gradient(135deg, #e0b83f, #c7901c);
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(212, 175, 55, 0.28);
+}
+
+.instagram-submit:hover {
+    transform: translateY(-1px);
+    opacity: 0.98;
+}
+
+.instagram-facebook {
+    display: none;
+}
+
+.signup-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #e0b83f, #c7901c);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    box-shadow: 0 8px 18px rgba(212, 175, 55, 0.22);
+}
+
+.signup-button:hover {
+    opacity: 0.96;
+}
+
+.instagram-forgot {
+    display: block;
+    margin-top: 16px;
+    text-align: center;
+    color: #b8860b;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.instagram-forgot:hover {
+    text-decoration: underline;
+}
+
+.instagram-signup-card {
+    padding: 20px 0;
+    text-align: center;
+    font-size: 14px;
+    border-top: 1px solid #f0e1b5;
+}
+
+.signup-prompt {
+    margin-bottom: 12px;
+    color: #262626;
+    font-weight: 600;
+}
+
+.signup-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #d4af37, #b8860b);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.signup-button:hover {
+    opacity: 0.95;
+}
+
+.instagram-signup-card a,
+.instagram-store-button {
+    color: #0095f6;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.instagram-download-card {
+    padding: 16px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.instagram-store-links {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.instagram-store-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    padding: 9px 12px;
+    border: 1px solid #dbdbdb;
+    border-radius: 6px;
+    background: #fafafa;
+}
+
+@media (max-width: 420px) {
+    .instagram-card,
+    .instagram-signup-card,
+    .instagram-download-card {
+        width: 100%;
+    }
+
+    .instagram-card {
+        padding: 32px 24px 24px;
+    }
+}
+
+/* Container */
+.container {
+    display: flex;
+    width: 100%;
+    max-width: 100vw;
+    min-height: 100vh;
+    height: auto;
+}
+
+/* Left Section - Branding */
+.left-section {
+    flex: 1;
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 50%, #1a1a1a 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    max-width: 50%;
+    justify-content: center;
+    padding: 40px;
+    min-width: 0;
+}
+
+/* Animated Wave Background */
+.left-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><path d="M0,300 Q300,200 600,300 T1200,300 L1200,600 L0,600 Z" fill="none" stroke="%23D4AF37" stroke-width="2" opacity="0.1"/><path d="M0,320 Q300,220 600,320 T1200,320 L1200,600 L0,600 Z" fill="none" stroke="%23D4AF37" stroke-width="2" opacity="0.08"/><path d="M0,340 Q300,240 600,340 T1200,340 L1200,600 L0,600 Z" fill="none" stroke="%23D4AF37" stroke-width="2" opacity="0.06"/><path d="M0,360 Q300,260 600,360 T1200,360 L1200,600 L0,600 Z" fill="none" stroke="%23D4AF37" stroke-width="2" opacity="0.04"/></svg>') repeat-x;
+    background-size: 600px 600px;
+    animation: wave 15s linear infinite;
+}
+
+@keyframes wave {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(600px);
+    }
+}
+
+/* Branding Content */
+.branding-content {
+    position: relative;
+    z-index: 2;
+    max-width: 80%;
+}
+
+.brand-title {
+    font-size: 72px;
+    font-weight: 800;
+    color: #D4AF37;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.brand-tagline {
+    font-size: 18px;
+    color: #D4AF37;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+/* Right Section - Login Form */
+.right-section {
+    flex: 1;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    overflow-x: hidden;
+    max-width: 50%;
+    overflow-y: auto;
+    min-width: 0;
+}
+
+.login-form-container {
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    margin: 0 20px 0 auto;
+}
+
+.welcome-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 40px;
+    background: linear-gradient(135deg, #1a1a1a, #D4AF37);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Form Styling */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+    width: 100%;
+    min-width: 0;
+}
+
+.input-wrapper:focus-within {
+    border-color: #D4AF37;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.icon {
+    font-size: 20px;
+    margin-right: 12px;
+    opacity: 0.6;
+}
+
+.input-field {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    min-width: 0;
+    color: #1a1a1a;
+    background: transparent;
+}
+
+.input-field::placeholder {
+    color: #999;
+}
+
+.toggle-password {
+    cursor: pointer;
+    font-size: 18px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+/* Utility: hide visible scrollbar but keep element scrollable */
+.hide-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+    width: 0;
+    height: 0;
+}
+
+/* Example: apply to right column containers that use vertical scrolling */
+.right-section.hide-scrollbar,
+.login-form-container.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.toggle-password:hover {
+    opacity: 1;
+}
+
+/* Login Button */
+.login-button {
+    padding: 14px 24px;
+    margin-top: 10px;
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    color: #D4AF37;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.login-button:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+}
+
+.login-button:active {
+    transform: translateY(0);
+}
+
+/* Signup Section */
+.signup-section {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.signup-text {
+    color: #333;
+    font-size: 14px;
+}
+
+.signup-link {
+    color: #D4AF37;
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+}
+
+.signup-link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+/* Form Rows */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 15px;
+    width: 100%;
+}
+
+.form-row .form-group {
+    min-width: 0;
+    width: 100%;
+}
+
+/* Select Field */
+.select-field {
+    height: 44px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #ffffff;
+    color: #1a1a1a;
+    cursor: pointer;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.select-field:focus {
+    outline: none;
+    border-color: #D4AF37;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+@media (max-width: 980px) {
+    .container { flex-direction: column; }
+    .left-section, .right-section { max-width: 100%; width: 100%; }
+    .left-section { padding: 30px 24px; }
+    .right-section { padding: 30px 24px; }
+    .login-form-container { margin: 0 auto; width: 100%; }
+    .brand-title { font-size: 54px; }
+    .welcome-title { font-size: 38px; }
+}
+
+@media (max-width: 640px) {
+    .left-section { padding: 24px 16px; }
+    .right-section { padding: 24px 16px; }
+    .brand-title { font-size: 42px; }
+    .brand-tagline { font-size: 16px; }
+    .login-form-container { max-width: 100%; }
+    .form-row { grid-template-columns: 1fr; }
+}
+
+
+.select-field option {
+    color: #1a1a1a;
+    background: #ffffff;
+}
+
+/* Address Section */
+.address-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+/* Role Section */
+.role-section {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checkbox-label:hover {
+    opacity: 0.8;
+}
+
+.checkbox-input {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+    accent-color: #D4AF37;
+}
+
+.checkbox-text {
+    font-size: 14px;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-text i {
+    color: #D4AF37;
+}
+
+/* Footer Links */
+.footer-links {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 25px;
+    padding-top: 25px;
+    border-top: 1px solid #ddd;
+}
+
+.footer-link {
+    color: #1a1a1a;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+    color: #D4AF37;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .brand-title {
+        font-size: 48px;
+    }
+
+    .brand-tagline {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .left-section {
+        flex: 0.5;
+        padding: 30px;
+    }
+
+    .right-section {
+        flex: 0.5;
+        overflow-y: auto;
+    }
+
+    .brand-title {
+        font-size: 36px;
+    }
+
+    .brand-tagline {
+        font-size: 14px;
+    }
+
+    .welcome-title {
+        font-size: 32px;
+    }
+
+    .login-form-container {
+        max-width: 100%;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-title {
+        font-size: 28px;
+    }
+
+    .welcome-title {
+        font-size: 24px;
+    }
+
+    .footer-links {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+

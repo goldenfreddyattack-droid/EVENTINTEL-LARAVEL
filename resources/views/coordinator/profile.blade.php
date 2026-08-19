@@ -1,0 +1,5 @@
+@extends('coordinator.layout')
+@section('title','Coordinator Profile')
+@section('content')
+<section><h2>Coordinator Profile</h2>@if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif<div class="form-section"><h2>Portfolio: About & Services</h2><form method="POST" action="{{ route('coordinator.profile.update') }}">@csrf<div class="settings-grid"><input name="business_name" value="{{ old('business_name',$user->business_name) }}" placeholder="Business name"><input name="business_address" value="{{ old('business_address',$user->business_address) }}" placeholder="Business address"></div><textarea name="about" placeholder="Tell clients about yourself">{{ old('about',$profile->about ?? '') }}</textarea><textarea name="services" placeholder="Services offered, one per line">{{ old('services',str_replace('|',"\n",$profile->services ?? '')) }}</textarea><button class="accept-btn">Save Portfolio</button></form></div><div class="form-section"><h2>Gallery</h2><p>Gallery management is available from your coordinator profile.</p></div></section>
+@endsection

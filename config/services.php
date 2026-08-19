@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'firebase' => [
+        'database_url' => env('FIREBASE_DATABASE_URL', 'https://eventintel-72be0-default-rtdb.firebaseio.com'),
+        'api_key' => env('FIREBASE_API_KEY', ''),
+        'project_id' => env('FIREBASE_PROJECT_ID', 'eventintel-72be0'),
+    ],
+
 ];
