@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventIntel - Sign Up</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Left Side - Branding -->
+        <div class="left-section">
+            <div class="branding-content">
+                <h1 class="brand-title">EventIntel</h1>
+                <p class="brand-tagline">EventIntel guides every decision with smart recommendations and Ai Generated Event Flow</p>
+            </div>
+        </div>
+
+        <!-- Right Side - Sign Up Form -->
+        <div class="right-section">
+            <div class="login-form-container">
+                <h2 class="welcome-title">Create Account</h2>
+                
+                <form class="login-form">
+                    <!-- Name Fields -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <i class="icon fas fa-user"></i>
+                                <input type="text" placeholder="First Name" class="input-field" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <i class="icon fas fa-user"></i>
+                                <input type="text" placeholder="Last Name" class="input-field" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <i class="icon fas fa-user"></i>
+                                <input type="text" placeholder="Middle Initial" class="input-field" maxlength="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="icon fas fa-envelope"></i>
+                            <input type="email" placeholder="Email Address" class="input-field" required>
+                        </div>
+                    </div>
+
+                    <!-- Username -->
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="icon fas fa-user-circle"></i>
+                            <input type="text" placeholder="Username" class="input-field" required>
+                        </div>
+                    </div>
+
+                    <!-- Age and Gender -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <i class="icon fas fa-birthday-cake"></i>
+                                <input type="number" placeholder="Age" class="input-field" min="18" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <select class="input-field select-field" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="icon fas fa-phone"></i>
+                            <input type="tel" placeholder="Phone Number" class="input-field" required>
+                        </div>
+                    </div>
+
+                    <!-- Address Fields -->
+                    <div class="address-section">
+                        <p class="section-title">Address Information</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <i class="icon fas fa-map-pin"></i>
+                                    <input type="text" placeholder="Province" class="input-field" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <i class="icon fas fa-map-pin"></i>
+                                    <input type="text" placeholder="Municipality" class="input-field" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <i class="icon fas fa-map-pin"></i>
+                                    <input type="text" placeholder="Barangay" class="input-field" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <i class="icon fas fa-map-pin"></i>
+                                    <input type="text" placeholder="Postal Code" class="input-field" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role Selection -->
+                    <div class="role-section">
+                        <p class="section-title">Account Type</p>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="role" value="coordinator" class="checkbox-input">
+                                <span class="checkbox-text"><i class="fas fa-clipboard-list"></i> Sign Up as Coordinator</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="role" value="supplier" class="checkbox-input">
+                                <span class="checkbox-text"><i class="fas fa-box"></i> Sign Up as Supplier</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Passwords -->
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="icon fas fa-lock"></i>
+                            <input type="password" placeholder="Password" class="input-field" id="password" required>
+                            <span class="toggle-password" onclick="togglePassword('password')"><i class="fas fa-eye"></i></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="icon fas fa-lock"></i>
+                            <input type="password" placeholder="Confirm Password" class="input-field" id="confirm-password" required>
+                            <span class="toggle-password" onclick="togglePassword('confirm-password')"><i class="fas fa-eye"></i></span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="login-button">Sign Up</button>
+                </form>
+
+                <div class="signup-section">
+                    <p class="signup-text">Already have an account? <a href="index.html" class="signup-link">Log In</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = event.target.closest('.toggle-password').querySelector('i');
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
+</body>
+</html>

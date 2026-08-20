@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventIntel - Organizer Profile</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: #050505;
+      color: white;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: auto;
+      padding: 6px 48px 40px;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      width: 100%;
+      padding: 6px 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 26px;
+      font-weight: 800;
+      color: #f3c547;
+      letter-spacing: 1px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .nav-links button {
+      padding: 8px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      background: transparent;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .nav-links button:hover,
+    .nav-links .active {
+      background: rgba(255, 215, 0, 0.12);
+      color: #f3c547;
+      box-shadow: 0 0 14px rgba(255, 215, 0, 0.12);
+    }
+
+    .profile-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 215, 0, 0.35);
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #f3c547;
+      cursor: pointer;
+    }
+
+    /* PROFILE SECTION */
+    .profile {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 40px;
+      margin-top: 20px;
+    }
+
+    .profile-card {
+      background: rgba(15,15,15,.95);
+      border: 1px solid rgba(255,215,0,.12);
+      border-radius: 28px;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .profile-img {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin: auto;
+      margin-bottom: 18px;
+      border: 2px solid rgba(255,215,0,.3);
+    }
+
+    .profile-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-card h2 {
+      margin-bottom: 8px;
+    }
+
+    .role {
+      color: #f3c547;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    .rating {
+      color: #f3c547;
+      margin-bottom: 20px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      transition: .3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #fff2ab, #f3c547, #c99208);
+      color: #111;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(255,215,0,.3);
+      color: #f3c547;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(243,197,71,.2);
+    }
+
+    /* DETAILS */
+    .details {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .section {
+      background: rgba(15,15,15,.9);
+      border: 1px solid rgba(255,215,0,.12);
+      border-radius: 28px;
+      padding: 26px;
+    }
+
+    .section h3 {
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+
+    .section p {
+      color: #cfcfcf;
+      line-height: 1.6;
+    }
+
+    .services {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .service {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,215,0,.1);
+      color: #f3c547;
+      font-size: 13px;
+    }
+
+  </style>
+
+</head>
+<body>
+
+  <div class="container">
+
+<div class="navbar">
+  <div class="logo">EventIntel</div>
+
+  <div class="nav-links">
+    <button>Home</button>
+    <button>Create Event</button>
+    <button>Your Events</button>
+
+    <div class="profile-btn">
+      <i class="fa-regular fa-user"></i>
+    </div>
+  </div>
+</div>
+
+<div class="profile">
+
+  <!-- LEFT CARD -->
+  <div class="profile-card">
+    <div class="profile-img">
+      <img src="images/vince.jpg">
+    </div>
+
+    <h2>Vincent Tolentino</h2>
+    <div class="role">Professional Event Coordinator</div>
+    <div class="rating">★★★★★ (4.9)</div>
+
+    <div class="action-buttons">
+      <button class="btn btn-primary">Book Now</button>
+      <button class="btn btn-outline">Message</button>
+    </div>
+  </div>
+
+  <!-- RIGHT DETAILS -->
+  <div class="details">
+
+    <div class="section">
+      <h3>About</h3>
+      <p>
+        Vincent Tolentino is a highly experienced event organizer with over 8 years of
+        experience in planning weddings, corporate events, and large-scale celebrations.
+        Known for attention to detail and creative execution, Vincent ensures every event
+        is memorable and stress-free.
+      </p>
+    </div>
+
+    <div class="section">
+      <h3>Services Offered</h3>
+      <div class="services">
+        <div class="service">Wedding Planning</div>
+        <div class="service">Corporate Events</div>
+        <div class="service">Birthday Parties</div>
+        <div class="service">Full Coordination</div>
+        <div class="service">On-the-day Coordination</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Experience & Highlights</h3>
+      <p>
+        • Organized 300+ successful events<br>
+        • Partnered with top venues and suppliers<br>
+        • Awarded "Best Event Coordinator 2025"<br>
+        • Specialized in luxury and themed events
+      </p>
+    </div>
+
+  </div>
+
+</div>
+  </div>
+
+</body>
+</html>
