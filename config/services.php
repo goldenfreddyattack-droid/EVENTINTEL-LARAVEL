@@ -35,6 +35,10 @@ return [
         ],
     ],
 
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+    ],
+
     'firebase' => [
         'database_url' => env('FIREBASE_DATABASE_URL', 'https://eventintel-72be0-default-rtdb.firebaseio.com'),
         'api_key' => env('FIREBASE_API_KEY', ''),

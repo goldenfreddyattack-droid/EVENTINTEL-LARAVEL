@@ -23,6 +23,23 @@ Route::middleware('auth')->group(function () {
     Route::delete('student/{id}', [App\Http\Controllers\studmngt_controller::class, 'delete'])->name('student.delete');
     Route::get('profile', [\App\Http\Controllers\ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::post('profile/application', [\App\Http\Controllers\ProfileController::class, 'applyRole'])->name('profile.application');
+    Route::get('/recommendation', [\App\Http\Controllers\RecommendationController::class, 'index'])->name('recommendation');
+    Route::post('/recommendation/generate', [\App\Http\Controllers\RecommendationController::class, 'generate'])->name('recommendation.generate');
+    Route::get('/packages', [\App\Http\Controllers\PackageController::class, 'index'])->name('packages');
+    Route::get('/your-events', [\App\Http\Controllers\YourEventsController::class, 'index'])->name('your.events');
+    Route::get('/your-events/{eventId}/map', [App\Http\Controllers\YourEventsController::class, 'map'])->name('your.events.map');
+    Route::match(['get', 'post'], '/your-events/{eventId}/guests', [App\Http\Controllers\YourEventsController::class, 'guests'])->name('your.events.guests');
+    Route::match(['get', 'post'], '/your-events/{eventId}/invitation', [App\Http\Controllers\YourEventsController::class, 'invitation'])->name('your.events.invitation');
+    Route::get('/messages', [App\Http\Controllers\ClientMessagesController::class, 'index'])->name('your.messages');
+    Route::post('/messages', [App\Http\Controllers\ClientMessagesController::class, 'send'])->name('your.messages.send');
+    Route::get('/messages/api', [App\Http\Controllers\ClientMessagesController::class, 'api'])->name('your.messages.api');
+    Route::get('/your-events/{eventId}/status', [\App\Http\Controllers\YourEventsController::class, 'status'])->name('your.events.status');
+    Route::post('/your-events/{eventId}/pay', [\App\Http\Controllers\YourEventsController::class, 'pay'])->name('your.events.pay');
+    Route::get('/newsfeed', [\App\Http\Controllers\NewsfeedController::class, 'index'])->name('newsfeed');
+    Route::post('/newsfeed', [\App\Http\Controllers\NewsfeedController::class, 'store'])->name('newsfeed.store');
+    Route::post('/newsfeed/like', [\App\Http\Controllers\NewsfeedController::class, 'like'])->name('newsfeed.like');
+    Route::post('/newsfeed/comment', [\App\Http\Controllers\NewsfeedController::class, 'comment'])->name('newsfeed.comment');
 
     // Supplier routes
     Route::get('/supplier/dashboard', [\App\Http\Controllers\SupplierDashboardController::class, 'index'])->name('supplier.dashboard');

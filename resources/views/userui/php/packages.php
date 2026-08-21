@@ -132,12 +132,17 @@ body{
 /* NAVBAR */
 .navbar {
   width: 100%;
-  padding: 12px 48px 24px 48px;
+  min-height: 72px;
+  padding: 12px 18px 12px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
+  border: 1px solid #dfe3e6;
+  border-radius: 18px;
+  background: #f1f3f4;
+  box-shadow: 0 12px 28px rgba(52, 62, 70, 0.12);
 }
 
 .logo-text {
@@ -150,34 +155,39 @@ body{
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: flex-end;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .nav-links button {
-  padding: 8px 18px;
-  border-radius: 12px;
-  border: 1px solid rgba(212,160,23,0.35);
-  background: rgba(255,255,255,0.55);
-  color: #222;
+  padding: 10px 13px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #414950;
+  font: inherit;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .nav-links button:hover,
 .nav-links .active {
-  background: linear-gradient(to right, #ffe17a, #d4a017);
-  color: black;
-  box-shadow: 0 0 14px rgba(255, 215, 0, 0.12);
+  border-color: #e0b536;
+  background: #f6c84c;
+  color: #242a2f;
+  box-shadow: none;
 }
 
 .profile-btn {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 215, 0, 0.35);
-  background: #fff;
+  margin-left: 5px;
+  border: 1px solid #d8b13e;
+  background: #e7eaec;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -188,7 +198,7 @@ body{
 }
 
 /* CONTENT */
-.container{max-width:1300px;margin:auto;padding:20px 50px 60px;}
+.container{width:min(1180px,calc(100% - 96px));margin:0 auto;padding:34px 0 60px;}
 h1{font-size:42px;margin-bottom:8px;}
 .subtitle{color:#777;margin-bottom:30px;}
 
@@ -377,7 +387,7 @@ h1{font-size:42px;margin-bottom:8px;}
 
 @media (max-width:900px){
   .packages{grid-template-columns:1fr;}
-  .container{padding:20px 22px 40px;}
+  .container{width:calc(100% - 44px);padding:20px 0 40px;}
 }
 </style>
 </head>
@@ -390,6 +400,7 @@ h1{font-size:42px;margin-bottom:8px;}
     <button onclick="window.location.href='createevent.php'">Create Event</button>
     <button onclick="window.location.href='yourevents.php'">Your Events</button>
     <button onclick="window.location.href='recommendation.php'">Recommendations</button>
+    <button class="active" onclick="window.location.href='packages.php'">Packages</button>
     <button onclick="window.location.href='newsfeed.php'">Newsfeed</button>
     <button class="profile-btn" type="button" aria-label="Profile" title="Profile" onclick="window.location.href='profile.php'"><i class="fas fa-user"></i></button>
   </div>

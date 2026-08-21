@@ -57,6 +57,8 @@ h3,.your-services h3,.messages h3,.services h3{font-size:clamp(28px,4vw,42px);fo
 .accept-btn,.service-card button,.setting-card button{background:linear-gradient(135deg,var(--gold2),var(--gold),var(--gold3));color:#111}
 .decline-btn{background:transparent;color:#ff8b8b;border:1px solid rgba(255,80,80,.35)}
 .accept-btn:hover,.decline-btn:hover,.service-card button:hover,.setting-card button:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(243,197,71,.22)}
+.alert-box{text-align:center}
+.alert-box>div{margin-bottom:16px}
 .services-messages{margin-top:34px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:26px}
 .services{background:var(--panel);border:1px solid var(--border);border-radius:30px;padding:24px;box-shadow:var(--shadow)}
 .your-services{width:100%}

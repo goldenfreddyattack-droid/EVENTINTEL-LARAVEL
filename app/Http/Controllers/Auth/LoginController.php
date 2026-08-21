@@ -50,6 +50,12 @@ class LoginController extends Controller
         }
 
         if ($user && Hash::check($password, $user->password)) {
+            if (($user->status ?? null) === 'rejected') {
+                throw ValidationException::withMessages([
+                    'login' => ['Your profile has been rejected and cannot be used to log in.'],
+                ]);
+            }
+
             Auth::login($user, $request->boolean('remember'));
 
             $request->session()->regenerate();
@@ -64,6 +70,10 @@ class LoginController extends Controller
 
             if (($user->role ?? null) === 'coordinator') {
                 return redirect()->route('coordinator.dashboard');
+            }
+
+            if (($user->role ?? null) === 'client') {
+                return redirect()->route('home');
             }
 
             return redirect()->intended($this->redirectPath());

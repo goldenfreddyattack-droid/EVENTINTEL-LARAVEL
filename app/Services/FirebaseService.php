@@ -167,4 +167,99 @@ class FirebaseService
             return false;
         }
     }
+
+    public function getNewsfeedPosts(): array
+    {
+        return $this->getCollection('newsfeed/posts', 'post_id');
+    }
+
+    public function createNewsfeedPost(int $userId, string $content, ?string $imagePath = null): ?string
+    {
+        $post = [
+            'user_id' => $userId,
+            'content' => $content,
+            'image_path' => $imagePath,
+            'created_at' => now()->toIso8601String(),
+        ];
+
+        return $this->push('newsfeed/posts', $post);
+    }
+
+    public function getNewsfeedComments(): array
+    {
+        return $this->getCollection('newsfeed/comments', 'comment_id');
+    }
+
+    public function createNewsfeedComment(string $postId, int $userId, string $comment): ?string
+    {
+        return $this->push('newsfeed/comments', [
+            'post_id' => $postId,
+            'user_id' => $userId,
+            'comment' => $comment,
+            'created_at' => now()->toIso8601String(),
+        ]);
+    }
+
+    public function getNewsfeedLikes(): array
+    {
+        try {
+            $response = Http::get("{$this->databaseUrl}/newsfeed/likes.json");
+            return $response->successful() && is_array($response->json()) ? $response->json() : [];
+        } catch (\Exception $e) {
+            Log::error('Firebase newsfeed likes fetch failed', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    public function toggleNewsfeedLike(string $postId, int $userId): array
+    {
+        $path = "newsfeed/likes/{$postId}/{$userId}";
+        $response = Http::get("{$this->databaseUrl}/{$path}.json");
+        $liked = (bool) $response->json();
+
+        if ($liked) {
+            $response = Http::delete("{$this->databaseUrl}/{$path}.json");
+        } else {
+            $response = Http::withBody('true', 'application/json')->put("{$this->databaseUrl}/{$path}.json");
+        }
+
+        return [
+            'liked' => ! $liked,
+            'success' => $response->successful(),
+        ];
+    }
+
+    protected function getCollection(string $path, string $idKey): array
+    {
+        try {
+            $response = Http::get("{$this->databaseUrl}/{$path}.json");
+            if (! $response->successful() || ! is_array($response->json())) {
+                return [];
+            }
+
+            $items = [];
+            foreach ($response->json() as $id => $item) {
+                if (is_array($item)) {
+                    $item[$idKey] = (string) $id;
+                    $items[] = $item;
+                }
+            }
+
+            return $items;
+        } catch (\Exception $e) {
+            Log::error('Firebase newsfeed collection fetch failed', ['path' => $path, 'error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    protected function push(string $path, array $data): ?string
+    {
+        try {
+            $response = Http::post("{$this->databaseUrl}/{$path}.json", $data);
+            return $response->successful() ? ($response->json('name') ?: null) : null;
+        } catch (\Exception $e) {
+            Log::error('Firebase newsfeed write failed', ['path' => $path, 'error' => $e->getMessage()]);
+            return null;
+        }
+    }
 }

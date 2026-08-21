@@ -1,0 +1,115 @@
+.userui-navbar {
+    width: 100%;
+    min-height: 72px;
+    padding: 12px 18px 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 3;
+    border: 1px solid #dfe3e6;
+    border-radius: 18px;
+    background: #f1f3f4;
+    box-shadow: 0 12px 28px rgba(52, 62, 70, 0.12);
+}
+
+.userui-logo {
+    position: relative;
+    color: #f6c84c;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1;
+}
+
+.userui-nav-links {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.userui-nav-links a {
+    padding: 10px 13px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: #414950;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.userui-nav-links a:hover,
+.userui-nav-links a.active {
+    border-color: #e0b536;
+    background: #f6c84c;
+    color: #242a2f;
+    box-shadow: none;
+}
+
+.userui-welcome {
+    margin-right: 8px;
+    color: #707980;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.userui-profile {
+    width: 44px;
+    height: 44px;
+    margin-left: 5px;
+    padding: 0 !important;
+    border: 1px solid #d8b13e !important;
+    border-radius: 50% !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e7eaec !important;
+}
+
+.userui-profile i {
+    color: #f6c84c;
+}
+
+@media (max-width: 900px) {
+    .userui-navbar {
+        justify-content: center;
+        padding: 14px;
+    }
+
+    .userui-nav-links {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 650px) {
+    .userui-navbar {
+        gap: 14px;
+        border-radius: 14px;
+    }
+
+    .userui-welcome {
+        width: 100%;
+        margin-right: 0;
+        text-align: center;
+    }
+
+    .userui-nav-links {
+        gap: 3px;
+    }
+
+    .userui-nav-links a {
+        padding: 9px 10px;
+        font-size: 12px;
+    }
+
+    .userui-profile {
+        margin-left: 2px;
+    }
+}
