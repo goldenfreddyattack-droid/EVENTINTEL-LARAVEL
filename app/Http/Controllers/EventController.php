@@ -33,11 +33,54 @@ class EventController extends Controller
         ]);
     }
 
+    public function venueAvailability(Request $request)
+    {
+        abort_unless(Auth::user()->role === 'client', 403, 'Client access only.');
+
+        $venueName = trim((string) $request->query('venue'));
+        abort_unless($venueName !== '', 422, 'A venue is required.');
+
+        $dates = collect(range(0, 6))->map(function (int $offset) use ($venueName) {
+            $date = now()->startOfDay()->addDays($offset);
+            $booked = DB::table('events')
+                ->where('venue_name', $venueName)
+                ->whereDate('event_date', $date->toDateString())
+                ->whereNotIn('status', ['cancelled', 'Cancelled'])
+                ->exists();
+
+            return ['date' => $date->toDateString(), 'label' => $date->format('M j'), 'available' => ! $booked];
+        });
+
+        $venue = DB::table('supplier_services')->where('name', $venueName)->first();
+        $addonMap = [
+            'catering' => 'catering',
+            'clothing' => 'clothes',
+            'clothes' => 'clothes',
+            'styling' => 'clothes',
+            'sounds & lights' => 'sounds_lights',
+            'sounds and lights' => 'sounds_lights',
+            'sounds_lights' => 'sounds_lights',
+            'host' => 'host',
+            'mc' => 'host',
+            'photographer' => 'photographer',
+        ];
+        $addons = $venue && Schema::hasColumn('supplier_services', 'venue_add_ons')
+            ? collect(explode(',', (string) $venue->venue_add_ons))
+                ->map(fn (string $addon) => $addonMap[strtolower(trim($addon))] ?? null)
+                ->filter()
+                ->unique()
+                ->values()
+            : collect();
+
+        return response()->json(['dates' => $dates, 'addons' => $addons]);
+    }
+
     public function store(Request $request)
     {
         abort_unless(Auth::user()->role === 'client', 403, 'Client access only.');
 
         $data = $request->validate([
+            'event_name' => ['required', 'string', 'max:150'],
             'event_type' => ['required', 'string', 'max:100'],
             'other_event_type' => ['nullable', 'required_if:event_type,Others', 'string', 'max:100'],
             'event_date' => ['required', 'date'],
@@ -90,7 +133,7 @@ class EventController extends Controller
         $eventId = DB::transaction(function () use ($data, $eventType, $endTime, $services) {
             $eventId = DB::table('events')->insertGetId([
                 'user_id' => Auth::id(),
-                'title' => $eventType . ' Event',
+                'title' => $data['event_name'],
                 'event_type' => $eventType,
                 'theme' => $data['theme'] ?? null,
                 'budget' => $data['event_budget'] ?? null,

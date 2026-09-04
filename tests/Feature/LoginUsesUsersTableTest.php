@@ -33,6 +33,7 @@ class LoginUsesUsersTableTest extends TestCase
             'password' => Hash::make('password'),
             'role' => 'admin',
             'status' => 'approved',
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->post('/login', [
@@ -67,6 +68,37 @@ class LoginUsesUsersTableTest extends TestCase
 
         $response = $this->from('/login')->post('/login', [
             'login' => 'rejected-user',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors('login');
+        $this->assertGuest();
+    }
+
+    public function test_username_login_is_case_sensitive(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->increments('user_id');
+            $table->string('username')->unique();
+            $table->string('full_name')->nullable();
+            $table->string('email')->unique()->nullable();
+            $table->string('password');
+            $table->enum('role', ['client', 'supplier', 'coordinator', 'admin'])->nullable()->default('client');
+            $table->enum('status', ['approved', 'pending', 'rejected'])->nullable()->default('approved');
+            $table->timestamp('created_at')->useCurrent();
+        });
+
+        User::create([
+            'username' => 'lowercase-user',
+            'email' => 'lowercase@test.com',
+            'password' => Hash::make('password'),
+            'role' => 'client',
+            'status' => 'approved',
+        ]);
+
+        $response = $this->from('/login')->post('/login', [
+            'login' => 'LOWERCASE-USER',
             'password' => 'password',
         ]);
 

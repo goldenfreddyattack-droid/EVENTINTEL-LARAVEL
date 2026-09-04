@@ -35,6 +35,19 @@ class ServiceCatalogController extends Controller
             'services' => $services,
             'returnUrl' => $request->query('return'),
             'modal' => $request->boolean('modal'),
+            'readonly' => $request->boolean('readonly'),
+        ]);
+    }
+
+    public function carousel(Request $request, string $service)
+    {
+        $definition = $this->definition($service);
+        $services = $this->queryServices($definition['categories']);
+
+        return view('userui.service-carousel', [
+            'serviceKey' => $service,
+            'serviceLabel' => $definition['label'],
+            'services' => $services,
         ]);
     }
 
@@ -50,6 +63,20 @@ class ServiceCatalogController extends Controller
             'serviceRecord' => $serviceRecord,
             'returnUrl' => $request->query('return'),
             'modal' => $request->boolean('modal'),
+            'readonly' => $request->boolean('readonly'),
+        ]);
+    }
+
+    public function carouselShow(string $service, int $serviceId)
+    {
+        $definition = $this->definition($service);
+        $serviceRecord = $this->queryServices($definition['categories'])->firstWhere('service_id', $serviceId);
+        abort_unless($serviceRecord, 404);
+
+        return view('userui.service-carousel-detail', [
+            'serviceKey' => $service,
+            'serviceLabel' => $definition['label'],
+            'serviceRecord' => $serviceRecord,
         ]);
     }
 

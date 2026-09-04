@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
@@ -40,20 +41,45 @@ class LoginController extends Controller
         $user = null;
 
         if (in_array('username', $columns) && in_array('email', $columns)) {
-            $user = User::where('username', $login)
-                ->orWhere('email', $login)
+            $user = User::where(function ($query) use ($login) {
+                if (DB::connection()->getDriverName() === 'mysql') {
+                    $query->whereRaw('BINARY username = ?', [$login]);
+                } else {
+                    $query->whereRaw('username = ? COLLATE BINARY', [$login]);
+                }
+
+                $query->orWhere('email', $login);
+            })
                 ->first();
         } elseif (in_array('username', $columns)) {
-            $user = User::where('username', $login)->first();
+            $user = User::where(function ($query) use ($login) {
+                if (DB::connection()->getDriverName() === 'mysql') {
+                    $query->whereRaw('BINARY username = ?', [$login]);
+                } else {
+                    $query->whereRaw('username = ? COLLATE BINARY', [$login]);
+                }
+            })->first();
         } elseif (in_array('email', $columns)) {
             $user = User::where('email', $login)->first();
         }
 
         if ($user && Hash::check($password, $user->password)) {
+            if (is_null($user->email_verified_at)) {
+                return back()
+                    ->withInput($request->only('login', 'password'))
+                    ->withErrors(['login' => 'Please verify your email address before logging in.']);
+            }
+
+            if (($user->status ?? null) === 'pending' && ($user->role ?? null) !== 'client') {
+                return back()
+                    ->withInput($request->only('login', 'password'))
+                    ->withErrors(['login' => 'Your account is still waiting for admin approval.']);
+            }
+
             if (($user->status ?? null) === 'rejected') {
-                throw ValidationException::withMessages([
-                    'login' => ['Your profile has been rejected and cannot be used to log in.'],
-                ]);
+                return back()
+                    ->withInput($request->only('login', 'password'))
+                    ->withErrors(['login' => 'Your profile has been rejected and cannot be used to log in.']);
             }
 
             Auth::login($user, $request->boolean('remember'));
@@ -79,9 +105,9 @@ class LoginController extends Controller
             return redirect()->intended($this->redirectPath());
         }
 
-        throw ValidationException::withMessages([
-            'login' => [trans('auth.failed')],
-        ]);
+        return back()
+            ->withInput($request->only('login', 'password'))
+            ->withErrors(['login' => trans('auth.failed')]);
     }
 
     protected function validateLogin(Request $request)

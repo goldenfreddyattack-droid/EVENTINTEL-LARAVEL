@@ -82,9 +82,17 @@
         }
 
         function selectService(service) {
+            const serviceKeys = {
+                'Photographer': 'photographer',
+                'Catering': 'catering',
+                'Host / MC': 'host',
+                'Venue': 'venue',
+                'Stylist': 'clothes',
+                'Lights & Sound': 'sounds_lights',
+            };
             const destination = service === 'Event Coordinator'
                 ? @js(route('coordinators.index'))
-                : @js(route('supplier.feed')) + '?service=' + encodeURIComponent(service);
+                : @js(url('/carousel/services')) + '/' + serviceKeys[service];
             window.location.href = destination;
         }
 

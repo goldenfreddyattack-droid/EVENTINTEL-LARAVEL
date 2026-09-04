@@ -307,6 +307,7 @@
                                 class="input-field @error('password') is-invalid @enderror"
                                 required
                                 autocomplete="current-password"
+                                value="{{ old('password') }}"
                             >
                             <span class="toggle-password" aria-label="Toggle password visibility">
                                 <i class="fas fa-eye"></i>

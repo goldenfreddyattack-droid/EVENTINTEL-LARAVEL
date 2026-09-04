@@ -7,6 +7,8 @@ Route::get('/', function () {
 });
 
 Auth::routes();
+Route::get('/email/verify/{user}', [App\Http\Controllers\Auth\VerificationController::class, 'verify'])
+    ->name('verification.verify');
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
@@ -29,8 +31,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/packages', [\App\Http\Controllers\PackageController::class, 'index'])->name('packages');
     Route::get('/events/create', [App\Http\Controllers\EventController::class, 'create'])->name('events.create');
     Route::post('/events', [App\Http\Controllers\EventController::class, 'store'])->name('events.store');
+    Route::get('/events/venue-availability', [App\Http\Controllers\EventController::class, 'venueAvailability'])->name('events.venue-availability');
     Route::get('/services/{service}/{serviceId}', [App\Http\Controllers\ServiceCatalogController::class, 'show'])->where('serviceId', '[0-9]+')->name('services.show');
     Route::get('/services/{service}', [App\Http\Controllers\ServiceCatalogController::class, 'index'])->name('services.index');
+    Route::get('/carousel/services/{service}/{serviceId}', [App\Http\Controllers\ServiceCatalogController::class, 'carouselShow'])->where('serviceId', '[0-9]+')->name('carousel.services.show');
+    Route::get('/carousel/services/{service}', [App\Http\Controllers\ServiceCatalogController::class, 'carousel'])->name('carousel.services.index');
     Route::get('/event-coordinators', [\App\Http\Controllers\CoordinatorController::class, 'clientIndex'])->name('coordinators.index');
     Route::get('/event-coordinator', fn () => redirect()->route('coordinators.index'));
     Route::get('/event-coordinators/{coordinatorId}', [\App\Http\Controllers\CoordinatorController::class, 'clientShow'])->name('coordinators.show');

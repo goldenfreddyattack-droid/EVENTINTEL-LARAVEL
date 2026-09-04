@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
@@ -67,6 +70,27 @@ class RegisterController extends Controller
 
     protected function registered(Request $request, $user)
     {
-        return redirect()->route('login')->with('status', 'Account created. Please wait for admin approval.');
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'user' => $user->getKey(),
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        Mail::raw(
+            "Hello {$user->full_name},\n\nPlease verify your email address by opening this link:\n{$verificationUrl}\n\nThis link expires in 60 minutes.",
+            function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('Verify your EventIntel email address');
+            }
+        );
+
+        return redirect()->route('login')->with('status', 'Account created. Please verify your email. Your account will be usable after admin approval.');
     }
 }

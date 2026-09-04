@@ -18,6 +18,8 @@
         .pagination a:hover { background: #fff5d7; }
         .pagination [aria-current="page"] span { background: #f6c84c; color: #242a2f; }
         .pagination [aria-disabled="true"] span { color: #b9b09a; background: #fafafa; }
+        .decline-note { margin-top: 8px; padding: 8px 10px; border-left: 3px solid #d9534f; border-radius: 6px; background: #fff1f1; color: #8b2622; font-size: 13px; line-height: 1.45; }
+        .note-modal-text { margin: 0; padding: 18px; border-radius: 12px; background: #fff1f1; color: #8b2622; line-height: 1.6; white-space: pre-wrap; }
     </style>
 </head>
 <body>
@@ -79,6 +81,13 @@
         </div>
     </div>
 
+    <div class="events-modal" id="noteModal" aria-hidden="true">
+        <div class="events-modal-content" style="max-width:520px;">
+            <header><h2>Decline Note</h2><button type="button" data-close-note>&times;</button></header>
+            <div id="noteContent" style="padding:16px;"></div>
+        </div>
+    </div>
+
     <div class="events-modal" id="paymentModal" aria-hidden="true">
         <div class="events-modal-content" style="max-width:560px;">
             <header><h2><i class="fas fa-coins" style="color:#f3c547;"></i> Pay for Service</h2><button type="button" data-close-payment>&times;</button></header>
@@ -113,6 +122,8 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
         const statusModal = document.getElementById('statusModal');
         const statusContent = document.getElementById('statusContent');
+        const noteModal = document.getElementById('noteModal');
+        const noteContent = document.getElementById('noteContent');
         const paymentModal = document.getElementById('paymentModal');
         let paymentContext = null;
 
@@ -145,9 +156,22 @@
                     const badgeClass = key === 'pending_confirmation' ? 'pending' : key.replace(/_/g, '-');
                     const canPay = ['accepted', 'proposal_accepted', 'payment_pending'].includes(key);
                     const messageUrl = service.supplier_user_id ? `{{ url('/messages') }}?event_id=${button.dataset.statusEvent}&user_id=${service.supplier_user_id}` : `{{ url('/messages') }}?event_id=${button.dataset.statusEvent}`;
-                    return `<div class="status-row"><div><strong>${escapeHtml(service.name)}</strong><small>${escapeHtml(service.type)}${service.price ? ` · ₱${Number(service.price).toLocaleString()}` : ''}</small></div><div class="status-actions"><span class="status-badge ${badgeClass}" >${escapeHtml(service.status)}</span>${canPay ? `<button class="pay-service" data-event="${button.dataset.statusEvent}" data-service="${escapeHtml(service.service_key)}" data-price="${Number(service.price || 0)}" data-name="${escapeHtml(service.name)}">Pay</button>` : ''}<a class="pay-service" href="${messageUrl}">Message</a></div></div>`;
+                    const declineNote = ['declined', 'proposal_declined'].includes(key) && service.note
+                        ? `<div class="decline-note"><strong>Decline note:</strong> ${escapeHtml(service.note)}</div>`
+                        : '';
+                    const isDeclined = ['declined', 'proposal_declined'].includes(key);
+                    const noteButton = isDeclined && service.note
+                        ? `<button class="pay-service view-note" type="button" data-note="${escapeHtml(service.note)}">View Note</button>`
+                        : '';
+                    const messageButton = isDeclined ? '' : `<a class="pay-service" href="${messageUrl}">Message</a>`;
+                    return `<div class="status-row"><div><strong>${escapeHtml(service.name)}</strong><small>${escapeHtml(service.type)}${service.price ? ` · ₱${Number(service.price).toLocaleString()}` : ''}</small></div><div class="status-actions"><span class="status-badge ${badgeClass}" >${escapeHtml(service.status)}</span>${noteButton}${canPay ? `<button class="pay-service" data-event="${button.dataset.statusEvent}" data-service="${escapeHtml(service.service_key)}" data-price="${Number(service.price || 0)}" data-name="${escapeHtml(service.name)}">Pay</button>` : ''}${messageButton}</div></div>`;
                 }).join('')}</div>${totalHtml}`;
                 statusContent.querySelectorAll('.pay-service[data-service]').forEach(payButton => payButton.addEventListener('click', () => openPaymentModal(payButton)));
+                statusContent.querySelectorAll('.view-note').forEach(noteButton => noteButton.addEventListener('click', () => {
+                    noteContent.innerHTML = `<p class="note-modal-text">${escapeHtml(noteButton.dataset.note)}</p>`;
+                    noteModal.classList.add('show');
+                    noteModal.setAttribute('aria-hidden', 'false');
+                }));
             } catch (error) {
                 statusContent.innerHTML = '<p class="modal-loading">Error loading service status.</p>';
             }
@@ -166,6 +190,10 @@
         document.querySelector('[data-close-modal]').addEventListener('click', closeModal);
         statusModal.addEventListener('click', event => { if (event.target === statusModal) closeModal(); });
         function closeModal() { statusModal.classList.remove('show'); statusModal.setAttribute('aria-hidden', 'true'); }
+
+        document.querySelector('[data-close-note]').addEventListener('click', closeNoteModal);
+        noteModal.addEventListener('click', event => { if (event.target === noteModal) closeNoteModal(); });
+        function closeNoteModal() { noteModal.classList.remove('show'); noteModal.setAttribute('aria-hidden', 'true'); }
 
         document.querySelectorAll('[data-close-payment]').forEach(button => button.addEventListener('click', closePaymentModal));
         paymentModal.addEventListener('click', event => { if (event.target === paymentModal) closePaymentModal(); });
