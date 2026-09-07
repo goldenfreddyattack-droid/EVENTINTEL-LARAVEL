@@ -75,7 +75,7 @@ class SupplierBookingsController extends Controller
                     'title' => $event->title,
                     'event_type' => $event->event_type,
                     'event_date' => $event->event_date,
-                    'budget' => $event->budget,
+                    'service_price' => $service->price,
                     'client_name' => $event->client_name,
                     'service' => $service->category,
                     'service_key' => $serviceKey,

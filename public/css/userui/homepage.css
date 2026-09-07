@@ -21,18 +21,19 @@ body::before,
 body::after {
     content: '';
     position: absolute;
-    border-radius: 50%;
-    filter: blur(120px);
     pointer-events: none;
     z-index: 0;
 }
 
 body::before {
-    width: 450px;
-    height: 450px;
-    background: rgba(255, 196, 0, 0.1);
-    left: -120px;
-    top: -160px;
+    width: min(850px, 100%);
+    height: 760px;
+    left: 50%;
+    top: -50px;
+    transform: translateX(-50%);
+    border-radius: 0;
+    background: url('/images/userui/background.png') top center / 100% auto no-repeat;
+    opacity: 0.28;
 }
 
 body::after {

@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['id'
 
 // Fetch all services for this supplier from supplier_services table
 $servicesQuery = "
-    SELECT service_id, category, name 
+    SELECT service_id, category, name, price 
     FROM supplier_services 
     WHERE user_id = ?
     ORDER BY category
@@ -122,7 +122,7 @@ foreach ($services as $service) {
                 'title' => $event['title'],
                 'event_type' => $event['event_type'],
                 'event_date' => $event['event_date'],
-                'budget' => $event['budget'],
+                'service_price' => $service['price'],
                 'client_name' => $event['client_name'],
                 'service' => $category,
                 'service_key' => $serviceKey,
@@ -239,7 +239,7 @@ $paginatedRows = array_slice($bookingRows, $offset, $perPage);
                                 <th>Service</th>
                                 <th>Client Name</th>
                                 <th>Date</th>
-                                <th>Budget</th>
+                                <th>Price</th>
                                 <th>Payment Method</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -258,7 +258,7 @@ $paginatedRows = array_slice($bookingRows, $offset, $perPage);
                                 <td><?= esc($r['service']) ?></td>
                                 <td><?= esc($r['client_name'] ?? 'N/A') ?></td>
                                 <td><span class="date"><?= esc($r['event_date'] ?? 'TBD') ?></span></td>
-                                <td>₱<?= number_format($r['budget'] ?? 0) ?></td>
+                                <td>₱<?= number_format($r['service_price'] ?? 0, 2) ?></td>
                                 <td>
                                     <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;<?= $r['payment_method']==='online' ? 'background:rgba(100,150,255,.15);color:#6496ff;' : 'background:rgba(76,175,80,.15);color:#4caf50;' ?>">
                                         <i class="fas <?= $r['payment_method']==='online' ? 'fa-credit-card' : 'fa-money-bill-wave' ?>"></i>
@@ -272,6 +272,7 @@ $paginatedRows = array_slice($bookingRows, $offset, $perPage);
                                         border-radius:999px;
                                         font-size:12px;
                                         font-weight:700;
+                                        white-space:nowrap;
                                         <?= $r['status']==='accepted' ? 'background:rgba(100,255,150,.15);color:#64ff96;' : ($r['status']==='declined' ? 'background:rgba(255,100,100,.15);color:#ff6464;' : ($r['status']==='Payment Pending' ? 'background:rgba(255,215,0,.15);color:#d4a017;' : ($r['status']==='Paid' ? 'background:rgba(76,175,80,.15);color:#388e3c;' : 'background:rgba(243,197,71,.15);color:var(--gold);'))) ?>
                                     ">
                                         <?= esc(ucfirst(str_replace('_', ' ', $r['status']))) ?>

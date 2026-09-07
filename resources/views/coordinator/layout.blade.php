@@ -7,7 +7,7 @@
     @vite(['resources/css/coordinator.css'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .nav-menu a { display:block; width:100%; padding:11px 18px; border:1px solid var(--border); border-radius:14px; background:transparent; color:var(--text); font-size:14px; font-weight:800; letter-spacing:.5px; text-decoration:none; transition:.3s; }
+        .nav-menu a { display:block; width:100%; padding:11px 18px; border:1px solid var(--border); border-radius:14px; background:transparent; color:var(--text); font-size:13px; font-weight:600; letter-spacing:.5px; text-decoration:none; transition:.3s; }
         .nav-menu a:hover, .nav-menu li.active a { background:rgba(212,175,55,.1); color:#d4af37; border-color:var(--border2); box-shadow:0 0 14px rgba(212,175,55,.15); transform:translateX(5px); }
     </style>
     @yield('styles')
@@ -26,8 +26,13 @@
             <li class="{{ request()->routeIs('coordinator.suppliers') ? 'active' : '' }}"><a href="{{ route('coordinator.suppliers') }}">MY SUPPLIERS</a></li>
             <li class="{{ request()->routeIs('coordinator.reports') ? 'active' : '' }}"><a href="{{ route('coordinator.reports') }}">REPORTS</a></li>
             <li class="{{ request()->routeIs('coordinator.settings') ? 'active' : '' }}"><a href="{{ route('coordinator.settings') }}">SETTINGS</a></li>
+            <li>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button class="logout-btn" type="submit">LOGOUT</button>
+                </form>
+            </li>
         </ul></nav>
-        <form method="POST" action="{{ route('logout') }}" class="sidebar-footer">@csrf<button class="logout-btn" type="submit"><i class="fas fa-sign-out-alt"></i> Logout</button></form>
     </aside>
     <main class="main-content">@yield('content')</main>
 </div>

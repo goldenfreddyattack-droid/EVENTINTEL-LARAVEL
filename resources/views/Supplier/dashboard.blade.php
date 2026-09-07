@@ -20,7 +20,7 @@
     <div class="services-grid" style="margin-bottom: 30px;">
         <div class="service-card">
             <h4>Total Requests</h4>
-            <p class="rating" style="font-size: 32px; margin: 8px 0 0;">{{ $stats['total'] ?? 0 }}</p>
+            <p class="rating" style="font-size: 32px; margin: 8px 0 0; color: var(--gold);">{{ $stats['total'] ?? 0 }}</p>
         </div>
         <div class="service-card">
             <h4>Pending</h4>

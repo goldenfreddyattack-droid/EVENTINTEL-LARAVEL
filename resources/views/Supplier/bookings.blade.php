@@ -110,7 +110,7 @@
                     <th>Service</th>
                     <th>Client Name</th>
                     <th>Date</th>
-                    <th>Budget</th>
+                    <th>Price</th>
                     <th>Payment Method</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -129,7 +129,7 @@
                     <td>{{ $r['service'] }}</td>
                     <td>{{ $r['client_name'] ?? 'N/A' }}</td>
                     <td>{{ $r['event_date'] ?? 'TBD' }}</td>
-                    <td>₱{{ number_format($r['budget'] ?? 0) }}</td>
+                    <td>₱{{ number_format($r['service_price'] ?? 0, 2) }}</td>
                     <td>
                         <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;{{ $r['payment_method'] === 'online' ? 'background:rgba(100,150,255,.15);color:#6496ff;' : 'background:rgba(76,175,80,.15);color:#4caf50;' }}">
                             <i class="fas {{ $r['payment_method'] === 'online' ? 'fa-credit-card' : 'fa-money-bill-wave' }}"></i>
@@ -137,7 +137,7 @@
                         </span>
                     </td>
                     <td>
-                        <span style="display:inline-block;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:700;
+                        <span style="display:inline-block;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;
                             {{ $r['status'] === 'accepted' ? 'background:rgba(100,255,150,.15);color:#64ff96;' : ($r['status'] === 'declined' ? 'background:rgba(255,100,100,.15);color:#ff6464;' : ($r['status'] === 'Paid' ? 'background:rgba(76,175,80,.15);color:#388e3c;' : 'background:rgba(243,197,71,.15);color:var(--gold);')) }}">
                             {{ ucfirst(str_replace('_', ' ', $r['status'])) }}
                         </span>
