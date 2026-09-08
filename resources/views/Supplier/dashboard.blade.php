@@ -19,15 +19,19 @@
     .dash-alert-info p {font-size: 13px; color: var(--muted); margin: 0;}
 
     /* ===== Section 2: Floating Stats Grid ===== */
-    .dash-stats-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;}
-    .stat-box {background: #fafafa; border: 1px solid #eaeaea; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 6px; transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;}
+    .dash-stats-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;}
+    .stat-box {background: #fafafa; border: 1px solid #eaeaea; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 4px; transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;}
     .stat-box:hover {background: #ffffff; border-color: var(--border2); transform: translateY(-2px);}
-    .stat-label {font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;}
-    .stat-num {font-size: 28px; font-weight: 800; line-height: 1.1;}
+    .stat-label {font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;}
+    .stat-num {font-size: 24px; font-weight: 800; line-height: 1.1;}
+    
+    /* Stat Custom Colors */
     .text-gold {color: var(--gold);}
-    .text-pending {color: #555555;}
-    .text-success {color: #2e9f4d;}
-    .text-danger {color: #d9534f;}
+    .text-pending {color: #f39c12;}
+    .text-accepted {color: #27ae60;}
+    .text-pending-pay {color: #e67e22;}
+    .text-danger {color: #c0392b;}
+    .text-done {color: #2980b9;}
 
     /* ===== Section 3: Floating Services Section ===== */
     .section-title {display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;}
@@ -68,6 +72,9 @@
     .dash-empty-state {grid-column: 1 / -1; background: #fafafa; border: 2px dashed #e0e0e0; border-radius: 16px; padding: 40px 20px; text-align: center;}
     .empty-icon {font-size: 32px; color: #ccc; margin-bottom: 10px;}
     .dash-empty-state p {color: var(--muted); margin-bottom: 16px; font-size: 14px;}
+
+    /* ===== Chart Container Styling ===== */
+    .chart-wrapper {position: relative; width: 100%; height: 300px; margin-top: 10px;}
 </style>
 
 <section class="dashboard-container">
@@ -94,11 +101,11 @@
         @endif
     </div>
 
-    {{-- FLOATING PANEL 2: Stats Grid --}}
+    {{-- FLOATING PANEL 2: Detailed Stats Grid --}}
     <div class="dash-card-floating">
         <div class="dash-stats-grid">
             <div class="stat-box">
-                <span class="stat-label">Total Requests</span>
+                <span class="stat-label">Total</span>
                 <span class="stat-num text-gold">{{ $stats['total'] ?? 0 }}</span>
             </div>
             <div class="stat-box">
@@ -107,16 +114,37 @@
             </div>
             <div class="stat-box">
                 <span class="stat-label">Accepted</span>
-                <span class="stat-num text-success">{{ $stats['accepted'] ?? 0 }}</span>
+                <span class="stat-num text-accepted">{{ $stats['accepted'] ?? 0 }}</span>
             </div>
             <div class="stat-box">
-                <span class="stat-label">Rejected</span>
+                <span class="stat-label">Pending Pay</span>
+                <span class="stat-num text-pending-pay">{{ $stats['pending_payment'] ?? 0 }}</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Declined</span>
                 <span class="stat-num text-danger">{{ $stats['rejected'] ?? 0 }}</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Finished / Paid</span>
+                <span class="stat-num text-done">{{ $stats['completed'] ?? 0 }}</span>
             </div>
         </div>
     </div>
 
-    {{-- FLOATING PANEL 3: Services Section --}}
+    {{-- FLOATING PANEL 3: Analytics Chart --}}
+    <div class="dash-card-floating">
+        <div class="section-title">
+            <div>
+                <h3>Request Analytics</h3>
+                <p class="section-subtitle">Visual overview of all booking statuses</p>
+            </div>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="requestsChart"></canvas>
+        </div>
+    </div>
+
+    {{-- FLOATING PANEL 4: Services Section --}}
     <div class="dash-card-floating">
         <div class="section-title">
             <div>
@@ -173,9 +201,58 @@
     </div>
 </section>
 
-{{-- Interactive Behavior Script --}}
+{{-- Load Chart.js Library --}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{{-- Interactive Behavior & Chart Script --}}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Chart.js Initialization
+        const ctx = document.getElementById('requestsChart').getContext('2d');
+        const requestsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Pending', 'Accepted', 'Pending Payment', 'Declined', 'Finished / Paid'],
+                datasets: [{
+                    label: 'Requests',
+                    data: [
+                        {{ $stats['pending'] ?? 0 }},
+                        {{ $stats['accepted'] ?? 0 }},
+                        {{ $stats['pending_payment'] ?? 0 }},
+                        {{ $stats['rejected'] ?? 0 }},
+                        {{ $stats['completed'] ?? 0 }}
+                    ],
+                    backgroundColor: [
+                        '#f39c12', // Pending
+                        '#27ae60', // Accepted
+                        '#e67e22', // Pending Payment
+                        '#c0392b', // Declined
+                        '#2980b9'  // Finished / Paid
+                    ],
+                    borderRadius: 8,
+                    maxBarThickness: 50
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+
         // Filter Buttons
         const pillBtns = document.querySelectorAll('.pill-btn');
         const serviceCards = document.querySelectorAll('.dash-service-card');

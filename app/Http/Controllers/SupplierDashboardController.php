@@ -22,9 +22,22 @@ class SupplierDashboardController extends Controller
     public function index()
     {
         $userId = Auth::id();
-        $serviceNames = DB::table('supplier_services')->where('user_id', $userId)->pluck('name')->filter()->values()->all();
+        $serviceNames = DB::table('supplier_services')
+            ->where('user_id', $userId)
+            ->pluck('name')
+            ->filter()
+            ->values()
+            ->all();
 
-        $stats = ['total' => 0, 'pending' => 0, 'accepted' => 0, 'rejected' => 0];
+        // Consolidated stats array
+        $stats = [
+            'total'           => 0,
+            'pending'         => 0,
+            'accepted'        => 0,
+            'pending_payment' => 0,
+            'rejected'        => 0, // Covers declined
+            'completed'       => 0, // Covers Paid, Finish, and Done
+        ];
 
         if (!empty($serviceNames)) {
             $eventRows = DB::table('events')
@@ -52,11 +65,11 @@ class SupplierDashboardController extends Controller
 
             foreach ($eventRows as $event) {
                 $serviceFields = [
-                    'venue' => 'venue_status',
-                    'clothes' => 'clothes_status',
-                    'catering' => 'catering_status',
-                    'host' => 'host_status',
-                    'photographer' => 'photographer_status',
+                    'venue_name'    => 'venue_status',
+                    'clothes'       => 'clothes_status',
+                    'catering'      => 'catering_status',
+                    'host'          => 'host_status',
+                    'photographer'  => 'photographer_status',
                     'soundsnlights' => 'soundsnlights_status',
                 ];
 
@@ -66,15 +79,25 @@ class SupplierDashboardController extends Controller
                         continue;
                     }
 
-                    $status = $event->{$statusField} ?? 'pending';
+                    $rawStatus = $event->{$statusField} ?? 'pending';
+                    $status = strtolower(trim($rawStatus));
+
                     $stats['total']++;
 
-                    if (in_array($status, ['pending'], true)) {
+                    // Map status to exact categories
+                    if (in_array($status, ['pending', 'waiting'], true)) {
                         $stats['pending']++;
-                    } elseif (in_array($status, ['accepted', 'Payment Pending', 'Pending Confirmation', 'Paid'], true)) {
+                    } elseif (in_array($status, ['accepted', 'approved', 'confirmed'], true)) {
                         $stats['accepted']++;
-                    } elseif (in_array($status, ['declined', 'rejected'], true)) {
+                    } elseif (in_array($status, ['pending payment', 'payment pending'], true)) {
+                        $stats['pending_payment']++;
+                    } elseif (in_array($status, ['declined', 'rejected', 'cancelled'], true)) {
                         $stats['rejected']++;
+                    } elseif (in_array($status, ['paid', 'finish', 'finished', 'done', 'completed'], true)) {
+                        // Merged Paid and Finish/Done here
+                        $stats['completed']++;
+                    } else {
+                        $stats['pending']++;
                     }
                 }
             }
@@ -87,10 +110,10 @@ class SupplierDashboardController extends Controller
             ->get();
 
         return view('supplier.dashboard', [
-            'stats' => $stats,
+            'stats'        => $stats,
             'serviceCount' => DB::table('supplier_services')->where('user_id', $userId)->count(),
-            'services' => $services,
-            'newsFeed' => [
+            'services'     => $services,
+            'newsFeed'     => [
                 ['title' => 'New supplier marketplace update', 'time' => '2 hours ago'],
                 ['title' => 'Booking trends are rising this week', 'time' => 'Today'],
                 ['title' => 'Remember to keep service profiles up to date', 'time' => 'Yesterday'],
