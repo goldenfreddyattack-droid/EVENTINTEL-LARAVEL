@@ -11,7 +11,7 @@ body:after{width:560px;height:560px;background:rgba(212, 175, 55, 0.04);bottom:-
 .brand{padding:4px 4px 16px;border-bottom:1px solid var(--border);margin-bottom:14px}
 .menu-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--border2);background:#f5f5f5;color:var(--gold);cursor:pointer;margin-bottom:18px;transition:.3s}
 .menu-btn:hover{background:rgba(255,215,0,.12);box-shadow:0 0 14px rgba(255,215,0,.18)}
-.brand h1{font-size:26px;font-weight:700;letter-spacing:1px;margin-bottom:10px}
+.brand h1{font-size:26px;font-weight:1000;letter-spacing:1px;margin-bottom:10px}
 .blue-text,.pink-text{color:var(--gold)}
 .user-info{display:grid;gap:5px;color:var(--text);font-size:15px}
 .supplier{display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:6px 10px;border-radius:999px;background:rgba(243,197,71,.12);border:1px solid rgba(243,197,71,.2);color:var(--gold);font-size:13px;font-weight:700}
@@ -34,7 +34,7 @@ h3,.your-services h3,.messages h3,.services h3{font-size:clamp(24px,3vw,32px);fo
 .booking-table{width:100%;min-width:720px;border-collapse:separate;border-spacing:0 14px}
 .booking-table th{color:var(--gold);background:rgba(243,197,71,.09);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px 18px;text-align:left;font-size:13px;letter-spacing:.8px}
 .booking-table th:first-child{border-left:1px solid var(--border);border-radius:18px 0 0 18px}
-..booking-table th:last-child{border-right:1px solid var(--border);border-radius:0 18px 18px 0}
+.booking-table th:last-child{border-right:1px solid var(--border);border-radius:0 18px 18px 0}
 .booking-table td {
     background: var(--panel);
     border-top: 1px solid var(--border);
