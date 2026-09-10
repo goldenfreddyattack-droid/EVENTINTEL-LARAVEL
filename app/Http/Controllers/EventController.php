@@ -10,6 +10,18 @@ use Illuminate\Support\Carbon;
 
 class EventController extends Controller
 {
+    private const MAX_PLANNING_EVENTS = 3;
+
+    private function hasReachedPlanningEventLimit(int $userId): bool
+    {
+        $planningCount = DB::table('events')
+            ->where('user_id', $userId)
+            ->where('status', 'planning')
+            ->count();
+
+        return $planningCount >= self::MAX_PLANNING_EVENTS;
+    }
+
     public function __construct()
     {
         $this->middleware('auth');
@@ -22,6 +34,11 @@ class EventController extends Controller
             ? DB::table('supplier_services')->select('name', 'category', 'price', 'capacity', 'address')->whereNotNull('name')->orderBy('category')->orderBy('price')->get()
             : collect();
 
+        $planningCount = DB::table('events')
+            ->where('user_id', Auth::id())
+            ->where('status', 'planning')
+            ->count();
+
         return view('userui.create-event', [
             'eventTypes' => ['Birthday', 'Debut', 'Wedding', 'Anniversary', 'Christening', 'Gender Reveal', 'Reunion', 'Others'],
             'prefill' => [
@@ -30,6 +47,8 @@ class EventController extends Controller
                 'services' => array_filter(array_map('trim', explode(',', (string) $request->input('services')))),
             ],
             'availableServices' => $availableServices,
+            'planningCount' => $planningCount,
+            'planningLimitReached' => $planningCount >= 3,
         ]);
     }
 
@@ -40,18 +59,27 @@ class EventController extends Controller
         $venueName = trim((string) $request->query('venue'));
         abort_unless($venueName !== '', 422, 'A venue is required.');
 
-        $dates = collect(range(0, 6))->map(function (int $offset) use ($venueName) {
-            $date = now()->startOfDay()->addDays($offset);
-            $booked = DB::table('events')
-                ->where('venue_name', $venueName)
-                ->whereDate('event_date', $date->toDateString())
-                ->whereNotIn('status', ['cancelled', 'Cancelled'])
-                ->exists();
+        $monthStart = now()->startOfMonth();
+        $monthEnd = $monthStart->copy()->endOfMonth();
+        $normalizedVenueName = strtolower($venueName);
+        $bookedDates = DB::table('events')
+            ->whereRaw('LOWER(TRIM(venue_name)) = ?', [$normalizedVenueName])
+            ->whereBetween('event_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->whereNotIn('status', ['cancelled', 'Cancelled'])
+            ->pluck('event_date')
+            ->map(fn ($date) => Carbon::parse($date)->toDateString())
+            ->flip();
+
+        $dates = collect(range(0, $monthStart->daysInMonth - 1))->map(function (int $offset) use ($monthStart, $bookedDates) {
+            $date = $monthStart->copy()->addDays($offset);
+            $booked = $bookedDates->has($date->toDateString());
 
             return ['date' => $date->toDateString(), 'label' => $date->format('M j'), 'available' => ! $booked];
         });
 
-        $venue = DB::table('supplier_services')->where('name', $venueName)->first();
+        $venue = DB::table('supplier_services')
+            ->whereRaw('LOWER(TRIM(name)) = ?', [$normalizedVenueName])
+            ->first();
         $addonMap = [
             'catering' => 'catering',
             'clothing' => 'clothes',
@@ -64,13 +92,34 @@ class EventController extends Controller
             'mc' => 'host',
             'photographer' => 'photographer',
         ];
-        $addons = $venue && Schema::hasColumn('supplier_services', 'venue_add_ons')
-            ? collect(explode(',', (string) $venue->venue_add_ons))
-                ->map(fn (string $addon) => $addonMap[strtolower(trim($addon))] ?? null)
-                ->filter()
-                ->unique()
+        $addonPriceColumns = [
+            'catering' => 'venueaddons_price1',
+            'clothes' => 'venueaddons_price2',
+            'host' => 'venueaddons_price3',
+            'photographer' => 'venueaddons_price4',
+            'sounds_lights' => 'venueaddons_price5',
+        ];
+        $addons = collect();
+        if ($venue && Schema::hasColumn('supplier_services', 'venue_add_ons')) {
+            $addons = collect(json_decode($venue->venue_add_ons ?? '[]', true) ?: [])
                 ->values()
-            : collect();
+                ->map(function (string $addon) use ($addonMap, $addonPriceColumns, $venue) {
+                    $key = $addonMap[strtolower(trim($addon))] ?? null;
+                    if (!$key) {
+                        return null;
+                    }
+
+                    $priceColumn = $addonPriceColumns[$key];
+                    return [
+                        'key' => $key,
+                        'label' => $key === 'sounds_lights' ? 'Sounds & Lights' : ucfirst($key),
+                        'price' => (float) ($venue->{$priceColumn} ?? 0),
+                    ];
+                })
+                ->filter()
+                ->unique('key')
+                ->values();
+        }
 
         return response()->json(['dates' => $dates, 'addons' => $addons]);
     }
@@ -78,6 +127,12 @@ class EventController extends Controller
     public function store(Request $request)
     {
         abort_unless(Auth::user()->role === 'client', 403, 'Client access only.');
+
+        if ($this->hasReachedPlanningEventLimit(Auth::id())) {
+            return back()->withInput()->withErrors([
+                'event_name' => 'You already have three planning events. Finish one before creating another event.',
+            ]);
+        }
 
         $data = $request->validate([
             'event_name' => ['required', 'string', 'max:150'],

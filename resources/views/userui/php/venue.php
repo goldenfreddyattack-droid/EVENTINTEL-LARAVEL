@@ -871,7 +871,7 @@ foreach ($servicesRaw as $service) {
       <div class="venue-card">
         <div class="venue-image">
           <span class="tag"><?= ($service['rating'] ?? 4.5) >= 4.5 ? 'Popular' : '' ?></span>
-          <img src="../images/logo.png" alt="<?= esc($service['name']) ?>">
+          <img src="<?= $service['service_id'] ? '/eventintel/supplier/services/' . $service['service_id'] . '/image/service_pic' : '../images/logo.png' ?>" alt="<?= esc($service['name']) ?>" onerror="this.onerror=null;this.src='../images/logo.png';">
         </div>
         <div class="venue-content">
           <h3><?= esc($service['name']) ?></h3>

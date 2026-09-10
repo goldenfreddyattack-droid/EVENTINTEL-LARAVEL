@@ -156,21 +156,43 @@
                     const badgeClass = key === 'pending_confirmation' ? 'pending' : key.replace(/_/g, '-');
                     const canPay = ['accepted', 'proposal_accepted', 'payment_pending'].includes(key);
                     const messageUrl = service.supplier_user_id ? `{{ url('/messages') }}?event_id=${button.dataset.statusEvent}&user_id=${service.supplier_user_id}` : `{{ url('/messages') }}?event_id=${button.dataset.statusEvent}`;
-                    const declineNote = ['declined', 'proposal_declined'].includes(key) && service.note
-                        ? `<div class="decline-note"><strong>Decline note:</strong> ${escapeHtml(service.note)}</div>`
-                        : '';
                     const isDeclined = ['declined', 'proposal_declined'].includes(key);
                     const noteButton = isDeclined && service.note
                         ? `<button class="pay-service view-note" type="button" data-note="${escapeHtml(service.note)}">View Note</button>`
                         : '';
+                    const reselectButton = isDeclined
+                        ? `<button class="pay-service reselect-service" type="button" data-event="${button.dataset.statusEvent}" data-service="${escapeHtml(service.service_key)}">Re-select</button>`
+                        : '';
                     const messageButton = isDeclined ? '' : `<a class="pay-service" href="${messageUrl}">Message</a>`;
-                    return `<div class="status-row"><div><strong>${escapeHtml(service.name)}</strong><small>${escapeHtml(service.type)}${service.price ? ` · ₱${Number(service.price).toLocaleString()}` : ''}</small></div><div class="status-actions"><span class="status-badge ${badgeClass}" >${escapeHtml(service.status)}</span>${noteButton}${canPay ? `<button class="pay-service" data-event="${button.dataset.statusEvent}" data-service="${escapeHtml(service.service_key)}" data-price="${Number(service.price || 0)}" data-name="${escapeHtml(service.name)}">Pay</button>` : ''}${messageButton}</div></div>`;
+                    return `<div class="status-row"><div><strong>${escapeHtml(service.name)}</strong><small>${escapeHtml(service.type)}${service.price ? ` · ₱${Number(service.price).toLocaleString()}` : ''}</small></div><div class="status-actions"><span class="status-badge ${badgeClass}" >${escapeHtml(service.status)}</span>${noteButton}${reselectButton}${canPay ? `<button class="pay-service" data-event="${button.dataset.statusEvent}" data-service="${escapeHtml(service.service_key)}" data-price="${Number(service.price || 0)}" data-name="${escapeHtml(service.name)}">Pay</button>` : ''}${messageButton}</div></div>`;
                 }).join('')}</div>${totalHtml}`;
-                statusContent.querySelectorAll('.pay-service[data-service]').forEach(payButton => payButton.addEventListener('click', () => openPaymentModal(payButton)));
+                statusContent.querySelectorAll('.pay-service[data-service][data-price]').forEach(payButton => payButton.addEventListener('click', () => openPaymentModal(payButton)));
                 statusContent.querySelectorAll('.view-note').forEach(noteButton => noteButton.addEventListener('click', () => {
                     noteContent.innerHTML = `<p class="note-modal-text">${escapeHtml(noteButton.dataset.note)}</p>`;
                     noteModal.classList.add('show');
                     noteModal.setAttribute('aria-hidden', 'false');
+                }));
+                statusContent.querySelectorAll('.reselect-service[data-service]').forEach(reselectButton => reselectButton.addEventListener('click', async () => {
+                    const serviceType = reselectButton.dataset.service;
+                    try {
+                        const response = await fetch(`{{ url('/your-events') }}/${button.dataset.statusEvent}/reselect`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({service_type: serviceType})
+                        });
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || 'Unable to clear the declined service.');
+                        }
+                        const serviceCatalogUrl = `{{ url('/services') }}/${serviceType}?return=${encodeURIComponent('{{ route('your.events') }}')}&reselect=1&event_id=${encodeURIComponent(button.dataset.statusEvent)}`;
+                        window.location.href = serviceCatalogUrl;
+                    } catch (error) {
+                        alert(error.message);
+                    }
                 }));
             } catch (error) {
                 statusContent.innerHTML = '<p class="modal-loading">Error loading service status.</p>';

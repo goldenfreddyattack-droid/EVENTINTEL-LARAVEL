@@ -30,7 +30,7 @@
                 <div class="homepage-subtitle">Smart Event Planning Platform</div>
                 <p>Organize memorable events, connect with professional coordinators, and receive intelligent recommendations tailored to your needs.</p>
                 <div class="homepage-button-group">
-                    <a class="homepage-action primary" href="{{ route('events.create') }}">Create an Event</a>
+                    <a class="homepage-action primary" id="homepageCreateEvent" href="{{ route('events.create') }}" data-planning-limit="{{ $planningLimitReached ? '1' : '0' }}">Create an Event</a>
                     <a class="homepage-action" href="{{ route('coordinators.index') }}">Find an Event Coordinator</a>
                     <a class="homepage-action" href="{{ route('supplier.feed') }}">View Supplier Newsfeed</a>
                 </div>

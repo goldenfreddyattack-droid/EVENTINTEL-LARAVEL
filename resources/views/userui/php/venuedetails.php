@@ -86,6 +86,47 @@ $venues = [
 $selectedVenue = $venues[$venueSlug] ?? null;
 $hasValidVenue = $selectedVenue !== null;
 
+// Try to load actual database pictures if available
+if ($hasValidVenue) {
+  try {
+    // Bootstrap Laravel to access database
+    $app = require __DIR__ . '/../../../../bootstrap/app.php';
+    $kernel = $app->make(\Illuminate\Contracts\Http\Kernel::class);
+    $db = $app->make('db');
+    
+    $dbService = $db->table('supplier_services')->where('name', $selectedVenue['title'])->first();
+    
+    if ($dbService && $dbService->service_id) {
+      $gallery = [];
+      $serviceId = $dbService->service_id;
+      
+      // Add service_pic1 as main image
+      if ($dbService->service_pic1) {
+        $gallery[] = '/eventintel/supplier/services/' . $serviceId . '/image/service_pic1';
+      }
+      
+      // Add cover photo (service_pic)
+      if ($dbService->service_pic) {
+        $gallery[] = '/eventintel/supplier/services/' . $serviceId . '/image/service_pic';
+      }
+      
+      // Add service_pic2 through service_pic4
+      for ($i = 2; $i <= 4; $i++) {
+        $picCol = "service_pic{$i}";
+        if (property_exists($dbService, $picCol) && $dbService->$picCol) {
+          $gallery[] = '/eventintel/supplier/services/' . $serviceId . '/image/service_pic' . $i;
+        }
+      }
+      
+      if (count($gallery) >= 1) {
+        $selectedVenue['gallery'] = $gallery;
+      }
+    }
+  } catch (Exception $e) {
+    // Silently fall back to hardcoded images if database access fails
+  }
+}
+
 function esc($value) {
   return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }

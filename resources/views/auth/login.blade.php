@@ -258,7 +258,7 @@
                 <h1 class="welcome-title">Welcome!</h1>
                 <p class="login-description">Sign in to continue to your account.</p>
 
-                @if ($errors->any())
+                @if (isset($errors) && is_object($errors) && method_exists($errors, 'any') && $errors->any())
                     <div class="alert error">
                         @foreach ($errors->all() as $error)
                             <div>{{ $error }}</div>
@@ -287,10 +287,10 @@
                             <input
                                 type="text"
                                 name="login"
-                                placeholder="Username or Email"
+                                placeholder="Email"
                                 class="input-field @error('login') is-invalid @enderror"
                                 required
-                                autocomplete="username"
+                                autocomplete="email"
                                 value="{{ old('login') }}"
                             >
                         </div>

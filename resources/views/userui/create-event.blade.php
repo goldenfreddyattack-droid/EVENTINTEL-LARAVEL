@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="{{ asset('css/fontawesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/userui/navbar.css') }}">
     <style>
+        <style>
+            .venue-addon{justify-content:space-between}
+            .venue-addon strong{color:#a77700;white-space:nowrap}
+            .venue-addon-total{display:flex;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid #eee2b7;font-weight:900}
         *{box-sizing:border-box}body{margin:0;background:#f8f8f8;color:#111;font-family:'Segoe UI',sans-serif}.page{width:100%;min-height:100vh;padding:6px 48px 48px}.heading{position:relative;z-index:5;width:260px;margin:34px 0 24px 6vw;pointer-events:none}.heading h1{font-size:34px;line-height:1.15;margin:0 0 8px}.heading p{color:#666;font-size:14px;line-height:1.6}.page:after{content:'';position:fixed;inset:0;background:rgba(18,22,25,.58);z-index:4;pointer-events:none}.wizard-layout{position:fixed;z-index:5;inset:55% auto auto 50%;transform:translate(-50%,-50%);display:flex;gap:20px;width:min(820px,calc(100vw - 36px));max-height:calc(100vh - 56px);align-items:stretch}.wizard-steps{width:160px;padding:20px 0;display:flex;flex-direction:column;gap:12px}.step-pill{border:1px solid #eee2b7;border-radius:22px;background:rgba(255,255,255,.8);padding:14px 16px;font-weight:800;font-size:13px}.step-pill.active{background:#f3c547;border-color:#d8ab24}.form-card{width:100%;max-width:600px;max-height:calc(100vh - 110px);overflow:auto;background:#fff;border:1px solid #eee2b7;border-radius:24px;padding:24px 20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.section{display:none;border:0;padding:0;margin:0}.section.active{display:block}.section h2{color:#b07c00;font-size:18px;margin:0 0 18px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}.field label{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#777}.field input,.field select{width:100%;padding:13px 14px;border:1px solid #dfd6b7;border-radius:12px;background:#fff;font:inherit}.types,.services{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.choice{border:1px solid #e8e2d2;border-radius:16px;padding:14px;text-align:left;cursor:pointer;font-weight:600}.choice:has(input:checked){background:#fff1b8;border-color:#d6a91d}.choice input{margin-right:10px}.theme-grid,.package-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.theme-chip,.package-card{border:1px solid #e8e2d2;border-radius:14px;background:#fff;padding:11px;text-align:center;cursor:pointer;font:inherit}.theme-chip.selected,.package-card.selected{background:#fff1b8;border-color:#d6a91d}.package-card strong,.package-card b{display:block;color:#b07c00}.package-card small{display:block;color:#777;margin-top:6px;font-size:11px}.service-list{display:grid;gap:10px}.service-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;border:1px solid #eee2b7;border-radius:14px;padding:12px 14px}.service-row strong{display:block}.service-row small{display:block;color:#777;margin-top:3px}.service-row input[type=checkbox]{width:24px;height:24px;accent-color:#d6a609;cursor:default;pointer-events:none}.service-view{border:0;border-radius:14px;padding:8px 13px;background:#fff1b8;color:#8a6800;font-weight:800;cursor:pointer}.service-option{display:block;width:100%;border:1px solid #eee2b7;border-radius:12px;background:#fff;text-align:left;padding:13px 15px;margin-bottom:10px;cursor:pointer}.service-option:hover{background:#fff1b8}.service-option strong,.service-option small{display:block}.service-option small{color:#777;margin-top:5px}.service-catalog-link{display:inline-block;margin-bottom:14px;color:#a77700;font-size:13px;font-weight:800}.catalog-frame{display:block;width:100%;height:70vh;border:0;border-radius:12px;background:#f8f8f8}.error{color:#a33;font-size:13px;margin:6px 0 0}.actions{display:flex;justify-content:flex-end;gap:12px;margin-top:28px}.button{border:0;border-radius:20px;padding:12px 22px;font-weight:800;text-decoration:none;cursor:pointer}.button.secondary{background:#f1f1f1;color:#333}.button.primary{background:#f3c547;color:#111}.step-note{color:#777;line-height:1.5;font-size:13px;margin:-6px 0 18px}.service-modal{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.5)}.service-modal.open{display:flex}.service-panel{width:min(1000px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)}.service-panel header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.service-panel h3{margin:0;color:#b07c00}.close-service{border:0;background:#f1f1f1;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:20px}@media(max-width:700px){.page{padding:6px 18px 32px}.heading{width:220px;margin-left:18px}.wizard-layout{inset:50% auto auto 50%;width:calc(100vw - 24px);gap:0}.wizard-steps{display:none}.form-card{max-height:calc(100vh - 28px);padding:24px 18px}.grid{grid-template-columns:1fr}.types,.services,.theme-grid,.package-grid{grid-template-columns:1fr 1fr}}@media(max-width:430px){.types,.services,.theme-grid,.package-grid{grid-template-columns:1fr}}
         .review-modal{display:none;position:fixed;inset:0;z-index:20;align-items:center;justify-content:center;padding:20px;background:#12161999}.review-modal.open{display:flex}.review-panel{width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border:1px solid #eee2b7;border-radius:24px;padding:24px;box-shadow:0 20px 60px #0004}.review-list{display:grid;gap:10px;margin:18px 0}.review-row{display:flex;justify-content:space-between;gap:16px;padding:13px 14px;border:1px solid #eee2d2;border-radius:12px}.review-row small{display:block;color:#777;margin-top:4px}.review-price{color:#a77700;font-weight:800;white-space:nowrap}.review-total{display:flex;justify-content:space-between;border-top:2px solid #eee2b7;padding-top:16px;font-size:20px;font-weight:900}.review-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.review-actions button{height:42px;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer}.review-actions .secondary{background:#f1f1f1;color:#222}.review-actions .primary{background:#f3c547;color:#111}
     </style>
@@ -19,6 +23,13 @@
     @if (count($errors))
         @php($validationErrors = is_object($errors) ? $errors->all() : $errors)
         <div class="form-card" style="margin-bottom:18px;color:#8b1e1e;background:#fff7f7;"><strong>Please review these details:</strong><ul style="margin:8px 0 0 18px;">@foreach ($validationErrors as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+    @endif
+
+    @if (($planningCount ?? 0) >= 3)
+        <div class="form-card" style="margin-bottom:18px;color:#8b1e1e;background:#fff7f7;">
+            <strong>You already have three planning events.</strong>
+            <div style="margin-top:8px;">Finish one before creating another event.</div>
+        </div>
     @endif
 
     <div class="wizard-layout">
@@ -85,10 +96,10 @@
 <div class="review-modal" id="reviewModal" aria-hidden="true"><div class="review-panel" role="dialog" aria-modal="true" aria-labelledby="reviewTitle"><h2 id="reviewTitle">Review Selected Services</h2><p class="step-note">Check your selected services and estimated total before creating the event.</p><div class="review-list" id="reviewList"></div><div class="review-total"><span>Total</span><span id="reviewTotal">₱0.00</span></div><div class="review-actions"><button type="button" class="secondary" data-close-review>Back</button><button type="button" class="primary" data-confirm-review>Confirm and Create Event</button></div></div></div>
 <div class="service-modal" id="serviceModal" aria-hidden="true"><div class="service-panel"><header><div><h3 id="serviceModalTitle">Available Services</h3><a class="service-catalog-link" id="serviceCatalogLink" href="#">Open full catalog</a></div><button class="close-service" type="button" data-close-service aria-label="Close">&times;</button></header><div id="serviceResults"></div></div></div>
 <style>
-    .venue-modal{display:none;position:fixed;inset:0;z-index:30;align-items:center;justify-content:center;padding:20px;background:#12161999}.venue-modal.open{display:flex}.venue-panel{width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:24px;padding:24px;box-shadow:0 20px 60px #0004}.venue-panel h2{margin:0 0 8px}.venue-panel p{color:#666;margin:0 0 18px}.venue-dates,.venue-addons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.venue-date,.venue-addon{border:1px solid #d7eadb;border-radius:14px;padding:13px;background:#effbf1;color:#17652b;font-weight:800}.venue-date.booked{border-color:#f4caca;background:#fff0f0;color:#ad2929}.venue-date{display:flex;justify-content:space-between}.venue-addon{display:flex;gap:10px;align-items:center;background:#fff;border-color:#eee2b7;color:#222}.venue-addon input{accent-color:#d6a91d}.venue-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.venue-modal-actions button{height:42px;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer}.venue-modal-actions .secondary{background:#f1f1f1}.venue-modal-actions .primary{background:#f3c547}@media(max-width:520px){.venue-dates,.venue-addons{grid-template-columns:1fr}}
+    .venue-modal{display:none;position:fixed;inset:0;z-index:30;align-items:center;justify-content:center;padding:20px;background:#12161999}.venue-modal.open{display:flex}.venue-panel{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:24px;padding:24px;box-shadow:0 20px 60px #0004}.venue-panel h2{margin:0 0 8px}.venue-panel p{color:#666;margin:0 0 18px}.venue-calendar-heading{display:flex;align-items:center;justify-content:space-between;margin:20px 0 12px;color:#171717}.venue-calendar-heading strong{font-size:18px}.venue-legend{display:flex;gap:14px;color:#777;font-size:12px}.venue-legend span{display:flex;align-items:center;gap:5px}.venue-legend i{width:9px;height:9px;border-radius:50%;background:#35a45b}.venue-legend .booked-dot{background:#d95b5b}.venue-weekdays,.venue-dates{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.venue-weekdays{margin-bottom:7px;text-align:center;color:#888;font-size:11px;font-weight:800;text-transform:uppercase}.venue-date,.venue-date-empty{min-height:82px}.venue-date{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid #d7eadb;border-radius:12px;padding:8px 4px;background:#effbf1;color:#17652b;font-weight:800}.venue-date .day-name{font-size:11px;color:#569167;font-weight:700}.venue-date strong{font-size:22px;line-height:1}.venue-date span:last-child{font-size:11px}.venue-date.booked{border-color:#f4caca;background:#fff0f0;color:#ad2929}.venue-date.booked .day-name{color:#c87979}.venue-addon{display:flex;gap:10px;align-items:center;padding:13px;border:1px solid #eee2b7;border-radius:14px;background:#fff;color:#222;font-weight:800}.venue-addon input{accent-color:#d6a91d}.venue-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.venue-modal-actions button{height:42px;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer}.venue-modal-actions .secondary{background:#f1f1f1}.venue-modal-actions .primary{background:#f3c547}@media(max-width:520px){.venue-panel{padding:18px}.venue-weekdays,.venue-dates{gap:4px}.venue-date,.venue-date-empty{min-height:70px}.venue-date strong{font-size:18px}.venue-legend{gap:8px;font-size:11px}}
 </style>
-<div class="venue-modal" id="venueAvailabilityModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Availability</h2><p id="venueAvailabilityText">Check available dates for this venue.</p><div class="venue-dates" id="venueDates"></div><div class="venue-modal-actions"><button class="secondary" type="button" data-close-venue>Cancel</button><button class="primary" type="button" data-venue-addons>Continue to Add-ons</button></div></div></div>
-<div class="venue-modal" id="venueAddonsModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Add-ons</h2><p>Select additional services this venue can provide.</p><div class="venue-addons" id="venueAddons"></div><div class="venue-modal-actions"><button class="secondary" type="button" data-back-venue>Back</button><button class="primary" type="button" data-confirm-venue>Confirm and Select Venue</button></div></div></div>
+<div class="venue-modal" id="venueAvailabilityModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Availability</h2><p id="venueAvailabilityText">Check available dates for this venue.</p><div class="venue-calendar-heading"><strong id="venueCalendarMonth">Available dates</strong><div class="venue-legend"><span><i></i>Open</span><span><i class="booked-dot"></i>Booked</span></div></div><div class="venue-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="venue-dates" id="venueDates"></div><div class="venue-modal-actions"><button class="secondary" type="button" data-close-venue>Cancel</button><button class="primary" type="button" data-venue-addons>Continue to Add-ons</button></div></div></div>
+<div class="venue-modal" id="venueAddonsModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Add-ons</h2><p>Select additional services this venue can provide.</p><div class="venue-addons" id="venueAddons"></div><div class="venue-addon-total"><span>Add-ons total</span><strong id="venueAddonsTotal">₱0.00</strong></div><div class="venue-modal-actions"><button class="secondary" type="button" data-back-venue>Back</button><button class="primary" type="button" data-confirm-venue>Confirm and Select Venue</button></div></div></div>
 <script>
     const eventTypeInputs = document.querySelectorAll('input[name="event_type"]');
     const otherInput = document.getElementById('other_event_type');
@@ -203,6 +214,8 @@
     const venueAddonsModal = document.getElementById('venueAddonsModal');
     const venueDates = document.getElementById('venueDates');
     const venueAddons = document.getElementById('venueAddons');
+    const venueAddonsTotal = document.getElementById('venueAddonsTotal');
+    const venueCalendarMonth = document.getElementById('venueCalendarMonth');
     let pendingVenue = null;
     function closeVenueModals() {
         venueAvailabilityModal.classList.remove('open');
@@ -213,10 +226,28 @@
         document.getElementById('venueAvailabilityText').textContent = `Availability for ${name}`;
         venueDates.innerHTML = '<p>Checking availability...</p>';
         venueAvailabilityModal.classList.add('open');
+        try {
         const response = await fetch(`{{ route('events.venue-availability') }}?venue=${encodeURIComponent(name)}`);
         const data = await response.json();
-        venueDates.innerHTML = data.dates.map(item => `<div class="venue-date ${item.available ? '' : 'booked'}"><strong>${item.label}</strong><span>${item.available ? 'Open' : 'Booked'}</span></div>`).join('');
-        venueAddons.innerHTML = (data.addons || []).map(addon => `<label class="venue-addon"><input type="checkbox" value="${addon}"><span>${serviceLabels[serviceKey(addon)] || addon}</span></label>`).join('') || '<p>This venue has no listed add-ons.</p>';
+        const firstDate = data.dates.length ? new Date(`${data.dates[0].date}T00:00:00`) : null;
+        if (firstDate) {
+            venueCalendarMonth.textContent = firstDate.toLocaleDateString('en-US', {month:'long', year:'numeric'});
+        }
+        const leadingCalendarCells = firstDate ? '<span class="venue-date-empty" aria-hidden="true"></span>'.repeat(firstDate.getDay()) : '';
+        venueDates.innerHTML = leadingCalendarCells + data.dates.map(item => {
+            const date = new Date(`${item.date}T00:00:00`);
+            const dayName = date.toLocaleDateString('en-US', {weekday:'short'});
+            return `<div class="venue-date ${item.available ? '' : 'booked'}"><span class="day-name">${dayName}</span><strong>${date.getDate()}</strong><span>${item.available ? 'Open' : 'Booked'}</span></div>`;
+        }).join('');
+        pendingVenue.addons = data.addons || [];
+        venueAddons.innerHTML = pendingVenue.addons.map(addon => `<label class="venue-addon"><span><input type="checkbox" value="${addon.key}" data-price="${addon.price}"> ${addon.label}</span><strong>₱${Number(addon.price).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})}</strong></label>`).join('') || '<p>This venue has no listed add-ons.</p>';
+        venueAddons.querySelectorAll('input[type="checkbox"]').forEach(input => input.addEventListener('change', () => {
+            const total = [...venueAddons.querySelectorAll('input:checked')].reduce((sum, item) => sum + Number(item.dataset.price || 0), 0);
+            venueAddonsTotal.textContent = '₱' + total.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+        }));
+    } catch (error) {
+        venueDates.innerHTML = '<p>Unable to load availability. Please try again.</p>';
+    }
     }
     document.querySelector('[data-close-venue]').addEventListener('click', closeVenueModals);
     document.querySelector('[data-venue-addons]').addEventListener('click', () => { venueAvailabilityModal.classList.remove('open'); venueAddonsModal.classList.add('open'); });
@@ -230,7 +261,12 @@
         document.querySelectorAll('#venueAddons input:checked').forEach(input => {
             const key = serviceKey(input.value);
             const field = document.getElementById(key);
-            if (field) { field.value = pendingVenue.name; document.getElementById(`selected-${key}`).textContent = `${pendingVenue.name} (${input.value})`; document.querySelector(`[data-service-row="${key}"] input`).checked = true; }
+            if (field) {
+                field.value = pendingVenue.name;
+                selectedServicePrices[key] = Number(input.dataset.price) || 0;
+                document.getElementById(`selected-${key}`).textContent = `${pendingVenue.name} (${input.value})`;
+                document.querySelector(`[data-service-row="${key}"] input`).checked = true;
+            }
         });
         closeVenueModals();
     });

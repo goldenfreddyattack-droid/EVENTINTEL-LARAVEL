@@ -13,14 +13,16 @@ class LoginUsesUsersTableTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_can_login_with_username_from_users_table(): void
+    public function test_user_can_login_with_email_from_users_table(): void
     {
+        Schema::dropIfExists('users');
         Schema::create('users', function (Blueprint $table) {
             $table->increments('user_id');
             $table->string('username')->unique();
             $table->string('full_name')->nullable();
             $table->string('email')->unique()->nullable();
             $table->string('password');
+            $table->timestamp('email_verified_at')->nullable();
             $table->enum('role', ['client', 'supplier', 'coordinator', 'admin'])->nullable()->default('client');
             $table->enum('status', ['approved', 'pending', 'rejected'])->nullable()->default('approved');
             $table->timestamp('created_at')->useCurrent();
@@ -37,22 +39,24 @@ class LoginUsesUsersTableTest extends TestCase
         ]);
 
         $response = $this->post('/login', [
-            'login' => 'admin',
+            'login' => 'admin@test.com',
             'password' => 'password',
         ]);
 
-        $response->assertRedirect('/home');
+        $response->assertRedirect('/admin');
         $this->assertAuthenticatedAs($user);
     }
 
     public function test_rejected_user_cannot_login(): void
     {
+        Schema::dropIfExists('users');
         Schema::create('users', function (Blueprint $table) {
             $table->increments('user_id');
             $table->string('username')->unique();
             $table->string('full_name')->nullable();
             $table->string('email')->unique()->nullable();
             $table->string('password');
+            $table->timestamp('email_verified_at')->nullable();
             $table->enum('role', ['client', 'supplier', 'coordinator', 'admin'])->nullable()->default('client');
             $table->enum('status', ['approved', 'pending', 'rejected'])->nullable()->default('approved');
             $table->timestamp('created_at')->useCurrent();
@@ -67,7 +71,7 @@ class LoginUsesUsersTableTest extends TestCase
         ]);
 
         $response = $this->from('/login')->post('/login', [
-            'login' => 'rejected-user',
+            'login' => 'rejected@test.com',
             'password' => 'password',
         ]);
 
@@ -76,14 +80,16 @@ class LoginUsesUsersTableTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_username_login_is_case_sensitive(): void
+    public function test_username_login_is_rejected_when_email_only_auth_is_required(): void
     {
+        Schema::dropIfExists('users');
         Schema::create('users', function (Blueprint $table) {
             $table->increments('user_id');
             $table->string('username')->unique();
             $table->string('full_name')->nullable();
             $table->string('email')->unique()->nullable();
             $table->string('password');
+            $table->timestamp('email_verified_at')->nullable();
             $table->enum('role', ['client', 'supplier', 'coordinator', 'admin'])->nullable()->default('client');
             $table->enum('status', ['approved', 'pending', 'rejected'])->nullable()->default('approved');
             $table->timestamp('created_at')->useCurrent();
@@ -98,7 +104,7 @@ class LoginUsesUsersTableTest extends TestCase
         ]);
 
         $response = $this->from('/login')->post('/login', [
-            'login' => 'LOWERCASE-USER',
+            'login' => 'lowercase-user',
             'password' => 'password',
         ]);
 

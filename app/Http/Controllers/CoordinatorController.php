@@ -55,6 +55,12 @@ class CoordinatorController extends Controller
         abort_unless((bool) $coordinator, 404);
         $data = $request->validate(['coordinator_package' => ['required', 'string', 'max:255']]);
         if (Schema::hasTable('coordinator_packages') && !DB::table('coordinator_packages')->where('coordinator_id', $coordinatorId)->where('name', $data['coordinator_package'])->exists()) return back()->withErrors(['coordinator_package' => 'That package is no longer available.']);
+
+        $planningCount = DB::table('events')->where('user_id', Auth::id())->where('status', 'planning')->count();
+        if ($planningCount >= 3) {
+            return back()->withErrors(['coordinator_package' => 'You already have three planning events. Finish one before creating another event.']);
+        }
+
         DB::table('events')->insert(['user_id' => Auth::id(), 'coordinator' => $coordinator->full_name, 'coordinator_status' => 'pending', 'status' => 'planning', 'coordinator_package' => $data['coordinator_package'], 'created_at' => now()]);
         return redirect()->route('your.events')->with('success', 'Booking confirmed. The coordinator has been added to your event.');
     }
@@ -65,6 +71,12 @@ class CoordinatorController extends Controller
         abort_unless((bool) $coordinator, 404);
         abort_unless(Schema::hasTable('custom_event_requests'), 503, 'Custom booking is not available yet.');
         $data = $request->validate(['event_type' => ['required', 'string', 'max:100'], 'event_date' => ['required', 'date'], 'venue_preference' => ['nullable', 'string', 'max:255'], 'guest_count' => ['nullable', 'integer', 'min:1'], 'theme' => ['nullable', 'string', 'max:120'], 'budget' => ['nullable', 'numeric', 'min:0'], 'required_services' => ['nullable', 'string', 'max:1000'], 'special_requests' => ['nullable', 'string', 'max:5000'], 'additional_notes' => ['nullable', 'string', 'max:5000']]);
+
+        $planningCount = DB::table('events')->where('user_id', Auth::id())->where('status', 'planning')->count();
+        if ($planningCount >= 3) {
+            return back()->withErrors(['event_type' => 'You already have three planning events. Finish one before creating another event.']);
+        }
+
         $eventId = DB::table('events')->insertGetId(['user_id' => Auth::id(), 'title' => $data['event_type'] . ' Event (Custom)', 'event_type' => $data['event_type'], 'theme' => $data['theme'] ?? null, 'budget' => $data['budget'] ?? null, 'event_date' => $data['event_date'], 'guest_count' => $data['guest_count'] ?? null, 'coordinator' => $coordinator->full_name, 'coordinator_package' => '', 'coordinator_status' => 'pending', 'status' => 'planning', 'created_at' => now()]);
         DB::table('custom_event_requests')->insert(['event_id' => $eventId, 'client_id' => Auth::id(), 'coordinator_id' => $coordinatorId, 'event_type' => $data['event_type'], 'event_date' => $data['event_date'], 'venue_preference' => $data['venue_preference'] ?? null, 'guest_count' => $data['guest_count'] ?? null, 'theme' => $data['theme'] ?? null, 'budget' => $data['budget'] ?? null, 'required_services' => $data['required_services'] ?? null, 'special_requests' => $data['special_requests'] ?? null, 'additional_notes' => $data['additional_notes'] ?? null, 'status' => 'pending']);
         return redirect()->route('your.events')->with('success', 'Custom event request sent to ' . $coordinator->full_name . '.');

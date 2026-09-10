@@ -27,7 +27,7 @@
                         <option value="{{ $type }}" @selected($eventKey === strtolower($type))>{{ $type }}</option>
                     @endforeach
                 </select>
-                <a class="packages-back" href="{{ route('events.create') }}">Back to Create Event</a>
+                <a id="packagesBackCreateEvent" class="packages-back" href="{{ route('events.create') }}" data-planning-limit="{{ $planningLimitReached ? '1' : '0' }}">Back to Create Event</a>
             </form>
 
             <section class="packages-grid" aria-label="Available packages">
@@ -64,7 +64,8 @@
                             data-name="{{ $package['name'] }}"
                             data-price="{{ $package['price'] }}"
                             data-event-type="{{ $eventType }}"
-                            data-services='@json($package['services'])'>
+                            data-services='@json($package['services'])'
+                            data-planning-limit="{{ $planningLimitReached ? '1' : '0' }}">
                             Choose this package
                         </button>
                     </article>
@@ -103,8 +104,26 @@
     <script>
         const allocation = @json($allocation);
         const chooseEventUrl = @json(route('events.create'));
+        const planningLimitModal = document.getElementById('planningLimitModal');
+
+        const packagesBackCreateEvent = document.getElementById('packagesBackCreateEvent');
+        if (packagesBackCreateEvent && packagesBackCreateEvent.dataset.planningLimit === '1') {
+            packagesBackCreateEvent.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (planningLimitModal) {
+                    planningLimitModal.style.display = 'flex';
+                }
+            });
+        }
 
         function choosePackage(button) {
+            if (button.dataset.planningLimit === '1') {
+                if (planningLimitModal) {
+                    planningLimitModal.style.display = 'flex';
+                }
+                return;
+            }
+
             const services = JSON.parse(button.dataset.services || '[]');
             const payload = {
                 selectedPackage: button.dataset.name,

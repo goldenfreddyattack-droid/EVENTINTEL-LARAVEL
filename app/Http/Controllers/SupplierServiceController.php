@@ -13,6 +13,10 @@ class SupplierServiceController extends Controller
     {
         $this->middleware('auth');
         $this->middleware(function ($request, $next) {
+            if ($request->routeIs('supplier.services.image')) {
+                return $next($request);
+            }
+
             if (Auth::user()->role !== 'supplier') {
                 abort(403, 'Unauthorized. Supplier access only.');
             }
@@ -39,12 +43,49 @@ class SupplierServiceController extends Controller
             'price' => ['nullable', 'numeric'],
             'address' => ['nullable', 'string'],
             'style' => ['nullable', 'string', 'max:150'],
+            'capacity' => ['nullable', 'integer', 'min:0'],
+            'venueaddons_price1' => ['nullable', 'numeric', 'min:0'],
+            'venueaddons_price2' => ['nullable', 'numeric', 'min:0'],
+            'venueaddons_price3' => ['nullable', 'numeric', 'min:0'],
+            'venueaddons_price4' => ['nullable', 'numeric', 'min:0'],
+            'venueaddons_price5' => ['nullable', 'numeric', 'min:0'],
             'service_pic' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'service_pic1' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'service_pic2' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'service_pic3' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'service_pic4' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'service_pic5' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
 
         $servicePic = null;
         if ($request->hasFile('service_pic')) {
             $servicePic = file_get_contents($request->file('service_pic')->getRealPath());
+        }
+
+        // Process additional gallery pictures
+        $galleryPics = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $galleryPics[$i] = null;
+            if ($request->hasFile("service_pic{$i}")) {
+                $galleryPics[$i] = file_get_contents($request->file("service_pic{$i}")->getRealPath());
+            }
+        }
+
+        // Process venue add-ons
+        $venueAddOns = null;
+        $venueAddOnsInput = $request->input('venue_add_ons');
+        
+        if ($validated['category'] === 'Venue' && !empty($venueAddOnsInput)) {
+            // Ensure it's an array, convert if needed
+            $addonArray = is_array($venueAddOnsInput) ? $venueAddOnsInput : [$venueAddOnsInput];
+            // Filter out empty strings
+            $addonArray = array_filter($addonArray, function($addon) {
+                return !empty(trim((string)$addon));
+            });
+            
+            if (!empty($addonArray)) {
+                $venueAddOns = json_encode(array_values($addonArray));
+            }
         }
 
         DB::table('supplier_services')->insert([
@@ -55,9 +96,21 @@ class SupplierServiceController extends Controller
             'description' => $validated['description'] ?? null,
             'price' => $validated['price'] ?? 0,
             'address' => $validated['address'] ?? null,
-            'latitude' => $request->input('latitude'),
-            'longitude' => $request->input('longitude'),
+            'capacity' => $validated['capacity'] ?? null,
+            'latitude' => $request->input('latitude') ?? null,
+            'longitude' => $request->input('longitude') ?? null,
             'service_pic' => $servicePic,
+            'service_pic1' => $galleryPics[1],
+            'service_pic2' => $galleryPics[2],
+            'service_pic3' => $galleryPics[3],
+            'service_pic4' => $galleryPics[4],
+            'service_pic5' => $galleryPics[5],
+            'venue_add_ons' => $venueAddOns,
+            'venueaddons_price1' => $validated['venueaddons_price1'] ?? 0,
+            'venueaddons_price2' => $validated['venueaddons_price2'] ?? 0,
+            'venueaddons_price3' => $validated['venueaddons_price3'] ?? 0,
+            'venueaddons_price4' => $validated['venueaddons_price4'] ?? 0,
+            'venueaddons_price5' => $validated['venueaddons_price5'] ?? 0,
             'rating' => 5.00,
             'created_at' => now(),
         ]);
@@ -65,19 +118,23 @@ class SupplierServiceController extends Controller
         return redirect()->route('supplier.services')->with('success', 'Service added successfully.');
     }
 
-    public function image($id): Response
+    public function image($id, $pic = 'service_pic'): Response
     {
+        // Validate pic parameter to prevent injection
+        if (!in_array($pic, ['service_pic', 'service_pic1', 'service_pic2', 'service_pic3', 'service_pic4', 'service_pic5'], true)) {
+            abort(404);
+        }
+
         $service = DB::table('supplier_services')
             ->where('service_id', $id)
-            ->where('user_id', Auth::id())
-            ->first(['service_pic']);
+            ->first([$pic]);
 
-        abort_unless($service && $service->service_pic, 404);
+        abort_unless($service && $service->$pic, 404);
 
-        $imageInfo = getimagesizefromstring($service->service_pic);
+        $imageInfo = getimagesizefromstring($service->$pic);
         abort_unless($imageInfo !== false, 404);
 
-        return response($service->service_pic, 200, [
+        return response($service->$pic, 200, [
             'Content-Type' => $imageInfo['mime'],
             'Cache-Control' => 'private, max-age=86400',
         ]);

@@ -140,6 +140,17 @@
             <h3><i class="fas fa-plus-circle text-gold"></i> Add New Service</h3>
         </div>
 
+        @if($errors->any())
+            <div style="background: rgba(220,53,69,0.1); border: 1px solid rgba(220,53,69,0.3); color: #721c24; padding: 12px 14px; border-radius: 8px; margin-bottom: 16px;">
+                <strong>Please fix the following errors:</strong>
+                <ul style="margin: 8px 0 0 20px; padding: 0;">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('supplier.services.store') }}" enctype="multipart/form-data">
             @csrf
             <div class="form-grid">
@@ -149,7 +160,7 @@
                 </div>
                 <div class="form-field">
                     <label>Category *</label>
-                    <select name="category" required>
+                    <select name="category" id="service_category" required onchange="toggleVenueAddons()">
                         <option value="Venue">Venue</option>
                         <option value="Catering">Catering</option>
                         <option value="Clothing">Clothing</option>
@@ -175,6 +186,14 @@
                     <input type="text" name="latitude" placeholder="Optional coordinate">
                 </div>
                 <div class="form-field">
+                    <label>Longitude</label>
+                    <input type="text" name="longitude" placeholder="Optional coordinate">
+                </div>
+                <div class="form-field" id="capacity_field" style="display: none;">
+                    <label>Capacity (number of guests)</label>
+                    <input type="number" name="capacity" placeholder="e.g. 100" min="0">
+                </div>
+                <div class="form-field">
                     <label>Cover Photo</label>
                     <input class="service-file-input" type="file" name="service_pic" accept="image/jpeg,image/png,image/webp">
                 </div>
@@ -184,12 +203,133 @@
                 </div>
             </div>
 
+            {{-- Gallery Pictures Section --}}
+            <div class="gallery-section" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #f0f0f0;">
+                <h4 style="font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px;">Gallery Pictures (Maximum 5)</h4>
+                <div class="gallery-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+                    <div class="gallery-upload">
+                        <input type="file" name="service_pic1" accept="image/jpeg,image/png,image/webp" style="display: none;" id="pic1_input" onchange="previewPic(1)">
+                        <div class="gallery-preview" id="pic1_preview" style="width: 100%; aspect-ratio: 1; border: 2px dashed #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fafafa; overflow: hidden;" onclick="document.getElementById('pic1_input').click();">
+                            <div style="text-align: center;">
+                                <i class="fas fa-image" style="font-size: 24px; color: #ccc; margin-bottom: 8px; display: block;"></i>
+                                <small style="color: #999;">Picture 1</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery-upload">
+                        <input type="file" name="service_pic2" accept="image/jpeg,image/png,image/webp" style="display: none;" id="pic2_input" onchange="previewPic(2)">
+                        <div class="gallery-preview" id="pic2_preview" style="width: 100%; aspect-ratio: 1; border: 2px dashed #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fafafa; overflow: hidden;" onclick="document.getElementById('pic2_input').click();">
+                            <div style="text-align: center;">
+                                <i class="fas fa-image" style="font-size: 24px; color: #ccc; margin-bottom: 8px; display: block;"></i>
+                                <small style="color: #999;">Picture 2</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery-upload">
+                        <input type="file" name="service_pic3" accept="image/jpeg,image/png,image/webp" style="display: none;" id="pic3_input" onchange="previewPic(3)">
+                        <div class="gallery-preview" id="pic3_preview" style="width: 100%; aspect-ratio: 1; border: 2px dashed #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fafafa; overflow: hidden;" onclick="document.getElementById('pic3_input').click();">
+                            <div style="text-align: center;">
+                                <i class="fas fa-image" style="font-size: 24px; color: #ccc; margin-bottom: 8px; display: block;"></i>
+                                <small style="color: #999;">Picture 3</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery-upload">
+                        <input type="file" name="service_pic4" accept="image/jpeg,image/png,image/webp" style="display: none;" id="pic4_input" onchange="previewPic(4)">
+                        <div class="gallery-preview" id="pic4_preview" style="width: 100%; aspect-ratio: 1; border: 2px dashed #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fafafa; overflow: hidden;" onclick="document.getElementById('pic4_input').click();">
+                            <div style="text-align: center;">
+                                <i class="fas fa-image" style="font-size: 24px; color: #ccc; margin-bottom: 8px; display: block;"></i>
+                                <small style="color: #999;">Picture 4</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gallery-upload">
+                        <input type="file" name="service_pic5" accept="image/jpeg,image/png,image/webp" style="display: none;" id="pic5_input" onchange="previewPic(5)">
+                        <div class="gallery-preview" id="pic5_preview" style="width: 100%; aspect-ratio: 1; border: 2px dashed #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fafafa; overflow: hidden;" onclick="document.getElementById('pic5_input').click();">
+                            <div style="text-align: center;">
+                                <i class="fas fa-image" style="font-size: 24px; color: #ccc; margin-bottom: 8px; display: block;"></i>
+                                <small style="color: #999;">Picture 5</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Venue Add-ons Section (Conditional) --}}
+            <div class="venue-addons-section" id="venue_addons_section" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #f0f0f0; display: none;">
+                <h4 style="font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px;">Venue Add-ons Services</h4>
+                <p style="font-size: 13px; color: #666; margin-bottom: 14px;">Select which services your venue can provide:</p>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                    <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
+                        <input type="checkbox" name="venue_add_ons[]" value="catering" data-price-input="venueaddons_price1" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Catering</span><input type="number" name="venueaddons_price1" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </label>
+                    <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
+                        <input type="checkbox" name="venue_add_ons[]" value="clothing" data-price-input="venueaddons_price2" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Clothing</span><input type="number" name="venueaddons_price2" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </label>
+                    <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
+                        <input type="checkbox" name="venue_add_ons[]" value="host" data-price-input="venueaddons_price3" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Host/MC</span><input type="number" name="venueaddons_price3" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </label>
+                    <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
+                        <input type="checkbox" name="venue_add_ons[]" value="photographer" data-price-input="venueaddons_price4" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Photographer</span><input type="number" name="venueaddons_price4" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </label>
+                    <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
+                        <input type="checkbox" name="venue_add_ons[]" value="sounds & lights" data-price-input="venueaddons_price5" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Sounds & Lights</span><input type="number" name="venueaddons_price5" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </label>
+                </div>
+            </div>
+
             <div class="form-submit-row">
                 <button type="submit" class="add-service-btn">
                     <i class="fas fa-plus"></i> Add Service
                 </button>
             </div>
         </form>
+        
+        <script>
+            function toggleVenueAddons() {
+                const category = document.getElementById('service_category').value;
+                const venueAddonsSection = document.getElementById('venue_addons_section');
+                const capacityField = document.getElementById('capacity_field');
+                
+                // Show/hide venue add-ons based on category
+                venueAddonsSection.style.display = category === 'Venue' ? 'block' : 'none';
+                
+                // Show/hide capacity field for venues
+                capacityField.style.display = category === 'Venue' ? 'block' : 'none';
+            }
+
+            document.querySelectorAll('[data-price-input]').forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    const priceInput = document.querySelector(`[name="${checkbox.dataset.priceInput}"]`);
+                    priceInput.style.display = checkbox.checked ? 'block' : 'none';
+                    priceInput.required = checkbox.checked;
+                    if (!checkbox.checked) priceInput.value = '';
+                });
+            });
+            
+            function previewPic(picNumber) {
+                const input = document.getElementById(`pic${picNumber}_input`);
+                const preview = document.getElementById(`pic${picNumber}_preview`);
+                
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+            
+            // Initialize on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                toggleVenueAddons();
+            });
+        </script>
     </div>
 
 </div>

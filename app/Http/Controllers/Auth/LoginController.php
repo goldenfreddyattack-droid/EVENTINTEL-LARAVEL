@@ -7,10 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -36,32 +33,7 @@ class LoginController extends Controller
         $login = trim((string) $request->input('login'));
         $password = (string) $request->input('password');
 
-        $columns = Schema::getColumnListing('users');
-
-        $user = null;
-
-        if (in_array('username', $columns) && in_array('email', $columns)) {
-            $user = User::where(function ($query) use ($login) {
-                if (DB::connection()->getDriverName() === 'mysql') {
-                    $query->whereRaw('BINARY username = ?', [$login]);
-                } else {
-                    $query->whereRaw('username = ? COLLATE BINARY', [$login]);
-                }
-
-                $query->orWhere('email', $login);
-            })
-                ->first();
-        } elseif (in_array('username', $columns)) {
-            $user = User::where(function ($query) use ($login) {
-                if (DB::connection()->getDriverName() === 'mysql') {
-                    $query->whereRaw('BINARY username = ?', [$login]);
-                } else {
-                    $query->whereRaw('username = ? COLLATE BINARY', [$login]);
-                }
-            })->first();
-        } elseif (in_array('email', $columns)) {
-            $user = User::where('email', $login)->first();
-        }
+        $user = User::where('email', $login)->first();
 
         if ($user && Hash::check($password, $user->password)) {
             if (is_null($user->email_verified_at)) {

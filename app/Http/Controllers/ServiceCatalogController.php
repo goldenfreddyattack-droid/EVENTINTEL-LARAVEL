@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -27,15 +28,18 @@ class ServiceCatalogController extends Controller
     public function index(Request $request, string $service)
     {
         $definition = $this->definition($service);
-        $services = $this->queryServices($definition['categories']);
+        $reselect = in_array($request->query('reselect'), ['1', 'true', 'yes', 'on'], true) || $request->boolean('reselect');
+        $excludeSupplierName = $reselect ? $this->excludeSupplierName($request, $service) : null;
+        $services = $this->queryServices($definition['categories'], $excludeSupplierName);
 
-        return view('userui.service-catalog', [
+        return view($reselect ? 'userui.reselect-service-catalog' : 'userui.service-catalog', [
             'serviceKey' => $service,
             'serviceLabel' => $definition['label'],
             'services' => $services,
-            'returnUrl' => $request->query('return'),
+            'returnUrl' => $request->query('return') ?: route('your.events'),
             'modal' => $request->boolean('modal'),
             'readonly' => $request->boolean('readonly'),
+            'eventId' => (int) $request->query('event_id'),
         ]);
     }
 
@@ -54,16 +58,19 @@ class ServiceCatalogController extends Controller
     public function show(Request $request, string $service, int $serviceId)
     {
         $definition = $this->definition($service);
-        $serviceRecord = $this->queryServices($definition['categories'])->firstWhere('service_id', $serviceId);
+        $reselect = in_array($request->query('reselect'), ['1', 'true', 'yes', 'on'], true) || $request->boolean('reselect');
+        $excludeSupplierName = $reselect ? $this->excludeSupplierName($request, $service) : null;
+        $serviceRecord = $this->queryServices($definition['categories'], $excludeSupplierName)->firstWhere('service_id', $serviceId);
         abort_unless($serviceRecord, 404);
 
-        return view('userui.service-detail', [
+        return view($reselect ? 'userui.reselect-service-detail' : 'userui.service-detail', [
             'serviceKey' => $service,
             'serviceLabel' => $definition['label'],
             'serviceRecord' => $serviceRecord,
-            'returnUrl' => $request->query('return'),
+            'returnUrl' => $request->query('return') ?: route('your.events'),
             'modal' => $request->boolean('modal'),
             'readonly' => $request->boolean('readonly'),
+            'eventId' => (int) $request->query('event_id'),
         ]);
     }
 
@@ -80,21 +87,55 @@ class ServiceCatalogController extends Controller
         ]);
     }
 
-    private function queryServices(array $categories)
+    private function queryServices(array $categories, ?string $excludeSupplierName = null)
     {
         if (!Schema::hasTable('supplier_services')) {
             return collect();
         }
 
         $normalizedCategories = array_map(fn (string $category) => strtolower(trim($category)), $categories);
-        return DB::table('supplier_services as services')
+        $query = DB::table('supplier_services as services')
             ->leftJoin('users', 'services.user_id', '=', 'users.user_id')
             ->whereNotNull('services.name')
             ->whereIn(DB::raw('LOWER(TRIM(services.category))'), $normalizedCategories)
-            ->select('services.*', 'users.full_name as supplier_name', 'users.business_name')
-            ->orderByDesc('services.rating')
+            ->select('services.*', 'users.full_name as supplier_name', 'users.business_name');
+
+        if ($excludeSupplierName) {
+            $query->where('services.name', '!=', $excludeSupplierName);
+        }
+
+        return $query->orderByDesc('services.rating')
             ->orderBy('services.price')
             ->get();
+    }
+
+    private function excludeSupplierName(Request $request, string $service): ?string
+    {
+        $eventId = (int) $request->query('event_id');
+        if ($eventId <= 0) {
+            return null;
+        }
+
+        $event = DB::table('events')
+            ->where('event_id', $eventId)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$event) {
+            return null;
+        }
+
+        $map = [
+            'venue' => 'venue_name',
+            'catering' => 'catering',
+            'host' => 'host',
+            'sounds_lights' => 'soundsnlights',
+            'photographer' => 'photographer',
+            'clothes' => 'clothes',
+            'coordinator' => 'coordinator',
+        ];
+
+        return trim((string) ($event->{$map[$service]} ?? '')) ?: null;
     }
 
     private function definition(string $service): array

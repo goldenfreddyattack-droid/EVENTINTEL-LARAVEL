@@ -108,6 +108,7 @@
                     <th>Supplier/Business</th>
                     <th>Type of Event</th>
                     <th>Service</th>
+                    <th>Add-ons</th>
                     <th>Client Name</th>
                     <th>Date</th>
                     <th>Price</th>
@@ -127,6 +128,7 @@
                     <td>{{ $r['business_name'] }}</td>
                     <td>{{ $r['event_type'] ?? 'N/A' }}</td>
                     <td>{{ $r['service'] }}</td>
+                    <td>{{ $r['addons'] ?? 'None' }}</td>
                     <td>{{ $r['client_name'] ?? 'N/A' }}</td>
                     <td>{{ $r['event_date'] ?? 'TBD' }}</td>
                     <td>₱{{ number_format($r['service_price'] ?? 0, 2) }}</td>

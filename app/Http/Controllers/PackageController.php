@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -62,6 +63,14 @@ class PackageController extends Controller
             ['tier' => 'Standard', 'name' => 'Standard Package', 'price' => 50000, 'services' => ['venue', 'catering', 'host', 'sounds_lights', 'photographer'], 'desc' => 'Popular balanced choice'],
             ['tier' => 'Premium', 'name' => 'Premium Package', 'price' => 90000, 'services' => ['venue', 'catering', 'host', 'sounds_lights', 'photographer', 'clothes'], 'desc' => 'Complete event experience'],
         ];
+
+        $planningCount = Auth::check()
+            ? DB::table('events')
+                ->where('user_id', Auth::id())
+                ->where('status', 'planning')
+                ->count()
+            : 0;
+        $planningLimitReached = $planningCount >= 3;
 
         $allocation = [
             'Venue' => 0.30,
@@ -126,7 +135,8 @@ class PackageController extends Controller
             'minByCategory',
             'selectedBudget',
             'serviceIcons',
-            'serviceNames'
+            'serviceNames',
+            'planningLimitReached'
         ));
     }
 }

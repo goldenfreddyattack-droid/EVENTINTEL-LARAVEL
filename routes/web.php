@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/messages', [App\Http\Controllers\ClientMessagesController::class, 'send'])->name('your.messages.send');
     Route::get('/messages/api', [App\Http\Controllers\ClientMessagesController::class, 'api'])->name('your.messages.api');
     Route::get('/your-events/{eventId}/status', [\App\Http\Controllers\YourEventsController::class, 'status'])->name('your.events.status');
+    Route::post('/your-events/{eventId}/reselect', [\App\Http\Controllers\YourEventsController::class, 'reselect'])->name('your.events.reselect');
     Route::post('/your-events/{eventId}/pay', [\App\Http\Controllers\YourEventsController::class, 'pay'])->name('your.events.pay');
     Route::get('/newsfeed', [\App\Http\Controllers\NewsfeedController::class, 'index'])->name('newsfeed');
     Route::post('/newsfeed', [\App\Http\Controllers\NewsfeedController::class, 'store'])->name('newsfeed.store');
@@ -65,7 +66,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/supplier/services', [\App\Http\Controllers\SupplierServiceController::class, 'index'])->name('supplier.services');
     Route::post('/supplier/services', [\App\Http\Controllers\SupplierServiceController::class, 'store'])->name('supplier.services.store');
-    Route::get('/supplier/services/{id}/image', [\App\Http\Controllers\SupplierServiceController::class, 'image'])->name('supplier.services.image');
+    Route::get('/supplier/services/{id}/image/{pic?}', [\App\Http\Controllers\SupplierServiceController::class, 'image'])->name('supplier.services.image');
     Route::delete('/supplier/services/{id}', [\App\Http\Controllers\SupplierServiceController::class, 'destroy'])->name('supplier.services.destroy');
 
     Route::get('/supplier/messages', [\App\Http\Controllers\SupplierMessagesController::class, 'index'])->name('supplier.messages');

@@ -62,6 +62,11 @@ class SupplierBookingsController extends Controller
                     "events.$column",
                     "events.$statusColumn",
                     'events.payment_method',
+                    'events.clothes',
+                    'events.catering',
+                    'events.host',
+                    'events.photographer',
+                    'events.soundsnlights',
                     'users.full_name as client_name'
                 )
                 ->where("events.$column", $service->name)
@@ -69,19 +74,48 @@ class SupplierBookingsController extends Controller
                 ->get();
 
             foreach ($events as $event) {
+                $addonLabels = [];
+                $addonTotal = 0;
+
+                // Build addon list by checking each service field for values
+                // Only show addons that match the venue name (were selected as venue add-ons)
+                $addonMap = [
+                    'catering' => ['label' => 'Catering', 'price' => 'venueaddons_price1'],
+                    'clothes' => ['label' => 'Clothes', 'price' => 'venueaddons_price2'],
+                    'host' => ['label' => 'Host', 'price' => 'venueaddons_price3'],
+                    'photographer' => ['label' => 'Photographer', 'price' => 'venueaddons_price4'],
+                    'soundsnlights' => ['label' => 'Sounds & Lights', 'price' => 'venueaddons_price5'],
+                ];
+
+                // Get the venue name to compare against
+                $venueName = $event->venue_name ?? null;
+
+                // Only show addons if we're looking at a venue booking
+                if ($serviceKey === 'venue' && $venueName) {
+                    foreach ($addonMap as $field => $addon) {
+                        $value = $event->$field ?? null;
+                        // Only include if the addon value matches the venue name (was selected as a venue add-on)
+                        if (is_string($value) && strtolower(trim($value)) === strtolower(trim($venueName))) {
+                            $addonLabels[] = $addon['label'];
+                            $addonTotal += (float) ($service->{$addon['price']} ?? 0);
+                        }
+                    }
+                }
+
                 $bookingRows[] = [
                     'service_id' => $service->service_id,
                     'event_id' => $event->event_id,
                     'title' => $event->title,
                     'event_type' => $event->event_type,
                     'event_date' => $event->event_date,
-                    'service_price' => $service->price,
+                    'service_price' => (float) $service->price + $addonTotal,
                     'client_name' => $event->client_name,
                     'service' => $service->category,
                     'service_key' => $serviceKey,
                     'status' => $event->$statusColumn,
                     'payment_method' => $event->payment_method ?? 'cash',
-                    'business_name' => $service->name
+                    'business_name' => $service->name,
+                    'addons' => empty($addonLabels) ? 'None' : implode(', ', array_unique($addonLabels)),
                 ];
             }
         }
@@ -156,6 +190,27 @@ class SupplierBookingsController extends Controller
         if ($newStatus === 'declined') {
             $declineNote = $request->input('decline_note', '');
             $updates[$noteColumn] = $declineNote;
+        }
+
+        // If updating venue status, also update all addon statuses to match
+        if ($service === 'venue') {
+            $event = DB::table('events')->where('event_id', $eventId)->first();
+            if ($event && $event->venue_name) {
+                $addonStatusMap = [
+                    'catering_status' => 'catering',
+                    'clothes_status' => 'clothes',
+                    'host_status' => 'host',
+                    'photographer_status' => 'photographer',
+                    'soundsnlights_status' => 'soundsnlights',
+                ];
+                
+                foreach ($addonStatusMap as $statusField => $valueField) {
+                    // Check if this addon has the venue name (meaning it was selected as a venue add-on)
+                    if ($event->$valueField === $event->venue_name) {
+                        $updates[$statusField] = $newStatus;
+                    }
+                }
+            }
         }
 
         DB::table('events')

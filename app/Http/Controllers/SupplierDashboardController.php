@@ -22,92 +22,92 @@ class SupplierDashboardController extends Controller
     public function index()
     {
         $userId = Auth::id();
-        $serviceNames = DB::table('supplier_services')
-            ->where('user_id', $userId)
-            ->pluck('name')
-            ->filter()
-            ->values()
-            ->all();
-
-        // Consolidated stats array
-        $stats = [
-            'total'           => 0,
-            'pending'         => 0,
-            'accepted'        => 0,
-            'pending_payment' => 0,
-            'rejected'        => 0, // Covers declined
-            'completed'       => 0, // Covers Paid, Finish, and Done
-        ];
-
-        if (!empty($serviceNames)) {
-            $eventRows = DB::table('events')
-                ->select(
-                    'event_id',
-                    'title',
-                    'venue_name', 'venue_status',
-                    'clothes', 'clothes_status',
-                    'catering', 'catering_status',
-                    'host', 'host_status',
-                    'photographer', 'photographer_status',
-                    'soundsnlights', 'soundsnlights_status'
-                )
-                ->where(function ($query) use ($serviceNames) {
-                    foreach ($serviceNames as $serviceName) {
-                        $query->orWhere('venue_name', $serviceName)
-                            ->orWhere('clothes', $serviceName)
-                            ->orWhere('catering', $serviceName)
-                            ->orWhere('host', $serviceName)
-                            ->orWhere('photographer', $serviceName)
-                            ->orWhere('soundsnlights', $serviceName);
-                    }
-                })
-                ->get();
-
-            foreach ($eventRows as $event) {
-                $serviceFields = [
-                    'venue_name'    => 'venue_status',
-                    'clothes'       => 'clothes_status',
-                    'catering'      => 'catering_status',
-                    'host'          => 'host_status',
-                    'photographer'  => 'photographer_status',
-                    'soundsnlights' => 'soundsnlights_status',
-                ];
-
-                foreach ($serviceFields as $field => $statusField) {
-                    $value = $event->{$field} ?? null;
-                    if (!in_array($value, $serviceNames, true)) {
-                        continue;
-                    }
-
-                    $rawStatus = $event->{$statusField} ?? 'pending';
-                    $status = strtolower(trim($rawStatus));
-
-                    $stats['total']++;
-
-                    // Map status to exact categories
-                    if (in_array($status, ['pending', 'waiting'], true)) {
-                        $stats['pending']++;
-                    } elseif (in_array($status, ['accepted', 'approved', 'confirmed'], true)) {
-                        $stats['accepted']++;
-                    } elseif (in_array($status, ['pending payment', 'payment pending'], true)) {
-                        $stats['pending_payment']++;
-                    } elseif (in_array($status, ['declined', 'rejected', 'cancelled'], true)) {
-                        $stats['rejected']++;
-                    } elseif (in_array($status, ['paid', 'finish', 'finished', 'done', 'completed'], true)) {
-                        // Merged Paid and Finish/Done here
-                        $stats['completed']++;
-                    } else {
-                        $stats['pending']++;
-                    }
-                }
-            }
-        }
 
         $services = DB::table('supplier_services')
             ->where('user_id', $userId)
             ->orderByDesc('created_at')
             ->limit(6)
             ->get();
+
+        $categoryMap = [
+            'Venue' => ['column' => 'venue_name', 'status' => 'venue_status'],
+            'Clothing' => ['column' => 'clothes', 'status' => 'clothes_status'],
+            'Catering' => ['column' => 'catering', 'status' => 'catering_status'],
+            'Host' => ['column' => 'host', 'status' => 'host_status'],
+            'Photographer' => ['column' => 'photographer', 'status' => 'photographer_status'],
+            'Sounds & Lights' => ['column' => 'soundsnlights', 'status' => 'soundsnlights_status'],
+        ];
+
+        $bookingRows = [];
+
+        foreach ($services as $service) {
+            if (!isset($categoryMap[$service->category])) {
+                continue;
+            }
+
+            $column = $categoryMap[$service->category]['column'];
+            $statusColumn = $categoryMap[$service->category]['status'];
+
+            $events = DB::table('events')
+                ->join('users', 'events.user_id', '=', 'users.user_id')
+                ->select(
+                    'events.event_id',
+                    'events.title',
+                    'events.event_type',
+                    'events.event_date',
+                    'events.budget',
+                    "events.$column",
+                    "events.$statusColumn",
+                    'events.payment_method',
+                    'users.full_name as client_name'
+                )
+                ->where("events.$column", $service->name)
+                ->orderByDesc('events.event_date')
+                ->get();
+
+            foreach ($events as $event) {
+                $bookingRows[] = [
+                    'service_id' => $service->service_id,
+                    'event_id' => $event->event_id,
+                    'title' => $event->title,
+                    'event_type' => $event->event_type,
+                    'event_date' => $event->event_date,
+                    'service_price' => $service->price,
+                    'client_name' => $event->client_name,
+                    'service' => $service->category,
+                    'status' => $event->{$statusColumn},
+                    'payment_method' => $event->payment_method ?? 'cash',
+                    'business_name' => $service->name,
+                ];
+            }
+        }
+
+        $stats = [
+            'total'           => count($bookingRows),
+            'pending'         => 0,
+            'accepted'        => 0,
+            'pending_payment' => 0,
+            'rejected'        => 0,
+            'completed'       => 0,
+        ];
+
+        foreach ($bookingRows as $row) {
+            $status = strtolower(trim((string) ($row['status'] ?? 'pending')));
+
+            if (in_array($status, ['pending', 'waiting'], true)) {
+                $stats['pending']++;
+            } elseif (in_array($status, ['accepted', 'approved', 'confirmed'], true)) {
+                $stats['accepted']++;
+            } elseif (in_array($status, ['payment pending', 'pending confirmation'], true)) {
+                $stats['pending_payment']++;
+            } elseif (in_array($status, ['declined', 'rejected', 'cancelled'], true)) {
+                $stats['rejected']++;
+            } elseif (in_array($status, ['paid', 'finish', 'finished', 'done', 'completed'], true)) {
+                $stats['completed']++;
+            } else {
+                $stats['pending']++;
+            }
+        }
 
         return view('supplier.dashboard', [
             'stats'        => $stats,

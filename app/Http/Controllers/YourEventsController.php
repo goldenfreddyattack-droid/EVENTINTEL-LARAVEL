@@ -144,15 +144,27 @@ class YourEventsController extends Controller
             $serviceStatus = $event->{$definition['status']} ?? 'pending';
             if ($name || $serviceStatus !== 'pending') {
                 $supplier = Schema::hasTable('supplier_services')
-                    ? DB::table('supplier_services')->where('name', $name)->first()
+                    ? DB::table('supplier_services')->whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim((string) $name))])->first()
                     : null;
+                $price = $supplier?->price;
+                if ($supplier && strtolower((string) $supplier->category) === 'venue' && $key !== 'venue') {
+                    $addonPriceColumns = [
+                        'catering' => 'venueaddons_price1',
+                        'clothes' => 'venueaddons_price2',
+                        'host' => 'venueaddons_price3',
+                        'photographer' => 'venueaddons_price4',
+                        'sounds_lights' => 'venueaddons_price5',
+                    ];
+                    $priceColumn = $addonPriceColumns[$key] ?? null;
+                    $price = $priceColumn ? ($supplier->{$priceColumn} ?? 0) : 0;
+                }
                 $services[] = [
                     'service_key' => $key,
                     'name' => $name ?: $definition['label'],
                     'type' => $definition['label'],
                     'status' => $serviceStatus,
                     'raw_status' => $serviceStatus,
-                    'price' => $supplier?->price,
+                    'price' => $price,
                     'note' => $event->{$definition['note']} ?? null,
                     'supplier_user_id' => $supplier?->user_id,
                 ];
@@ -173,6 +185,73 @@ class YourEventsController extends Controller
         }
 
         return response()->json(['services' => $services, 'coordinator_proposal' => $event->coordinator_proposal]);
+    }
+
+    public function reselect(Request $request, int $eventId)
+    {
+        $data = $request->validate([
+            'service_type' => ['required', 'in:venue,catering,host,sounds_lights,photographer,clothes,coordinator'],
+            'service_name' => ['nullable', 'string', 'max:255'],
+            'addons' => ['nullable', 'array'],
+            'addons.*' => ['string'],
+        ]);
+
+        $event = $this->ownedEvent($eventId);
+        $serviceFields = [
+            'venue' => ['value_field' => 'venue_name', 'status_field' => 'venue_status', 'note_field' => 'venue_note'],
+            'catering' => ['value_field' => 'catering', 'status_field' => 'catering_status', 'note_field' => 'catering_note'],
+            'host' => ['value_field' => 'host', 'status_field' => 'host_status', 'note_field' => 'host_note'],
+            'sounds_lights' => ['value_field' => 'soundsnlights', 'status_field' => 'soundsnlights_status', 'note_field' => 's&l_note'],
+            'photographer' => ['value_field' => 'photographer', 'status_field' => 'photographer_status', 'note_field' => 'photographer_note'],
+            'clothes' => ['value_field' => 'clothes', 'status_field' => 'clothes_status', 'note_field' => 'clothes_note'],
+            'coordinator' => ['value_field' => 'coordinator', 'status_field' => 'coordinator_status', 'note_field' => 'coordinator_proposal'],
+        ];
+
+        $service = $serviceFields[$data['service_type']];
+
+        $updates = [];
+
+        if (!empty($data['service_name'])) {
+            $updates[$service['value_field']] = trim((string) $data['service_name']);
+            $updates[$service['status_field']] = 'pending';
+
+            if ($service['note_field'] === 'coordinator_proposal') {
+                $updates[$service['note_field']] = null;
+            } elseif ($service['note_field'] !== 's&l_note') {
+                $updates[$service['note_field']] = null;
+            }
+
+            // If this is a venue selection with add-ons, clear and update addon fields
+            if ($data['service_type'] === 'venue') {
+                $venueName = trim((string) $data['service_name']);
+                
+                // Add-ons are optional venue-provided services. Preserve independently
+                // selected services and update only the add-ons explicitly chosen here.
+                $selectedAddons = $data['addons'] ?? [];
+                if (!empty($selectedAddons)) {
+                    foreach ($selectedAddons as $addon) {
+                        $addonField = $addon;
+                        if (in_array($addon, ['sounds_lights', 'soundsnlights', 'sounds and lights', 'sounds & lights'], true)) {
+                            $addonField = 'soundsnlights';
+                        } elseif (in_array($addon, ['clothes', 'clothing', 'attire', 'styling'], true)) {
+                            $addonField = 'clothes';
+                        }
+
+                        // Set the addon field to the venue name (indicating it was selected as a venue add-on)
+                        // and match its status to the venue status
+                        $updates[$addonField] = $venueName;
+                        $updates[$addonField . '_status'] = 'pending';  // Match the venue status
+                    }
+                }
+            }
+
+            DB::table('events')
+                ->where('event_id', $event->event_id)
+                ->where('user_id', Auth::id())
+                ->update($updates);
+        }
+
+        return response()->json(['success' => true, 'message' => 'The declined service has been replaced for reselection.']);
     }
 
     public function pay(Request $request, int $eventId)
