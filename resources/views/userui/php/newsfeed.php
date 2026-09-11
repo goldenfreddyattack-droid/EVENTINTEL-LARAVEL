@@ -503,13 +503,13 @@ $current_user = $current_user->fetch();
 
                     <div class="post-footer">
                         <button id="like_btn_<?= $post['post_id'] ?>" class="post-footer-btn" onclick="likePost(<?= $post['post_id'] ?>, event)">
-                            <i class="far fa-heart"></i> Like <span id="like_count_<?= $post['post_id'] ?>"><?= esc($post['likes_count']) ?></span>
+                            <i class="far fa-heart"></i> <span id="like_count_<?= $post['post_id'] ?>"><?= esc($post['likes_count']) ?></span>
                         </button>
                         <button id="comment_btn_<?= $post['post_id'] ?>" class="post-footer-btn">
                             <i class="far fa-comment"></i> Comment (<span id="comment_count_<?= $post['post_id'] ?>"><?= esc($post['comments_count']) ?></span>)
                         </button>
                         <button class="post-footer-btn">
-                            <i class="far fa-share"></i> Share
+                            <i class="fas fa-share-nodes"></i> Share
                         </button>
                     </div>
                 </div>
@@ -560,10 +560,10 @@ $current_user = $current_user->fetch();
                     if (countEl) countEl.textContent = data.likes;
                     if (data.liked) {
                         btn.style.color = '#f3c547';
-                        btn.innerHTML = '<i class="fas fa-heart"></i> Unlike <span id="like_count_' + postId + '">' + data.likes + '</span>';
+                        btn.innerHTML = '<i class="fas fa-heart"></i> <span id="like_count_' + postId + '">' + data.likes + '</span>';
                     } else {
                         btn.style.color = '#999';
-                        btn.innerHTML = '<i class="far fa-heart"></i> Like <span id="like_count_' + postId + '">' + data.likes + '</span>';
+                        btn.innerHTML = '<i class="far fa-heart"></i> <span id="like_count_' + postId + '">' + data.likes + '</span>';
                     }
                 }
             })

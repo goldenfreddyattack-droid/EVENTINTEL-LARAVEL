@@ -204,7 +204,21 @@ class FirebaseService
     {
         try {
             $response = Http::get("{$this->databaseUrl}/newsfeed/likes.json");
-            return $response->successful() && is_array($response->json()) ? $response->json() : [];
+            if (! $response->successful() || ! is_array($response->json())) {
+                return [];
+            }
+
+            return collect($response->json())
+                ->mapWithKeys(function ($usersForPost, $postId) {
+                    if (! is_array($usersForPost)) {
+                        return [$postId => []];
+                    }
+
+                    return [$postId => collect($usersForPost)
+                        ->filter(fn ($liked) => $liked === true)
+                        ->all()];
+                })
+                ->all();
         } catch (\Exception $e) {
             Log::error('Firebase newsfeed likes fetch failed', ['error' => $e->getMessage()]);
             return [];

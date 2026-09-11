@@ -4,6 +4,7 @@
 
 @section('styles')
 <style>
+    .text-gold { color: var(--gold); }
     /* ===== Messenger Center Wrapper & Outer Card Container ===== */
     .messenger-card { max-width: 980px; margin: 0 auto; background: #ffffff; border: 1px solid #ebebeb; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03); overflow: hidden; height: 80vh; min-height: 560px; max-height: 800px; display: flex; flex-direction: column; }
     

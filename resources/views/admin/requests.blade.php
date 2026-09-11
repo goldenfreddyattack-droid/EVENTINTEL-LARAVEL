@@ -11,15 +11,16 @@
     .admin-table td { background:#fafafa; border:1px solid #ececec; color:#222; }
     .status-pill { display:inline-flex; padding:8px 14px; border-radius:999px; background:#fff5d8; color:#b8860b; font-weight:700; }
     .request-actions { display:flex; gap:8px; flex-wrap:wrap; }
-    .request-actions button { border:0; border-radius:10px; padding:9px 12px; color:#fff; font-weight:700; cursor:pointer; }
-    .request-actions .approve { background:#28a745; }
-    .request-actions .reject { background:#dc3545; }
+    .request-actions button { border:1px solid transparent; border-radius:14px; padding:10px 16px; font-weight:800; cursor:pointer; transition:.3s; }
+    .request-actions button:hover { transform:translateY(-2px); box-shadow:0 10px 20px rgba(0,0,0,.12); }
+    .request-actions .approve { border-color:var(--gold); background:linear-gradient(135deg,var(--gold2),var(--gold),var(--gold3)); color:#111; }
+    .request-actions .reject { border-color:rgba(255,80,80,.35); background:rgba(255,80,80,.08); color:#d95353; }
     .admin-file { color:#007bff; text-decoration:none; }
     .admin-file:hover { text-decoration:underline; }
     .admin-thumb { display:block; width:95px; height:95px; object-fit:cover; border-radius:12px; border:1px solid #ddd; margin-top:10px; }
     .admin-pagination { display:flex; justify-content:center; gap:8px; margin-top:20px; }
-    .admin-pagination a, .admin-pagination span { min-width:38px; padding:9px 12px; border:1px solid #ddd; border-radius:10px; background:#fff; color:#555; text-align:center; text-decoration:none; }
-    .admin-pagination .active { border-color:var(--gold); background:#fff7df; color:var(--gold); font-weight:700; }
+    .admin-pagination a, .admin-pagination span { min-width:38px; padding:9px 12px; border:1px solid var(--border); border-radius:12px; background:var(--panel); color:var(--text); text-align:center; text-decoration:none; }
+    .admin-pagination a:hover, .admin-pagination .active { border-color:var(--gold); background:rgba(212,175,55,.1); color:var(--gold); font-weight:700; }
     .admin-pagination .disabled { color:#aaa; }
 </style>
 @endsection

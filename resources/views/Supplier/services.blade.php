@@ -205,8 +205,8 @@
 
             {{-- Gallery Pictures Section --}}
             <div class="gallery-section" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #f0f0f0;">
-                <h4 style="font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px;">Gallery Pictures (Maximum 5)</h4>
-                <div class="gallery-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+                <h4 style="font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px;">Gallery Pictures (Maximum 4)</h4>
+                <div class="gallery-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
                     <div class="gallery-upload">
                         <input type="file" name="service_pic1" accept="image/jpeg,image/png,image/webp" style="display: none;" id="pic1_input" onchange="previewPic(1)">
                         <div class="gallery-preview" id="pic1_preview" style="width: 100%; aspect-ratio: 1; border: 2px dashed #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fafafa; overflow: hidden;" onclick="document.getElementById('pic1_input').click();">
@@ -243,15 +243,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="gallery-upload">
-                        <input type="file" name="service_pic5" accept="image/jpeg,image/png,image/webp" style="display: none;" id="pic5_input" onchange="previewPic(5)">
-                        <div class="gallery-preview" id="pic5_preview" style="width: 100%; aspect-ratio: 1; border: 2px dashed #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fafafa; overflow: hidden;" onclick="document.getElementById('pic5_input').click();">
-                            <div style="text-align: center;">
-                                <i class="fas fa-image" style="font-size: 24px; color: #ccc; margin-bottom: 8px; display: block;"></i>
-                                <small style="color: #999;">Picture 5</small>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -262,23 +253,23 @@
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
                     <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
                         <input type="checkbox" name="venue_add_ons[]" value="catering" data-price-input="venueaddons_price1" style="width: 18px; height: 18px; cursor: pointer;">
-                        <span>Catering</span><input type="number" name="venueaddons_price1" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;">
+                        <span>Catering</span><input type="number" name="venueaddons_price1" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;"><textarea name="venueaddons_details1" data-details-input="venueaddons_details1" placeholder="Describe the catering add-on" rows="2" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
                     </label>
                     <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
                         <input type="checkbox" name="venue_add_ons[]" value="clothing" data-price-input="venueaddons_price2" style="width: 18px; height: 18px; cursor: pointer;">
-                        <span>Clothing</span><input type="number" name="venueaddons_price2" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;">
+                        <span>Clothing</span><input type="number" name="venueaddons_price2" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;"><textarea name="venueaddons_details2" data-details-input="venueaddons_details2" placeholder="Describe the clothing add-on" rows="2" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
                     </label>
                     <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
                         <input type="checkbox" name="venue_add_ons[]" value="host" data-price-input="venueaddons_price3" style="width: 18px; height: 18px; cursor: pointer;">
-                        <span>Host/MC</span><input type="number" name="venueaddons_price3" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;">
+                        <span>Host/MC</span><input type="number" name="venueaddons_price3" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;"><textarea name="venueaddons_details3" data-details-input="venueaddons_details3" placeholder="Describe the host/MC add-on" rows="2" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
                     </label>
                     <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
                         <input type="checkbox" name="venue_add_ons[]" value="photographer" data-price-input="venueaddons_price4" style="width: 18px; height: 18px; cursor: pointer;">
-                        <span>Photographer</span><input type="number" name="venueaddons_price4" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;">
+                        <span>Photographer</span><input type="number" name="venueaddons_price4" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;"><textarea name="venueaddons_details4" data-details-input="venueaddons_details4" placeholder="Describe the photographer add-on" rows="2" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
                     </label>
                     <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
                         <input type="checkbox" name="venue_add_ons[]" value="sounds & lights" data-price-input="venueaddons_price5" style="width: 18px; height: 18px; cursor: pointer;">
-                        <span>Sounds & Lights</span><input type="number" name="venueaddons_price5" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;">
+                        <span>Sounds & Lights</span><input type="number" name="venueaddons_price5" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;"><textarea name="venueaddons_details5" data-details-input="venueaddons_details5" placeholder="Describe the sounds and lights add-on" rows="2" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
                     </label>
                 </div>
             </div>
@@ -306,9 +297,14 @@
             document.querySelectorAll('[data-price-input]').forEach(function (checkbox) {
                 checkbox.addEventListener('change', function () {
                     const priceInput = document.querySelector(`[name="${checkbox.dataset.priceInput}"]`);
+                    const detailsInput = checkbox.closest('.venue-addon-option').querySelector('[data-details-input]');
                     priceInput.style.display = checkbox.checked ? 'block' : 'none';
                     priceInput.required = checkbox.checked;
-                    if (!checkbox.checked) priceInput.value = '';
+                    detailsInput.style.display = checkbox.checked ? 'block' : 'none';
+                    if (!checkbox.checked) {
+                        priceInput.value = '';
+                        detailsInput.value = '';
+                    }
                 });
             });
             

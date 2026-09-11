@@ -88,9 +88,9 @@
                         <button type="submit" style="border:none; background:var(--gold); color:#111; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; cursor:pointer;">Comment</button>
                     </form>
                     <footer class="post-footer" style="display:flex; gap:16px; margin-top:12px; border-top:1px solid #f0f0f0; padding-top:10px; font-size:12px; color:var(--muted);">
-                        <button class="like-button {{ in_array($post->post_id, $likedPostIds) ? 'liked' : '' }}" data-post-id="{{ $post->post_id }}" style="background:none; border:none; cursor:pointer; color:inherit; font-size:12px;"><i class="{{ in_array($post->post_id, $likedPostIds) ? 'fas' : 'far' }} fa-heart text-gold"></i> <span class="like-label">{{ in_array($post->post_id, $likedPostIds) ? 'Unlike' : 'Like' }}</span> <span class="like-count">{{ $post->likes_count }}</span></button>
+                        <button class="like-button {{ in_array($post->post_id, $likedPostIds) ? 'liked' : '' }}" data-post-id="{{ $post->post_id }}" aria-label="Like post" style="background:none; border:none; cursor:pointer; color:inherit; font-size:12px;"><i class="{{ in_array($post->post_id, $likedPostIds) ? 'fas' : 'far' }} fa-heart text-gold"></i> <span class="like-count">{{ $post->likes_count }}</span></button>
                         <span><i class="far fa-comment"></i> <span class="comment-count">{{ $post->comments_count }}</span> comments</span>
-                        <button type="button" class="share-button" data-url="{{ url('/coordinator/newsfeed') }}#post-{{ $post->post_id }}" style="background:none; border:none; cursor:pointer; color:inherit; font-size:12px;"><i class="far fa-share-square"></i> Share</button>
+                        <button type="button" class="share-button" data-url="{{ url('/coordinator/newsfeed') }}#post-{{ $post->post_id }}" style="background:none; border:none; cursor:pointer; color:inherit; font-size:12px;"><i class="fas fa-share-nodes"></i> Share</button>
                     </footer>
                 </article>
             @empty
@@ -128,7 +128,6 @@
         const data = await response.json();
         button.classList.toggle('liked', data.liked);
         button.querySelector('i').className = `${data.liked ? 'fas' : 'far'} fa-heart text-gold`;
-        button.querySelector('.like-label').textContent = data.liked ? 'Unlike' : 'Like';
         button.querySelector('.like-count').textContent = data.likes;
     }));
 
@@ -148,7 +147,7 @@
     document.querySelectorAll('.share-button').forEach(button => button.addEventListener('click', async () => {
         await navigator.clipboard?.writeText(button.dataset.url);
         button.innerHTML = '<i class="fas fa-check"></i> Copied';
-        setTimeout(() => button.innerHTML = '<i class="far fa-share-square"></i> Share', 1600);
+        setTimeout(() => button.innerHTML = '<i class="fas fa-share-nodes"></i> Share', 1600);
     }));
 </script>
 @endsection

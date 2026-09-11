@@ -85,9 +85,10 @@ class CoordinatorController extends Controller
     public function dashboard()
     {
         $name = Auth::user()->full_name;
-        $events = DB::table('events')->where('coordinator', $name)->orderByDesc('event_id')->limit(4)->get();
-        $pending = DB::table('events')->where('coordinator', $name)->where('coordinator_status', 'pending')->count();
-        $ongoing = DB::table('events')->where('coordinator', $name)->whereIn('coordinator_status', ['accepted', 'proposal_sent', 'Payment Pending', 'Paid'])->count();
+        $events = DB::table('events')->where('coordinator', $name)->orderByDesc('event_id')->get();
+        $status = fn ($event) => strtolower(str_replace('_', ' ', trim((string) ($event->coordinator_status ?? 'pending'))));
+        $pending = $events->filter(fn ($event) => $status($event) === 'pending')->count();
+        $ongoing = $events->filter(fn ($event) => in_array($status($event), ['pending confirmation', 'accepted', 'proposal sent', 'payment pending', 'paid'], true))->count();
         $totalSuppliers = DB::table('supplier_services')->distinct('user_id')->count('user_id');
         return view('coordinator.dashboard', compact('events', 'pending', 'ongoing', 'totalSuppliers'));
     }

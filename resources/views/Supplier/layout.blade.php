@@ -29,8 +29,8 @@
                     <li class="{{ request()->routeIs('supplier.setup*') ? 'active' : '' }}">
                         <button type="button" onclick="location.href='{{ route('supplier.setup') }}'">SETUP</button>
                     </li>
-                    <li class="{{ request()->routeIs('newsfeed') ? 'active' : '' }}">
-                        <button type="button" onclick="location.href='{{ route('newsfeed') }}'">NEWSFEED</button>
+                    <li class="{{ request()->routeIs('supplier.feed', 'supplier.newsfeed') ? 'active' : '' }}">
+                        <button type="button" onclick="location.href='{{ route('supplier.feed') }}'">NEWSFEED</button>
                     </li>
                     <li class="{{ request()->routeIs('supplier.bookings') ? 'active' : '' }}">
                         <button type="button" onclick="location.href='{{ route('supplier.bookings') }}'">BOOKINGS</button>

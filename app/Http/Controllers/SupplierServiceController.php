@@ -49,12 +49,16 @@ class SupplierServiceController extends Controller
             'venueaddons_price3' => ['nullable', 'numeric', 'min:0'],
             'venueaddons_price4' => ['nullable', 'numeric', 'min:0'],
             'venueaddons_price5' => ['nullable', 'numeric', 'min:0'],
+            'venueaddons_details1' => ['nullable', 'string', 'max:1000'],
+            'venueaddons_details2' => ['nullable', 'string', 'max:1000'],
+            'venueaddons_details3' => ['nullable', 'string', 'max:1000'],
+            'venueaddons_details4' => ['nullable', 'string', 'max:1000'],
+            'venueaddons_details5' => ['nullable', 'string', 'max:1000'],
             'service_pic' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'service_pic1' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'service_pic2' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'service_pic3' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'service_pic4' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
-            'service_pic5' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
 
         $servicePic = null;
@@ -64,7 +68,7 @@ class SupplierServiceController extends Controller
 
         // Process additional gallery pictures
         $galleryPics = [];
-        for ($i = 1; $i <= 5; $i++) {
+        for ($i = 1; $i <= 4; $i++) {
             $galleryPics[$i] = null;
             if ($request->hasFile("service_pic{$i}")) {
                 $galleryPics[$i] = file_get_contents($request->file("service_pic{$i}")->getRealPath());
@@ -104,13 +108,18 @@ class SupplierServiceController extends Controller
             'service_pic2' => $galleryPics[2],
             'service_pic3' => $galleryPics[3],
             'service_pic4' => $galleryPics[4],
-            'service_pic5' => $galleryPics[5],
+            'service_pic5' => null,
             'venue_add_ons' => $venueAddOns,
             'venueaddons_price1' => $validated['venueaddons_price1'] ?? 0,
             'venueaddons_price2' => $validated['venueaddons_price2'] ?? 0,
             'venueaddons_price3' => $validated['venueaddons_price3'] ?? 0,
             'venueaddons_price4' => $validated['venueaddons_price4'] ?? 0,
             'venueaddons_price5' => $validated['venueaddons_price5'] ?? 0,
+            'venueaddons_details1' => $validated['venueaddons_details1'] ?? null,
+            'venueaddons_details2' => $validated['venueaddons_details2'] ?? null,
+            'venueaddons_details3' => $validated['venueaddons_details3'] ?? null,
+            'venueaddons_details4' => $validated['venueaddons_details4'] ?? null,
+            'venueaddons_details5' => $validated['venueaddons_details5'] ?? null,
             'rating' => 5.00,
             'created_at' => now(),
         ]);
@@ -121,7 +130,7 @@ class SupplierServiceController extends Controller
     public function image($id, $pic = 'service_pic'): Response
     {
         // Validate pic parameter to prevent injection
-        if (!in_array($pic, ['service_pic', 'service_pic1', 'service_pic2', 'service_pic3', 'service_pic4', 'service_pic5'], true)) {
+        if (!in_array($pic, ['service_pic', 'service_pic1', 'service_pic2', 'service_pic3', 'service_pic4'], true)) {
             abort(404);
         }
 

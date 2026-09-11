@@ -10,10 +10,15 @@
     <style>
         <style>
             .venue-addon{justify-content:space-between}
+            .venue-addon-info{display:flex;align-items:center;gap:10px}
+            .addon-details-button{border:1px solid #d6a91d;border-radius:8px;padding:6px 10px;background:#fff8dc;color:#a77700;font-weight:800;font-size:11px;cursor:pointer}
+            .addon-details-button:hover{background:#fff1b8}
+            #addonDetailsText{white-space:pre-wrap;overflow-wrap:anywhere}
             .venue-addon strong{color:#a77700;white-space:nowrap}
             .venue-addon-total{display:flex;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid #eee2b7;font-weight:900}
         *{box-sizing:border-box}body{margin:0;background:#f8f8f8;color:#111;font-family:'Segoe UI',sans-serif}.page{width:100%;min-height:100vh;padding:6px 48px 48px}.heading{position:relative;z-index:5;width:260px;margin:34px 0 24px 6vw;pointer-events:none}.heading h1{font-size:34px;line-height:1.15;margin:0 0 8px}.heading p{color:#666;font-size:14px;line-height:1.6}.page:after{content:'';position:fixed;inset:0;background:rgba(18,22,25,.58);z-index:4;pointer-events:none}.wizard-layout{position:fixed;z-index:5;inset:55% auto auto 50%;transform:translate(-50%,-50%);display:flex;gap:20px;width:min(820px,calc(100vw - 36px));max-height:calc(100vh - 56px);align-items:stretch}.wizard-steps{width:160px;padding:20px 0;display:flex;flex-direction:column;gap:12px}.step-pill{border:1px solid #eee2b7;border-radius:22px;background:rgba(255,255,255,.8);padding:14px 16px;font-weight:800;font-size:13px}.step-pill.active{background:#f3c547;border-color:#d8ab24}.form-card{width:100%;max-width:600px;max-height:calc(100vh - 110px);overflow:auto;background:#fff;border:1px solid #eee2b7;border-radius:24px;padding:24px 20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.section{display:none;border:0;padding:0;margin:0}.section.active{display:block}.section h2{color:#b07c00;font-size:18px;margin:0 0 18px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}.field label{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#777}.field input,.field select{width:100%;padding:13px 14px;border:1px solid #dfd6b7;border-radius:12px;background:#fff;font:inherit}.types,.services{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.choice{border:1px solid #e8e2d2;border-radius:16px;padding:14px;text-align:left;cursor:pointer;font-weight:600}.choice:has(input:checked){background:#fff1b8;border-color:#d6a91d}.choice input{margin-right:10px}.theme-grid,.package-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.theme-chip,.package-card{border:1px solid #e8e2d2;border-radius:14px;background:#fff;padding:11px;text-align:center;cursor:pointer;font:inherit}.theme-chip.selected,.package-card.selected{background:#fff1b8;border-color:#d6a91d}.package-card strong,.package-card b{display:block;color:#b07c00}.package-card small{display:block;color:#777;margin-top:6px;font-size:11px}.service-list{display:grid;gap:10px}.service-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;border:1px solid #eee2b7;border-radius:14px;padding:12px 14px}.service-row strong{display:block}.service-row small{display:block;color:#777;margin-top:3px}.service-row input[type=checkbox]{width:24px;height:24px;accent-color:#d6a609;cursor:default;pointer-events:none}.service-view{border:0;border-radius:14px;padding:8px 13px;background:#fff1b8;color:#8a6800;font-weight:800;cursor:pointer}.service-option{display:block;width:100%;border:1px solid #eee2b7;border-radius:12px;background:#fff;text-align:left;padding:13px 15px;margin-bottom:10px;cursor:pointer}.service-option:hover{background:#fff1b8}.service-option strong,.service-option small{display:block}.service-option small{color:#777;margin-top:5px}.service-catalog-link{display:inline-block;margin-bottom:14px;color:#a77700;font-size:13px;font-weight:800}.catalog-frame{display:block;width:100%;height:70vh;border:0;border-radius:12px;background:#f8f8f8}.error{color:#a33;font-size:13px;margin:6px 0 0}.actions{display:flex;justify-content:flex-end;gap:12px;margin-top:28px}.button{border:0;border-radius:20px;padding:12px 22px;font-weight:800;text-decoration:none;cursor:pointer}.button.secondary{background:#f1f1f1;color:#333}.button.primary{background:#f3c547;color:#111}.step-note{color:#777;line-height:1.5;font-size:13px;margin:-6px 0 18px}.service-modal{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.5)}.service-modal.open{display:flex}.service-panel{width:min(1000px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)}.service-panel header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.service-panel h3{margin:0;color:#b07c00}.close-service{border:0;background:#f1f1f1;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:20px}@media(max-width:700px){.page{padding:6px 18px 32px}.heading{width:220px;margin-left:18px}.wizard-layout{inset:50% auto auto 50%;width:calc(100vw - 24px);gap:0}.wizard-steps{display:none}.form-card{max-height:calc(100vh - 28px);padding:24px 18px}.grid{grid-template-columns:1fr}.types,.services,.theme-grid,.package-grid{grid-template-columns:1fr 1fr}}@media(max-width:430px){.types,.services,.theme-grid,.package-grid{grid-template-columns:1fr}}
         .review-modal{display:none;position:fixed;inset:0;z-index:20;align-items:center;justify-content:center;padding:20px;background:#12161999}.review-modal.open{display:flex}.review-panel{width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border:1px solid #eee2b7;border-radius:24px;padding:24px;box-shadow:0 20px 60px #0004}.review-list{display:grid;gap:10px;margin:18px 0}.review-row{display:flex;justify-content:space-between;gap:16px;padding:13px 14px;border:1px solid #eee2d2;border-radius:12px}.review-row small{display:block;color:#777;margin-top:4px}.review-price{color:#a77700;font-weight:800;white-space:nowrap}.review-total{display:flex;justify-content:space-between;border-top:2px solid #eee2b7;padding-top:16px;font-size:20px;font-weight:900}.review-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.review-actions button{height:42px;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer}.review-actions .secondary{background:#f1f1f1;color:#222}.review-actions .primary{background:#f3c547;color:#111}
+        .package-modal{display:none;position:fixed;inset:0;z-index:15;align-items:center;justify-content:center;padding:20px;background:#12161999}.package-modal.open{display:flex}.package-panel{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border:1px solid #eee2b7;border-radius:24px;padding:24px;box-shadow:0 20px 60px #0004}.package-panel h2{margin:0 0 8px;color:#b07c00;font-size:22px}.package-panel .step-note{margin-bottom:18px}.package-modal-actions{display:flex;justify-content:space-between;gap:10px;margin-top:20px}.package-modal-actions button{height:42px;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer}.package-modal-actions .secondary{background:#f1f1f1;color:#222}.package-modal-actions .primary{background:#f3c547;color:#111}
     </style>
 </head>
 <body>
@@ -56,9 +61,6 @@
             <div id="themeChips" class="theme-grid"></div>
             <input id="theme" name="theme" value="{{ old('theme') }}" placeholder="Choose a theme or type your own" style="display:none;">
             @error('theme')<p class="error">{{ $message }}</p>@enderror
-            <div class="section-subtitle" style="color:#b07c00;font-weight:800;margin:22px 0 10px;">Suggested Packages</div>
-            <p class="step-note">Choose a package to pre-fill your budget and services.</p>
-            <div id="packageCards" class="package-grid"></div>
             <div class="actions"><a class="button secondary" href="{{ route('home') }}">Cancel</a><button class="button primary" type="button" data-next>Next</button></div>
         </section>
 
@@ -70,7 +72,6 @@
                 <div class="field"><label for="guest_count">Number of attendees</label><input id="guest_count" type="number" name="guest_count" min="1" value="{{ old('guest_count', 1) }}" required>@error('guest_count')<p class="error">{{ $message }}</p>@enderror</div>
                 <div class="field"><label for="event_time">Start time</label><input id="event_time" type="time" name="event_time" value="{{ old('event_time') }}" required>@error('event_time')<p class="error">{{ $message }}</p>@enderror</div>
                 <div class="field"><label for="event_end_time">End time</label><input id="event_end_time" type="time" name="event_end_time" value="{{ old('event_end_time') }}" required>@error('event_end_time')<p class="error">{{ $message }}</p>@enderror</div>
-                <div class="field"><label for="event_budget">Estimated budget (PHP)</label><input id="event_budget" type="number" name="event_budget" min="0" step="0.01" value="{{ old('event_budget', $prefill['budget']) }}"></div>
             </div>
             <div class="actions"><button class="button secondary" type="button" data-back>Back</button><button class="button primary" type="button" data-next>Next</button></div>
         </section>
@@ -93,6 +94,19 @@
     </form>
     </div>
 </div>
+<div class="package-modal" id="packageModal" aria-hidden="true">
+    <div class="package-panel" role="dialog" aria-modal="true" aria-labelledby="packageTitle">
+        <h2 id="packageTitle" style="color:#b07c00;font-size:16px;font-weight:800;margin:8px 0 6px;">Enter Your Budget</h2>
+        <div class="field" style="margin-bottom:18px;"><label for="event_budget" style="font-weight:400;font-size:13px;text-transform:none;letter-spacing:normal;color:#777;line-height:1.5;">Budget</label><input id="event_budget" type="number" name="event_budget" min="0" step="0.01" value="{{ old('event_budget', $prefill['budget']) }}"></div>
+        <div class="section-subtitle" style="color:#b07c00;font-weight:800;margin:8px 0 6px;">Suggested Packages</div>
+        <p class="step-note">Choose a package to pre-fill your budget and services, or continue without selecting one.</p>
+        <div id="packageCards" class="package-grid"></div>
+        <div class="package-modal-actions">
+            <button type="button" class="secondary" data-close-packages>Back to Schedule</button>
+            <button type="button" class="primary" data-continue-packages>Continue to Services</button>
+        </div>
+    </div>
+</div>
 <div class="review-modal" id="reviewModal" aria-hidden="true"><div class="review-panel" role="dialog" aria-modal="true" aria-labelledby="reviewTitle"><h2 id="reviewTitle">Review Selected Services</h2><p class="step-note">Check your selected services and estimated total before creating the event.</p><div class="review-list" id="reviewList"></div><div class="review-total"><span>Total</span><span id="reviewTotal">₱0.00</span></div><div class="review-actions"><button type="button" class="secondary" data-close-review>Back</button><button type="button" class="primary" data-confirm-review>Confirm and Create Event</button></div></div></div>
 <div class="service-modal" id="serviceModal" aria-hidden="true"><div class="service-panel"><header><div><h3 id="serviceModalTitle">Available Services</h3><a class="service-catalog-link" id="serviceCatalogLink" href="#">Open full catalog</a></div><button class="close-service" type="button" data-close-service aria-label="Close">&times;</button></header><div id="serviceResults"></div></div></div>
 <style>
@@ -100,6 +114,7 @@
 </style>
 <div class="venue-modal" id="venueAvailabilityModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Availability</h2><p id="venueAvailabilityText">Check available dates for this venue.</p><div class="venue-calendar-heading"><strong id="venueCalendarMonth">Available dates</strong><div class="venue-legend"><span><i></i>Open</span><span><i class="booked-dot"></i>Booked</span></div></div><div class="venue-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="venue-dates" id="venueDates"></div><div class="venue-modal-actions"><button class="secondary" type="button" data-close-venue>Cancel</button><button class="primary" type="button" data-venue-addons>Continue to Add-ons</button></div></div></div>
 <div class="venue-modal" id="venueAddonsModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Add-ons</h2><p>Select additional services this venue can provide.</p><div class="venue-addons" id="venueAddons"></div><div class="venue-addon-total"><span>Add-ons total</span><strong id="venueAddonsTotal">₱0.00</strong></div><div class="venue-modal-actions"><button class="secondary" type="button" data-back-venue>Back</button><button class="primary" type="button" data-confirm-venue>Confirm and Select Venue</button></div></div></div>
+<div class="venue-modal" id="addonDetailsModal" aria-hidden="true"><div class="venue-panel addon-details-panel"><h2 id="addonDetailsTitle">Add-on Details</h2><p id="addonDetailsText">No additional details were provided for this add-on.</p><div class="venue-modal-actions"><button class="secondary" type="button" data-close-addon-details>Close</button></div></div></div>
 <script>
     const eventTypeInputs = document.querySelectorAll('input[name="event_type"]');
     const otherInput = document.getElementById('other_event_type');
@@ -216,6 +231,9 @@
     const venueAddons = document.getElementById('venueAddons');
     const venueAddonsTotal = document.getElementById('venueAddonsTotal');
     const venueCalendarMonth = document.getElementById('venueCalendarMonth');
+    const addonDetailsModal = document.getElementById('addonDetailsModal');
+    const addonDetailsTitle = document.getElementById('addonDetailsTitle');
+    const addonDetailsText = document.getElementById('addonDetailsText');
     let pendingVenue = null;
     function closeVenueModals() {
         venueAvailabilityModal.classList.remove('open');
@@ -240,7 +258,16 @@
             return `<div class="venue-date ${item.available ? '' : 'booked'}"><span class="day-name">${dayName}</span><strong>${date.getDate()}</strong><span>${item.available ? 'Open' : 'Booked'}</span></div>`;
         }).join('');
         pendingVenue.addons = data.addons || [];
-        venueAddons.innerHTML = pendingVenue.addons.map(addon => `<label class="venue-addon"><span><input type="checkbox" value="${addon.key}" data-price="${addon.price}"> ${addon.label}</span><strong>₱${Number(addon.price).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})}</strong></label>`).join('') || '<p>This venue has no listed add-ons.</p>';
+        venueAddons.innerHTML = pendingVenue.addons.map((addon, index) => `<label class="venue-addon"><span><input type="checkbox" value="${addon.key}" data-price="${addon.price}"> ${addon.label}</span><span class="venue-addon-info"><strong>₱${Number(addon.price).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})}</strong><button type="button" class="addon-details-button" data-addon-index="${index}">View Details</button></span></label>`).join('') || '<p>This venue has no listed add-ons.</p>';
+        venueAddons.querySelectorAll('[data-addon-index]').forEach(button => button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            const addon = pendingVenue.addons[Number(button.dataset.addonIndex)];
+            addonDetailsTitle.textContent = `${addon.label} Details`;
+            addonDetailsText.textContent = addon.details || 'No additional details were provided for this add-on.';
+            addonDetailsModal.classList.add('open');
+            addonDetailsModal.setAttribute('aria-hidden', 'false');
+        }));
         venueAddons.querySelectorAll('input[type="checkbox"]').forEach(input => input.addEventListener('change', () => {
             const total = [...venueAddons.querySelectorAll('input:checked')].reduce((sum, item) => sum + Number(item.dataset.price || 0), 0);
             venueAddonsTotal.textContent = '₱' + total.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -250,6 +277,16 @@
     }
     }
     document.querySelector('[data-close-venue]').addEventListener('click', closeVenueModals);
+    document.querySelector('[data-close-addon-details]').addEventListener('click', () => {
+        addonDetailsModal.classList.remove('open');
+        addonDetailsModal.setAttribute('aria-hidden', 'true');
+    });
+    addonDetailsModal.addEventListener('click', event => {
+        if (event.target === addonDetailsModal) {
+            addonDetailsModal.classList.remove('open');
+            addonDetailsModal.setAttribute('aria-hidden', 'true');
+        }
+    });
     document.querySelector('[data-venue-addons]').addEventListener('click', () => { venueAvailabilityModal.classList.remove('open'); venueAddonsModal.classList.add('open'); });
     document.querySelector('[data-back-venue]').addEventListener('click', () => { venueAddonsModal.classList.remove('open'); venueAvailabilityModal.classList.add('open'); });
     document.querySelector('[data-confirm-venue]').addEventListener('click', () => {
@@ -321,6 +358,26 @@
         document.getElementById('reviewModal').classList.remove('open');
         document.getElementById('reviewModal').setAttribute('aria-hidden', 'true');
     }
+    const packageModal = document.getElementById('packageModal');
+    function openPackageModal() {
+        packageModal.classList.add('open');
+        packageModal.setAttribute('aria-hidden', 'false');
+    }
+    function closePackageModal() {
+        packageModal.classList.remove('open');
+        packageModal.setAttribute('aria-hidden', 'true');
+    }
+    document.querySelector('[data-close-packages]').addEventListener('click', () => {
+        closePackageModal();
+        showStep(2);
+    });
+    document.querySelector('[data-continue-packages]').addEventListener('click', () => {
+        closePackageModal();
+        showStep(3);
+    });
+    packageModal.addEventListener('click', event => {
+        if (event.target === packageModal) closePackageModal();
+    });
     document.querySelector('[data-review]').addEventListener('click', openReview);
     document.querySelector('[data-close-review]').addEventListener('click', closeReview);
     document.querySelector('[data-confirm-review]').addEventListener('click', () => {
@@ -358,6 +415,10 @@
         }
         const visibleFields = steps[currentStep - 1].querySelectorAll('input[required]');
         if (![...visibleFields].every(field => field.reportValidity())) return;
+        if (currentStep === 2) {
+            openPackageModal();
+            return;
+        }
         showStep(Math.min(currentStep + 1, steps.length));
     }));
     document.querySelectorAll('[data-back]').forEach(button => button.addEventListener('click', () => showStep(Math.max(currentStep - 1, 1))));

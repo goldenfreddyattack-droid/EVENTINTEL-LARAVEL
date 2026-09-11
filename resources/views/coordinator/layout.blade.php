@@ -22,7 +22,7 @@
             <li class="{{ request()->routeIs('coordinator.proposals') ? 'active' : '' }}"><a href="{{ route('coordinator.proposals') }}">PROPOSALS</a></li>
             <li class="{{ request()->routeIs('coordinator.packages') ? 'active' : '' }}"><a href="{{ route('coordinator.packages') }}">PACKAGES</a></li>
             <li class="{{ request()->routeIs('coordinator.newsfeed') ? 'active' : '' }}"><a href="{{ route('coordinator.newsfeed') }}">NEWSFEED</a></li>
-            <li><a href="{{ route('coordinator.messages') }}">MESSAGES</a></li>
+            <li class="{{ request()->routeIs('coordinator.messages') ? 'active' : '' }}"><a href="{{ route('coordinator.messages') }}">MESSAGES</a></li>
             <li class="{{ request()->routeIs('coordinator.suppliers') ? 'active' : '' }}"><a href="{{ route('coordinator.suppliers') }}">MY SUPPLIERS</a></li>
             <li class="{{ request()->routeIs('coordinator.reports') ? 'active' : '' }}"><a href="{{ route('coordinator.reports') }}">REPORTS</a></li>
             <li class="{{ request()->routeIs('coordinator.settings') ? 'active' : '' }}"><a href="{{ route('coordinator.settings') }}">SETTINGS</a></li>

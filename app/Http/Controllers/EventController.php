@@ -99,21 +99,30 @@ class EventController extends Controller
             'photographer' => 'venueaddons_price4',
             'sounds_lights' => 'venueaddons_price5',
         ];
+        $addonDetailColumns = [
+            'catering' => 'venueaddons_details1',
+            'clothes' => 'venueaddons_details2',
+            'host' => 'venueaddons_details3',
+            'photographer' => 'venueaddons_details4',
+            'sounds_lights' => 'venueaddons_details5',
+        ];
         $addons = collect();
         if ($venue && Schema::hasColumn('supplier_services', 'venue_add_ons')) {
             $addons = collect(json_decode($venue->venue_add_ons ?? '[]', true) ?: [])
                 ->values()
-                ->map(function (string $addon) use ($addonMap, $addonPriceColumns, $venue) {
+                ->map(function (string $addon) use ($addonMap, $addonPriceColumns, $addonDetailColumns, $venue) {
                     $key = $addonMap[strtolower(trim($addon))] ?? null;
                     if (!$key) {
                         return null;
                     }
 
                     $priceColumn = $addonPriceColumns[$key];
+                    $detailColumn = $addonDetailColumns[$key];
                     return [
                         'key' => $key,
                         'label' => $key === 'sounds_lights' ? 'Sounds & Lights' : ucfirst($key),
                         'price' => (float) ($venue->{$priceColumn} ?? 0),
+                        'details' => (string) ($venue->{$detailColumn} ?? ''),
                     ];
                 })
                 ->filter()

@@ -97,9 +97,7 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('supplier.feed');
     })->name('supplier.newsfeed');
 
-    Route::get('/supplier/feed', function () {
-        return redirect()->route('newsfeed');
-    })->name('supplier.feed');
+    Route::get('/supplier/feed', [App\Http\Controllers\SupplierFeedController::class, 'index'])->name('supplier.feed');
         Route::get('/admin', [\App\Http\Controllers\AdminController::class, 'dashboard'])->name('admin.dashboard');
         Route::post('/admin/users', [\App\Http\Controllers\AdminController::class, 'createUser'])->name('admin.users.store');
         Route::get('/admin/requests', [\App\Http\Controllers\AdminController::class, 'requests'])->name('admin.requests');

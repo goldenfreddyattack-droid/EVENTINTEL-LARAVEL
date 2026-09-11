@@ -8,6 +8,16 @@
     <link rel="stylesheet" href="{{ asset('css/fontawesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/userui/navbar.css') }}">
     <link rel="stylesheet" href="{{ asset('css/userui/newsfeed.css') }}">
+    <style>
+        .newsfeed-content { width:min(980px,100%); margin-top:20px; padding:20px 24px; border:1px solid #ebebeb; border-radius:20px; background:#fff; box-shadow:0 10px 30px rgba(0,0,0,.03); }
+        .newsfeed-heading { border-bottom:1px solid #f0f0f0; padding-bottom:12px; margin-bottom:16px; }
+        .newsfeed-heading h1 { font-size:22px; margin-bottom:2px; }
+        .newsfeed-eyebrow { display:none; }
+        .create-post-card { margin-bottom:20px; padding:16px; border-radius:14px; box-shadow:none; background:#fafafa; }
+        .post-card { padding:16px; margin-bottom:16px; border-radius:14px; box-shadow:none; background:#fafafa; }
+        .post-submit { border-radius:8px; padding:8px 16px; }
+        @media(max-width:640px) { .newsfeed-content { padding:18px 16px; } }
+    </style>
 </head>
 <body>
     <div class="newsfeed-page">
@@ -69,9 +79,9 @@
                             <button type="submit">Comment</button>
                         </form>
                         <footer class="post-footer">
-                            <button class="like-button {{ in_array($post->post_id, $likedPostIds) ? 'liked' : '' }}" data-post-id="{{ $post->post_id }}"><i class="{{ in_array($post->post_id, $likedPostIds) ? 'fas' : 'far' }} fa-heart"></i> <span class="like-label">{{ in_array($post->post_id, $likedPostIds) ? 'Unlike' : 'Like' }}</span> <span class="like-count">{{ $post->likes_count }}</span></button>
+                            <button class="like-button {{ in_array($post->post_id, $likedPostIds) ? 'liked' : '' }}" data-post-id="{{ $post->post_id }}" aria-label="Like post"><i class="{{ in_array($post->post_id, $likedPostIds) ? 'fas' : 'far' }} fa-heart"></i> <span class="like-count">{{ $post->likes_count }}</span></button>
                             <span><i class="far fa-comment" aria-hidden="true"></i> <span class="comment-count">{{ $post->comments_count }}</span> comments</span>
-                            <button type="button" class="share-button" data-url="{{ url('/newsfeed') }}#post-{{ $post->post_id }}"><i class="far fa-share" aria-hidden="true"></i> Share</button>
+                            <button type="button" class="share-button" data-url="{{ url('/newsfeed') }}#post-{{ $post->post_id }}"><i class="fas fa-share-nodes" aria-hidden="true"></i> Share</button>
                         </footer>
                     </article>
                 @empty
@@ -103,7 +113,6 @@
             const data = await response.json();
             button.classList.toggle('liked', data.liked);
             button.querySelector('i').className = `${data.liked ? 'fas' : 'far'} fa-heart`;
-            button.querySelector('.like-label').textContent = data.liked ? 'Unlike' : 'Like';
             button.querySelector('.like-count').textContent = data.likes;
         }));
 
@@ -123,7 +132,7 @@
         document.querySelectorAll('.share-button').forEach(button => button.addEventListener('click', async () => {
             await navigator.clipboard?.writeText(button.dataset.url);
             button.innerHTML = '<i class="fas fa-check"></i> Copied';
-            setTimeout(() => button.innerHTML = '<i class="far fa-share"></i> Share', 1600);
+            setTimeout(() => button.innerHTML = '<i class="fas fa-share-nodes"></i> Share', 1600);
         }));
     </script>
 </body>

@@ -35,7 +35,19 @@ class LoginController extends Controller
 
         $user = User::where('email', $login)->first();
 
-        if ($user && Hash::check($password, $user->password)) {
+        if (! $user) {
+            return back()
+                ->withInput($request->only('login'))
+                ->withErrors(['login' => 'That email address does not exist.']);
+        }
+
+        if (! Hash::check($password, $user->password)) {
+            return back()
+                ->withInput($request->only('login'))
+                ->withErrors(['password' => 'The password is incorrect.']);
+        }
+
+        if ($user) {
             if (is_null($user->email_verified_at)) {
                 return back()
                     ->withInput($request->only('login', 'password'))
@@ -78,7 +90,7 @@ class LoginController extends Controller
         }
 
         return back()
-            ->withInput($request->only('login', 'password'))
+            ->withInput($request->only('login'))
             ->withErrors(['login' => trans('auth.failed')]);
     }
 
