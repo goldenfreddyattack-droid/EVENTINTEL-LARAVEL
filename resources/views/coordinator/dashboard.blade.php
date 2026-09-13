@@ -46,7 +46,7 @@
 
 @section('content')
 <div class="coord-container">
-    
+
     {{-- FLOATING PANEL 1: Page Header --}}
     <div class="coord-card-floating">
         <header class="coord-header-bar">

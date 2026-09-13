@@ -175,7 +175,7 @@ class EventController extends Controller
         $venue = DB::table('supplier_services')->where('name', $data['venue_name'])->first();
         $capacity = $venue?->capacity ?: 200;
         if ($data['guest_count'] > $capacity) {
-            return back()->withInput()->withErrors(['guest_count' => "The selected venue can accommodate up to {$capacity} guests."]); 
+            return back()->withInput()->withErrors(['guest_count' => "The selected venue can accommodate up to {$capacity} guests."]);
         }
 
         $overlap = DB::table('events')

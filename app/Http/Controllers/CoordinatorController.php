@@ -201,21 +201,21 @@ class CoordinatorController extends Controller
         $events = DB::table('events')->where('coordinator', Auth::user()->full_name)->orderByDesc('created_at')->get();
         return view('coordinator.proposals', ['events' => $events, 'selectedEvent' => $events->firstWhere('event_id', (int) $request->get('event_id'))]);
     }
-    
+
     public function storeProposal(Request $request)
     {
         $data = $request->validate([
             'event_id' => ['required', 'integer'],
-            'venue' => ['nullable', 'string'], 
-            'catering' => ['nullable', 'string'], 
+            'venue' => ['nullable', 'string'],
+            'catering' => ['nullable', 'string'],
             'clothing' => ['nullable', 'string'],
-            'decorations' => ['nullable', 'string'], 
-            'host' => ['nullable', 'string'], 
+            'decorations' => ['nullable', 'string'],
+            'host' => ['nullable', 'string'],
             'photography' => ['nullable', 'string'],
-            'videography' => ['nullable', 'string'], 
-            'timeline' => ['nullable', 'string'], 
+            'videography' => ['nullable', 'string'],
+            'timeline' => ['nullable', 'string'],
             'cost_breakdown' => ['nullable', 'string'],
-            'recommendations' => ['nullable', 'string'], 
+            'recommendations' => ['nullable', 'string'],
             'total_quotation' => ['nullable', 'numeric', 'min:0'],
         ]);
         $event = DB::table('events')->where('event_id', $data['event_id'])->where('coordinator', Auth::user()->full_name)->first();
