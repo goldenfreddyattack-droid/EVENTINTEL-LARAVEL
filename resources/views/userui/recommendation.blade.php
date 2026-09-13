@@ -89,6 +89,20 @@
                     @endforeach
                 </div>
 
+                @if ($bookmarkedServices->isNotEmpty())
+                    <div class="recommendation-bookmarks">
+                        <h3>Bookmarked place picks</h3>
+                        <div class="recommendation-bookmark-list">
+                            @foreach ($bookmarkedServices as $saved)
+                                <div class="recommendation-bookmark-item">
+                                    <span>{{ $saved->name }}</span>
+                                    <small>{{ $saved->category ?: 'Venue' }} · ★ {{ number_format((float) ($saved->rating ?? 0), 1) }}</small>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <button class="recommendation-generate" type="button" onclick="generateRecommendation()">Generate Timeline &amp; Recommendations</button>
 
                 <div class="recommendation-result" id="result" aria-live="polite">
@@ -158,16 +172,54 @@
             result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        function applyRecommendationToCreateEvent() {
+        async function applyRecommendationToCreateEvent() {
             if (!currentRecommendation) {
                 alert('Please generate a recommendation first.');
                 return;
             }
 
-            const payload = JSON.stringify(currentRecommendation);
-            sessionStorage.setItem('event_recommendation_prefill', payload);
-            document.cookie = `event_recommendation_prefill=${encodeURIComponent(payload)}; path=/; max-age=3600`;
-            window.location.href = @json(route('coordinator.events')) + '?from=recommendation';
+            const payload = {
+                event_type: currentRecommendation.eventType,
+                budget: Number(document.getElementById('budget').value || 0),
+                guest_count: Number(document.getElementById('pax').value || 0),
+                services: currentRecommendation.services,
+            };
+
+            try {
+                const response = await fetch(@json(route('recommendation.use')), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Unable to use the recommendation.');
+                }
+
+                const prefill = JSON.stringify({
+                    event_type: payload.event_type,
+                    budget: payload.budget,
+                    services: payload.services,
+                });
+                sessionStorage.setItem('event_recommendation_prefill', prefill);
+                document.cookie = `event_recommendation_prefill=${encodeURIComponent(prefill)}; path=/; max-age=3600`;
+
+                const params = new URLSearchParams({
+                    event_type: payload.event_type,
+                    budget: String(payload.budget || 0),
+                    services: payload.services.join(','),
+                    from: 'recommendation',
+                });
+
+                window.location.href = (data.redirect_url || (@json(route('events.create')) + '?' + params.toString()));
+            } catch (error) {
+                console.error(error);
+                alert(error.message || 'Unable to use the recommendation right now.');
+            }
         }
 
         document.querySelectorAll('.recommendation-service').forEach(service => {

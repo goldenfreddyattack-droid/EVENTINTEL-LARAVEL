@@ -18,6 +18,7 @@
         <div class="brand"><h1><span class="blue-text">Event</span><span class="pink-text">Intel</span></h1><div class="user-info"><strong>{{ Auth::user()->full_name ?? 'Coordinator' }}</strong><span class="supplier"><i class="fas fa-circle"></i> Coordinator</span></div></div>
         <nav class="nav-menu"><ul>
             <li class="{{ request()->routeIs('coordinator.dashboard') ? 'active' : '' }}"><a href="{{ route('coordinator.dashboard') }}">DASHBOARD</a></li>
+            <li class="{{ request()->routeIs('events.create') ? 'active' : '' }}"><a href="{{ route('events.create') }}">CREATE EVENT</a></li>
             <li class="{{ request()->routeIs('coordinator.events') ? 'active' : '' }}"><a href="{{ route('coordinator.events') }}">ASSIGNED EVENTS</a></li>
             <li class="{{ request()->routeIs('coordinator.proposals') ? 'active' : '' }}"><a href="{{ route('coordinator.proposals') }}">PROPOSALS</a></li>
             <li class="{{ request()->routeIs('coordinator.packages') ? 'active' : '' }}"><a href="{{ route('coordinator.packages') }}">PACKAGES</a></li>

@@ -45,4 +45,12 @@ return [
         'project_id' => env('FIREBASE_PROJECT_ID', 'eventintel-72be0'),
     ],
 
+    'gcash' => [
+        'enabled' => env('GCASH_ENABLED', false),
+        'api_key' => env('GCASH_API_KEY', ''),
+        'merchant_id' => env('GCASH_MERCHANT_ID', ''),
+        'base_url' => env('GCASH_BASE_URL', 'https://api.xendit.co'),
+        'webhook_secret' => env('GCASH_WEBHOOK_SECRET', ''),
+    ],
+
 ];

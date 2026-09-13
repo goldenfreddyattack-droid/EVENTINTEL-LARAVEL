@@ -109,10 +109,48 @@ class SupplierDashboardController extends Controller
             }
         }
 
+        $monthlySummary = collect();
+        foreach ($bookingRows as $row) {
+            $monthKey = isset($row['event_date']) && $row['event_date']
+                ? \Carbon\Carbon::parse($row['event_date'])->format('Y-m')
+                : null;
+
+            if (!$monthKey) {
+                continue;
+            }
+
+            if (!isset($monthlySummary[$monthKey])) {
+                $monthlySummary[$monthKey] = [
+                    'month' => \Carbon\Carbon::parse($monthKey . '-01')->format('M Y'),
+                    'pending' => 0,
+                    'accepted' => 0,
+                    'rejected' => 0,
+                    'completed' => 0,
+                ];
+            }
+
+            $status = strtolower(trim((string) ($row['status'] ?? 'pending')));
+
+            if (in_array($status, ['pending', 'waiting'], true)) {
+                $monthlySummary[$monthKey]['pending']++;
+            } elseif (in_array($status, ['accepted', 'approved', 'confirmed'], true)) {
+                $monthlySummary[$monthKey]['accepted']++;
+            } elseif (in_array($status, ['declined', 'rejected', 'cancelled'], true)) {
+                $monthlySummary[$monthKey]['rejected']++;
+            } elseif (in_array($status, ['paid', 'finish', 'finished', 'done', 'completed'], true)) {
+                $monthlySummary[$monthKey]['completed']++;
+            } else {
+                $monthlySummary[$monthKey]['pending']++;
+            }
+        }
+
+        $monthlySummary = $monthlySummary->sortKeys()->values();
+
         return view('supplier.dashboard', [
             'stats'        => $stats,
             'serviceCount' => DB::table('supplier_services')->where('user_id', $userId)->count(),
             'services'     => $services,
+            'monthlySummary' => $monthlySummary,
             'newsFeed'     => [
                 ['title' => 'New supplier marketplace update', 'time' => '2 hours ago'],
                 ['title' => 'Booking trends are rising this week', 'time' => 'Today'],

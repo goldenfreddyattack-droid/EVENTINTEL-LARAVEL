@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\GcashService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -71,6 +72,119 @@ class YourEventsController extends Controller
         $guests = DB::table('guests')->where('event_id', $eventId)->orderBy('name')->get();
 
         return view('userui.guests', compact('event', 'guests'));
+    }
+
+    public function rsvp(Request $request)
+    {
+        $eventId = (int) ($request->query('event', $request->input('event_id', 0)));
+        $event = DB::table('events')->where('event_id', $eventId)->first();
+        $invitation = $event ? DB::table('invitations')->where('event_id', $eventId)->first() : null;
+
+        if ($request->isMethod('post')) {
+            $data = $request->validate([
+                'event_id' => ['required', 'integer', 'min:1'],
+                'name' => ['required', 'string', 'max:150'],
+                'email' => ['nullable', 'email', 'max:150'],
+                'phone' => ['nullable', 'string', 'max:50'],
+            ]);
+
+            $event = DB::table('events')->where('event_id', $data['event_id'])->first();
+            abort_unless((bool) $event, 404, 'Event not found.');
+
+            $qrCode = 'EI-' . $event->event_id . '-' . strtoupper(bin2hex(random_bytes(4)));
+            $guest = DB::table('guests')->where('event_id', $event->event_id)
+                ->where(function ($query) use ($data) {
+                    if (!empty($data['email'])) {
+                        $query->orWhere('email', $data['email']);
+                    }
+                    if (!empty($data['phone'])) {
+                        $query->orWhere('phone', $data['phone']);
+                    }
+                    $query->orWhere('name', $data['name']);
+                })
+                ->first();
+
+            if ($guest) {
+                DB::table('guests')->where('guest_id', $guest->guest_id)->update([
+                    'name' => $data['name'],
+                    'email' => $data['email'] ?? null,
+                    'phone' => $data['phone'] ?? null,
+                    'qr_code' => $guest->qr_code ?? $qrCode,
+                    'rsvp_status' => 'confirmed',
+                    'attended' => $guest->attended ?? 0,
+                    'updated_at' => now(),
+                ]);
+                $guestQr = $guest->qr_code ?? $qrCode;
+            } else {
+                $guestId = DB::table('guests')->insertGetId([
+                    'event_id' => $event->event_id,
+                    'name' => $data['name'],
+                    'email' => $data['email'] ?? null,
+                    'phone' => $data['phone'] ?? null,
+                    'qr_code' => $qrCode,
+                    'rsvp_status' => 'confirmed',
+                    'attended' => 0,
+                    'created_at' => now(),
+                ]);
+                $guestQr = DB::table('guests')->where('guest_id', $guestId)->value('qr_code');
+            }
+
+            return view('userui.rsvp', [
+                'event' => $event,
+                'invitation' => $invitation,
+                'guest' => (object) [
+                    'name' => $data['name'],
+                    'email' => $data['email'] ?? null,
+                    'phone' => $data['phone'] ?? null,
+                    'qr_code' => $guestQr,
+                    'rsvp_status' => 'confirmed',
+                ],
+                'success' => true,
+            ]);
+        }
+
+        abort_unless((bool) $event, 404, 'Event not found.');
+        return view('userui.rsvp', [
+            'event' => $event,
+            'invitation' => $invitation,
+            'guest' => null,
+            'success' => false,
+        ]);
+    }
+
+    public function scanner(Request $request, int $eventId)
+    {
+        $event = $this->ownedEvent($eventId);
+
+        if ($request->isMethod('post')) {
+            $data = $request->validate([
+                'qr' => ['required', 'string', 'max:100'],
+            ]);
+
+            $guest = DB::table('guests')
+                ->where('event_id', $eventId)
+                ->where('qr_code', $data['qr'])
+                ->first();
+
+            if (!$guest) {
+                return response()->json(['ok' => false, 'msg' => 'QR code not found for this event.'], 404);
+            }
+
+            if ((int) ($guest->attended ?? 0) === 1) {
+                return response()->json(['ok' => false, 'msg' => 'Already scanned.'], 409);
+            }
+
+            DB::table('guests')->where('guest_id', $guest->guest_id)->update([
+                'attended' => 1,
+                'scanned_at' => now(),
+                'rsvp_status' => 'confirmed',
+            ]);
+
+            return response()->json(['ok' => true, 'msg' => 'Welcome ' . $guest->name]);
+        }
+
+        $guests = DB::table('guests')->where('event_id', $eventId)->orderBy('name')->get();
+        return view('userui.qr-scanner', compact('event', 'guests'));
     }
 
     public function invitation(Request $request, int $eventId)
@@ -224,7 +338,7 @@ class YourEventsController extends Controller
             // If this is a venue selection with add-ons, clear and update addon fields
             if ($data['service_type'] === 'venue') {
                 $venueName = trim((string) $data['service_name']);
-                
+
                 // Add-ons are optional venue-provided services. Preserve independently
                 // selected services and update only the add-ons explicitly chosen here.
                 $selectedAddons = $data['addons'] ?? [];
@@ -259,17 +373,41 @@ class YourEventsController extends Controller
         $data = $request->validate([
             'service_type' => ['required', 'in:venue,catering,host,sounds_lights,photographer,clothes,coordinator'],
             'payment_method' => ['required', 'in:cash,online'],
+            'amount' => ['nullable', 'numeric', 'min:1'],
         ]);
         $event = $this->ownedEvent($eventId);
         $statusColumn = $data['service_type'] === 'sounds_lights' ? 'soundsnlights_status' : $data['service_type'] . '_status';
 
+        $paymentMethod = $data['payment_method'];
+        $amount = (float) ($data['amount'] ?? 0);
+        $gcashResponse = null;
+
+        if ($paymentMethod === 'online') {
+            $amount = $amount > 0 ? $amount : 500;
+            $gcashResponse = app(GcashService::class)->createPayment([
+                'external_id' => 'ei-event-' . $event->event_id . '-' . $data['service_type'] . '-' . now()->timestamp,
+                'amount' => $amount,
+                'description' => 'EventIntel payment for ' . ucfirst(str_replace('_', ' ', $data['service_type'])) . ' service',
+                'currency' => 'PHP',
+                'metadata' => [
+                    'event_id' => $event->event_id,
+                    'service_type' => $data['service_type'],
+                    'user_id' => Auth::id(),
+                ],
+            ]);
+        }
+
         DB::table('events')->where('event_id', $event->event_id)->update([
             $statusColumn => 'Pending Confirmation',
-            'payment_method' => $data['payment_method'],
-            'payment_status' => 'pending',
+            'payment_method' => $paymentMethod,
+            'payment_status' => $paymentMethod === 'online' ? 'pending_verification' : 'pending',
         ]);
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'payment_method' => $paymentMethod,
+            'gcash' => $gcashResponse,
+        ]);
     }
 
     private function ownedEvent(int $eventId): object

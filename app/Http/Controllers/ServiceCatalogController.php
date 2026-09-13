@@ -87,6 +87,87 @@ class ServiceCatalogController extends Controller
         ]);
     }
 
+    public function bookmark(Request $request, string $service, int $serviceId)
+    {
+        $definition = $this->definition($service);
+        $serviceRecord = $this->queryServices($definition['categories'])->firstWhere('service_id', $serviceId);
+        abort_unless($serviceRecord, 404);
+
+        if (!Schema::hasTable('user_service_bookmarks')) {
+            return response()->json([
+                'bookmarked' => false,
+                'count' => 0,
+                'message' => 'Bookmark table is not available yet.',
+            ], 409);
+        }
+
+        $existing = DB::table('user_service_bookmarks')
+            ->where('user_id', Auth::id())
+            ->where('service_id', $serviceId)
+            ->exists();
+
+        if ($existing) {
+            DB::table('user_service_bookmarks')
+                ->where('user_id', Auth::id())
+                ->where('service_id', $serviceId)
+                ->delete();
+
+            return response()->json([
+                'bookmarked' => false,
+                'count' => DB::table('user_service_bookmarks')->where('user_id', Auth::id())->count(),
+            ]);
+        }
+
+        DB::table('user_service_bookmarks')->insert([
+            'user_id' => Auth::id(),
+            'service_id' => $serviceId,
+            'created_at' => now(),
+        ]);
+
+        return response()->json([
+            'bookmarked' => true,
+            'count' => DB::table('user_service_bookmarks')->where('user_id', Auth::id())->count(),
+            'serviceName' => $serviceRecord->name,
+        ]);
+    }
+
+    public function bookmarkedServices()
+    {
+        if (!Schema::hasTable('user_service_bookmarks') || !Schema::hasTable('supplier_services')) {
+            return collect();
+        }
+
+        $userJoinColumn = Schema::hasColumn('users', 'user_id') ? 'users.user_id' : 'users.id';
+        $query = DB::table('user_service_bookmarks as bookmarks')
+            ->where('bookmarks.user_id', Auth::id())
+            ->join('supplier_services as services', 'services.service_id', '=', 'bookmarks.service_id')
+            ->leftJoin('users', 'services.user_id', '=', DB::raw($userJoinColumn));
+
+        $select = ['services.*'];
+        if (Schema::hasColumn('users', 'full_name')) {
+            $select[] = 'users.full_name as supplier_name';
+        }
+        if (Schema::hasColumn('users', 'business_name')) {
+            $select[] = 'users.business_name';
+        }
+
+        return $query->select($select)
+            ->orderByDesc('bookmarks.created_at')
+            ->get();
+    }
+
+    public function isBookmarked(int $serviceId): bool
+    {
+        if (!Schema::hasTable('user_service_bookmarks')) {
+            return false;
+        }
+
+        return DB::table('user_service_bookmarks')
+            ->where('user_id', Auth::id())
+            ->where('service_id', $serviceId)
+            ->exists();
+    }
+
     private function queryServices(array $categories, ?string $excludeSupplierName = null)
     {
         if (!Schema::hasTable('supplier_services')) {
@@ -94,11 +175,20 @@ class ServiceCatalogController extends Controller
         }
 
         $normalizedCategories = array_map(fn (string $category) => strtolower(trim($category)), $categories);
+        $userJoinColumn = Schema::hasColumn('users', 'user_id') ? 'users.user_id' : 'users.id';
         $query = DB::table('supplier_services as services')
-            ->leftJoin('users', 'services.user_id', '=', 'users.user_id')
+            ->leftJoin('users', 'services.user_id', '=', DB::raw($userJoinColumn))
             ->whereNotNull('services.name')
-            ->whereIn(DB::raw('LOWER(TRIM(services.category))'), $normalizedCategories)
-            ->select('services.*', 'users.full_name as supplier_name', 'users.business_name');
+            ->whereIn(DB::raw('LOWER(TRIM(services.category))'), $normalizedCategories);
+
+        $select = ['services.*'];
+        if (Schema::hasColumn('users', 'full_name')) {
+            $select[] = 'users.full_name as supplier_name';
+        }
+        if (Schema::hasColumn('users', 'business_name')) {
+            $select[] = 'users.business_name';
+        }
+        $query->select($select);
 
         if ($excludeSupplierName) {
             $query->where('services.name', '!=', $excludeSupplierName);

@@ -331,6 +331,188 @@ body::after {
     color: #555;
 }
 
+.homepage-browse-section {
+    margin-top: 20px;
+    padding: 26px 0 10px;
+}
+
+.homepage-browse-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-end;
+    margin-bottom: 24px;
+}
+
+.homepage-browse-tag {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(243, 197, 71, 0.14);
+    color: #a77700;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.homepage-browse-header h2 {
+    font-size: clamp(28px, 4vw, 40px);
+    color: #1d1d1d;
+}
+
+.homepage-browse-tools {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.homepage-browse-tools select {
+    min-width: 190px;
+    height: 46px;
+    padding: 0 16px;
+    border: 1px solid rgba(212, 160, 23, 0.35);
+    border-radius: 12px;
+    background: #fffdf8;
+    color: #222;
+    font: inherit;
+    font-weight: 600;
+}
+
+.homepage-browse-tools a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 18px;
+    border-radius: 12px;
+    background: linear-gradient(to right, #ffd54a, #d4a017);
+    color: #111;
+    text-decoration: none;
+    font-weight: 800;
+}
+
+.homepage-browse-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.homepage-browse-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    padding: 24px 22px 18px;
+    border: 1px solid rgba(212, 160, 23, 0.2);
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,1), rgba(255,248,221,0.8));
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04);
+}
+
+.homepage-browse-icon {
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    background: rgba(243, 197, 71, 0.18);
+    color: #a77700;
+    font-size: 24px;
+}
+
+.homepage-browse-card h3 {
+    margin: 18px 0 10px;
+    font-size: 24px;
+    color: #111;
+}
+
+.homepage-browse-card p {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.homepage-browse-meta {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    color: #744d00;
+    font-weight: 700;
+}
+
+.homepage-browse-meta a {
+    color: #111;
+    text-decoration: none;
+    font-weight: 800;
+}
+
+.homepage-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    margin-top: 38px;
+    padding: 30px 0 18px;
+    border-top: 1px solid rgba(212, 160, 23, 0.2);
+}
+
+.homepage-footer-brand {
+    max-width: 420px;
+}
+
+.homepage-footer-logo {
+    margin-bottom: 12px;
+    color: #d4a017;
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+}
+
+.homepage-footer-brand p {
+    color: #555;
+    line-height: 1.7;
+}
+
+.homepage-footer-links {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px;
+    width: min(520px, 100%);
+}
+
+.homepage-footer-links h4 {
+    margin-bottom: 12px;
+    color: #111;
+    font-size: 16px;
+}
+
+.homepage-footer-links a {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    text-decoration: none;
+}
+
+.homepage-footer-links a:hover {
+    color: #a77700;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .homepage-carousel {
     max-width: 1600px;
     margin: 0 auto;
@@ -470,6 +652,11 @@ body::after {
     .homepage-button-group { flex-direction: column; align-items: center; }
     .homepage-action { width: 100%; max-width: 320px; }
     .homepage-carousel { padding: 40px 58px; }
+    .homepage-browse-header { display: block; }
+    .homepage-browse-tools { margin-top: 16px; }
+    .homepage-browse-grid { grid-template-columns: 1fr; }
+    .homepage-footer { display: block; }
+    .homepage-footer-links { width: 100%; margin-top: 20px; }
 }
 
 @media (max-width: 720px) {

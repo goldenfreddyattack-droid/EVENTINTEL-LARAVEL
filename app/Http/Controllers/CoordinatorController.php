@@ -86,11 +86,49 @@ class CoordinatorController extends Controller
     {
         $name = Auth::user()->full_name;
         $events = DB::table('events')->where('coordinator', $name)->orderByDesc('event_id')->get();
-        $status = fn ($event) => strtolower(str_replace('_', ' ', trim((string) ($event->coordinator_status ?? 'pending'))));
-        $pending = $events->filter(fn ($event) => $status($event) === 'pending')->count();
-        $ongoing = $events->filter(fn ($event) => in_array($status($event), ['pending confirmation', 'accepted', 'proposal sent', 'payment pending', 'paid'], true))->count();
+
+        $status = fn ($event) => strtolower(str_replace('_', ' ', trim((string) ($event->coordinator_status ?? $event->status ?? 'pending'))));
+        $pending = $events->filter(fn ($event) => in_array($status($event), ['pending', 'waiting', 'submitted'], true))->count();
+        $accepted = $events->filter(fn ($event) => in_array($status($event), ['accepted', 'approved', 'confirmed', 'proposal accepted', 'proposal_sent', 'proposal sent'], true))->count();
+        $rejected = $events->filter(fn ($event) => in_array($status($event), ['declined', 'rejected', 'cancelled', 'proposal_declined', 'proposal declined'], true))->count();
+        $completed = $events->filter(fn ($event) => in_array($status($event), ['paid', 'completed', 'finished', 'done'], true))->count();
+        $ongoing = $events->filter(fn ($event) => in_array($status($event), ['pending confirmation', 'accepted', 'proposal sent', 'payment pending', 'paid', 'ongoing'], true))->count();
         $totalSuppliers = DB::table('supplier_services')->distinct('user_id')->count('user_id');
-        return view('coordinator.dashboard', compact('events', 'pending', 'ongoing', 'totalSuppliers'));
+
+        $monthlySummary = collect();
+        foreach ($events as $event) {
+            $monthKey = !empty($event->event_date)
+                ? \Carbon\Carbon::parse($event->event_date)->format('Y-m')
+                : null;
+            if (!$monthKey) {
+                continue;
+            }
+
+            if (!isset($monthlySummary[$monthKey])) {
+                $monthlySummary[$monthKey] = [
+                    'month' => \Carbon\Carbon::parse($monthKey . '-01')->format('M Y'),
+                    'pending' => 0,
+                    'accepted' => 0,
+                    'rejected' => 0,
+                    'completed' => 0,
+                ];
+            }
+
+            $eventStatus = $status($event);
+            if (in_array($eventStatus, ['pending', 'waiting', 'submitted'], true)) {
+                $monthlySummary[$monthKey]['pending']++;
+            } elseif (in_array($eventStatus, ['accepted', 'approved', 'confirmed', 'proposal accepted', 'proposal_sent', 'proposal sent'], true)) {
+                $monthlySummary[$monthKey]['accepted']++;
+            } elseif (in_array($eventStatus, ['declined', 'rejected', 'cancelled', 'proposal_declined', 'proposal declined'], true)) {
+                $monthlySummary[$monthKey]['rejected']++;
+            } elseif (in_array($eventStatus, ['paid', 'completed', 'finished', 'done'], true)) {
+                $monthlySummary[$monthKey]['completed']++;
+            } else {
+                $monthlySummary[$monthKey]['pending']++;
+            }
+        }
+
+        return view('coordinator.dashboard', compact('events', 'pending', 'accepted', 'rejected', 'completed', 'ongoing', 'totalSuppliers', 'monthlySummary'));
     }
 
     public function events()

@@ -29,7 +29,7 @@ class EventController extends Controller
 
     public function create(Request $request)
     {
-        abort_unless(Auth::user()->role === 'client', 403, 'Client access only.');
+        abort_unless(in_array(Auth::user()->role, ['client', 'coordinator'], true), 403, 'Client or coordinator access only.');
         $availableServices = Schema::hasTable('supplier_services')
             ? DB::table('supplier_services')->select('name', 'category', 'price', 'capacity', 'address')->whereNotNull('name')->orderBy('category')->orderBy('price')->get()
             : collect();
@@ -54,7 +54,7 @@ class EventController extends Controller
 
     public function venueAvailability(Request $request)
     {
-        abort_unless(Auth::user()->role === 'client', 403, 'Client access only.');
+        abort_unless(in_array(Auth::user()->role, ['client', 'coordinator'], true), 403, 'Client or coordinator access only.');
 
         $venueName = trim((string) $request->query('venue'));
         abort_unless($venueName !== '', 422, 'A venue is required.');
@@ -135,7 +135,7 @@ class EventController extends Controller
 
     public function store(Request $request)
     {
-        abort_unless(Auth::user()->role === 'client', 403, 'Client access only.');
+        abort_unless(in_array(Auth::user()->role, ['client', 'coordinator'], true), 403, 'Client or coordinator access only.');
 
         if ($this->hasReachedPlanningEventLimit(Auth::id())) {
             return back()->withInput()->withErrors([

@@ -24,7 +24,7 @@
     .stat-box:hover {background: #ffffff; border-color: var(--border2); transform: translateY(-2px);}
     .stat-label {font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;}
     .stat-num {font-size: 24px; font-weight: 800; line-height: 1.1;}
-    
+
     /* Stat Custom Colors */
     .text-gold {color: var(--gold);}
     .text-pending {color: #f39c12;}
@@ -75,6 +75,14 @@
 
     /* ===== Chart Container Styling ===== */
     .chart-wrapper {position: relative; width: 100%; height: 300px; margin-top: 10px;}
+    .monthly-table-wrap {margin-top: 18px; overflow-x: auto;}
+    .monthly-table {width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #ececec; border-radius: 12px; overflow: hidden;}
+    .monthly-table th, .monthly-table td {padding: 12px 14px; border-bottom: 1px solid #f0f0f0; text-align: left; font-size: 14px;}
+    .monthly-table th {background: #faf7ee; color: #6b5d2e; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;}
+    .monthly-table tbody tr:last-child td {border-bottom: none;}
+    .month-pill {display: inline-flex; align-items: center; gap: 6px; background: rgba(243,197,71,0.12); color: #7d650d; border-radius: 999px; padding: 6px 10px; font-weight: 700; font-size: 12px;}
+    .status-dot {display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;}
+    .dot-pending {background:#f39c12;} .dot-accepted {background:#27ae60;} .dot-rejected {background:#c0392b;} .dot-completed {background:#2980b9;}
 </style>
 
 <section class="dashboard-container">
@@ -144,14 +152,57 @@
         </div>
     </div>
 
-    {{-- FLOATING PANEL 4: Services Section --}}
+    {{-- FLOATING PANEL 4: Monthly Summary --}}
+    <div class="dash-card-floating">
+        <div class="section-title">
+            <div>
+                <h3>Monthly Service Summary</h3>
+                <p class="section-subtitle">Status count by month with a simple trend chart</p>
+            </div>
+        </div>
+
+        <div class="chart-wrapper" style="height: 260px;">
+            <canvas id="monthlyTrendChart"></canvas>
+        </div>
+
+        <div class="monthly-table-wrap">
+            <table class="monthly-table">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Pending</th>
+                        <th>Accepted</th>
+                        <th>Rejected</th>
+                        <th>Completed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($monthlySummary as $month)
+                        <tr>
+                            <td><span class="month-pill">{{ $month['month'] }}</span></td>
+                            <td>{{ $month['pending'] }}</td>
+                            <td>{{ $month['accepted'] }}</td>
+                            <td>{{ $month['rejected'] }}</td>
+                            <td>{{ $month['completed'] }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" style="text-align:center; color: var(--muted);">No service activity yet.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- FLOATING PANEL 5: Services Section --}}
     <div class="dash-card-floating">
         <div class="section-title">
             <div>
                 <h3>Your Services</h3>
                 <p class="section-subtitle">Manage and monitor your active offerings</p>
             </div>
-            
+
             <div class="filter-pills">
                 <button class="pill-btn active" data-filter="all">All ({{ count($services) }})</button>
                 <button class="pill-btn" data-filter="active">Active</button>
@@ -162,14 +213,14 @@
             @forelse($services as $service)
                 <div class="dash-service-card" data-status="{{ $service->status ?? 'active' }}" data-category="{{ strtolower($service->category) }}">
                     <div class="card-img-wrapper">
-                        <img 
-                            src="{{ $service->service_pic ? route('supplier.services.image', $service->service_id) : asset('images/AdminLTELogo.png') }}" 
-                            alt="{{ $service->name }}" 
-                            onerror="this.onerror=null;this.src='{{ asset('images/AdminLTELogo.png') }}';" 
+                        <img
+                            src="{{ $service->service_pic ? route('supplier.services.image', $service->service_id) : asset('images/AdminLTELogo.png') }}"
+                            alt="{{ $service->name }}"
+                            onerror="this.onerror=null;this.src='{{ asset('images/AdminLTELogo.png') }}';"
                             loading="lazy"
                         />
                         <span class="card-badge"><i class="fas fa-star"></i> {{ number_format($service->rating ?? 5, 1) }}</span>
-                        
+
                         <div class="card-actions-dropdown">
                             <button class="card-action-btn" type="button" aria-label="Service actions">
                                 <i class="fas fa-ellipsis-v"></i>
@@ -179,11 +230,11 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="card-body">
                         <h4>{{ $service->name }}</h4>
                         <span class="card-category">{{ $service->category }}</span>
-                        
+
                         <div class="card-footer">
                             <span class="card-price">₱{{ number_format($service->price ?? 0) }}</span>
                             <span class="status-indicator {{ $service->status ?? 'active' }}">{{ ucfirst($service->status ?? 'active') }}</span>
@@ -239,6 +290,63 @@
                 plugins: {
                     legend: {
                         display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+
+        const monthlyLabels = @json(collect($monthlySummary)->pluck('month')->all());
+        const monthlyPending = @json(collect($monthlySummary)->pluck('pending')->all());
+        const monthlyAccepted = @json(collect($monthlySummary)->pluck('accepted')->all());
+        const monthlyRejected = @json(collect($monthlySummary)->pluck('rejected')->all());
+        const monthlyCompleted = @json(collect($monthlySummary)->pluck('completed')->all());
+
+        const monthlyTrendChart = new Chart(document.getElementById('monthlyTrendChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels,
+                datasets: [
+                    {
+                        label: 'Pending',
+                        data: monthlyPending,
+                        backgroundColor: '#f39c12',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Accepted',
+                        data: monthlyAccepted,
+                        backgroundColor: '#27ae60',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Rejected',
+                        data: monthlyRejected,
+                        backgroundColor: '#c0392b',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Completed',
+                        data: monthlyCompleted,
+                        backgroundColor: '#2980b9',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
                     }
                 },
                 scales: {

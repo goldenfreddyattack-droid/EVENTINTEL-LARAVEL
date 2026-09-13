@@ -56,6 +56,7 @@
             <input name="email" type="email" value="{{ old('email') }}" placeholder="Email">
             <input name="phone" value="{{ old('phone') }}" placeholder="Phone">
             <button class="btn" type="submit"><i class="fas fa-qrcode" aria-hidden="true"></i>&nbsp; Add Guest + Generate QR</button>
+            <a class="btn" href="{{ route('your.events.scanner', $event->event_id) }}" style="background:#e8f0ff;">Open QR Scanner</a>
             @error('name')<p class="error">{{ $message }}</p>@enderror
             @error('email')<p class="error">{{ $message }}</p>@enderror
             @error('phone')<p class="error">{{ $message }}</p>@enderror
@@ -63,6 +64,7 @@
 
         <section class="card">
             <h2>Guests <span style="color:var(--muted);font-size:15px;font-weight:600;">({{ $guests->count() }})</span></h2>
+            <p style="margin-top:12px; color:var(--muted);">On event day, open the QR scanner and scan each guest's code before they enter the venue.</p>
             @if($guests->isEmpty())
                 <p class="empty-state" style="margin-top:12px;">No guests added yet.</p>
             @else
@@ -72,7 +74,9 @@
                             <h2>{{ $guest->name }}</h2>
                             @if($guest->email)<p><strong>Email:</strong> {{ $guest->email }}</p>@endif
                             @if($guest->phone)<p><strong>Phone:</strong> {{ $guest->phone }}</p>@endif
-                            <p class="qr-code"><strong>QR:</strong> {{ $guest->qr_code }}</p>
+                            <div class="qr-box" style="margin-top:12px; display:flex; justify-content:center; background:#f7f7f7; border-radius:12px; padding:12px;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode($guest->qr_code) }}" alt="QR code for {{ $guest->name }}" style="display:block; width:160px; height:auto; border-radius:8px;">
+                            </div>
                             <p class="{{ $guest->attended ? 'status-attended' : 'status-pending' }}">
                                 <strong>Status:</strong> {{ $guest->attended ? 'Attended' : 'Not yet scanned' }}
                             </p>

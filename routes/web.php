@@ -28,11 +28,13 @@ Route::middleware('auth')->group(function () {
     Route::post('profile/application', [\App\Http\Controllers\ProfileController::class, 'applyRole'])->name('profile.application');
     Route::get('/recommendation', [\App\Http\Controllers\RecommendationController::class, 'index'])->name('recommendation');
     Route::post('/recommendation/generate', [\App\Http\Controllers\RecommendationController::class, 'generate'])->name('recommendation.generate');
+    Route::post('/recommendation/use', [\App\Http\Controllers\RecommendationController::class, 'useRecommendation'])->name('recommendation.use');
     Route::get('/packages', [\App\Http\Controllers\PackageController::class, 'index'])->name('packages');
     Route::get('/events/create', [App\Http\Controllers\EventController::class, 'create'])->name('events.create');
     Route::post('/events', [App\Http\Controllers\EventController::class, 'store'])->name('events.store');
     Route::get('/events/venue-availability', [App\Http\Controllers\EventController::class, 'venueAvailability'])->name('events.venue-availability');
     Route::get('/services/{service}/{serviceId}', [App\Http\Controllers\ServiceCatalogController::class, 'show'])->where('serviceId', '[0-9]+')->name('services.show');
+    Route::post('/services/{service}/{serviceId}/bookmark', [App\Http\Controllers\ServiceCatalogController::class, 'bookmark'])->where('serviceId', '[0-9]+')->name('services.bookmark');
     Route::get('/services/{service}', [App\Http\Controllers\ServiceCatalogController::class, 'index'])->name('services.index');
     Route::get('/carousel/services/{service}/{serviceId}', [App\Http\Controllers\ServiceCatalogController::class, 'carouselShow'])->where('serviceId', '[0-9]+')->name('carousel.services.show');
     Route::get('/carousel/services/{service}', [App\Http\Controllers\ServiceCatalogController::class, 'carousel'])->name('carousel.services.index');
@@ -44,6 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/your-events', [\App\Http\Controllers\YourEventsController::class, 'index'])->name('your.events');
     Route::get('/your-events/{eventId}/map', [App\Http\Controllers\YourEventsController::class, 'map'])->name('your.events.map');
     Route::match(['get', 'post'], '/your-events/{eventId}/guests', [App\Http\Controllers\YourEventsController::class, 'guests'])->name('your.events.guests');
+    Route::match(['get', 'post'], '/your-events/{eventId}/scanner', [App\Http\Controllers\YourEventsController::class, 'scanner'])->name('your.events.scanner');
     Route::match(['get', 'post'], '/your-events/{eventId}/invitation', [App\Http\Controllers\YourEventsController::class, 'invitation'])->name('your.events.invitation');
     Route::get('/messages', [App\Http\Controllers\ClientMessagesController::class, 'index'])->name('your.messages');
     Route::post('/messages', [App\Http\Controllers\ClientMessagesController::class, 'send'])->name('your.messages.send');
@@ -51,6 +54,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/your-events/{eventId}/status', [\App\Http\Controllers\YourEventsController::class, 'status'])->name('your.events.status');
     Route::post('/your-events/{eventId}/reselect', [\App\Http\Controllers\YourEventsController::class, 'reselect'])->name('your.events.reselect');
     Route::post('/your-events/{eventId}/pay', [\App\Http\Controllers\YourEventsController::class, 'pay'])->name('your.events.pay');
+    Route::match(['get', 'post'], '/rsvp', [\App\Http\Controllers\YourEventsController::class, 'rsvp'])->name('rsvp');
+    Route::post('/payments/gcash/create', [\App\Http\Controllers\GcashController::class, 'create'])->name('payments.gcash.create');
+    Route::post('/payments/gcash/webhook', [\App\Http\Controllers\GcashController::class, 'webhook'])->name('payments.gcash.webhook');
+    Route::get('/payments/gcash/verify/{reference}', [\App\Http\Controllers\GcashController::class, 'verify'])->name('payments.gcash.verify');
     Route::get('/newsfeed', [\App\Http\Controllers\NewsfeedController::class, 'index'])->name('newsfeed');
     Route::post('/newsfeed', [\App\Http\Controllers\NewsfeedController::class, 'store'])->name('newsfeed.store');
     Route::post('/newsfeed/like', [\App\Http\Controllers\NewsfeedController::class, 'like'])->name('newsfeed.like');
