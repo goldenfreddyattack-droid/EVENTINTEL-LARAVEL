@@ -9,6 +9,88 @@ use Illuminate\Support\Facades\DB;
 
 class SupplierServiceController extends Controller
 {
+    public static function normalizeCustomAddOns(Request $request): array
+    {
+        $names = $request->input('venue_addon_name', []);
+        $prices = $request->input('venue_addon_price', []);
+        $details = $request->input('venue_addon_details', []);
+
+        if (! is_array($names)) {
+            $names = [$names];
+        }
+
+        if (! is_array($prices)) {
+            $prices = [$prices];
+        }
+
+        if (! is_array($details)) {
+            $details = [$details];
+        }
+
+        $addons = [];
+
+        foreach ($names as $index => $name) {
+            $cleanName = trim((string) ($name ?? ''));
+            if ($cleanName === '') {
+                continue;
+            }
+
+            $price = $prices[$index] ?? 0;
+            $detailsText = trim((string) ($details[$index] ?? ''));
+
+            $addons[] = [
+                'name' => $cleanName,
+                'price' => is_numeric($price) ? (float) $price : 0.0,
+                'details' => $detailsText,
+            ];
+        }
+
+        return $addons;
+    }
+
+    public static function normalizeVenueAddons($value): array
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        $decoded = is_string($value) ? json_decode($value, true) : $value;
+        if (! is_array($decoded)) {
+            $decoded = array_filter(array_map('trim', explode(',', (string) $value)), fn ($item) => $item !== '');
+        }
+
+        $items = [];
+
+        foreach ($decoded as $entry) {
+            if (is_array($entry)) {
+                $name = trim((string) ($entry['name'] ?? $entry['label'] ?? $entry['title'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+
+                $items[] = [
+                    'name' => $name,
+                    'price' => isset($entry['price']) && is_numeric($entry['price']) ? (float) $entry['price'] : 0.0,
+                    'details' => trim((string) ($entry['details'] ?? $entry['description'] ?? '')),
+                ];
+                continue;
+            }
+
+            $name = trim((string) $entry);
+            if ($name === '') {
+                continue;
+            }
+
+            $items[] = [
+                'name' => $name,
+                'price' => 0.0,
+                'details' => '',
+            ];
+        }
+
+        return array_values($items);
+    }
+
     public function __construct()
     {
         $this->middleware('auth');
@@ -77,18 +159,52 @@ class SupplierServiceController extends Controller
 
         // Process venue add-ons
         $venueAddOns = null;
+        $venueAddOnsData = [];
         $venueAddOnsInput = $request->input('venue_add_ons');
-        
-        if ($validated['category'] === 'Venue' && !empty($venueAddOnsInput)) {
-            // Ensure it's an array, convert if needed
-            $addonArray = is_array($venueAddOnsInput) ? $venueAddOnsInput : [$venueAddOnsInput];
-            // Filter out empty strings
-            $addonArray = array_filter($addonArray, function($addon) {
-                return !empty(trim((string)$addon));
-            });
-            
-            if (!empty($addonArray)) {
-                $venueAddOns = json_encode(array_values($addonArray));
+
+        if ($validated['category'] === 'Venue') {
+            $legacyAddonMap = [
+                'catering' => ['name' => 'Catering', 'price' => $validated['venueaddons_price1'] ?? 0, 'details' => $validated['venueaddons_details1'] ?? ''],
+                'clothing' => ['name' => 'Clothing', 'price' => $validated['venueaddons_price2'] ?? 0, 'details' => $validated['venueaddons_details2'] ?? ''],
+                'host' => ['name' => 'Host/MC', 'price' => $validated['venueaddons_price3'] ?? 0, 'details' => $validated['venueaddons_details3'] ?? ''],
+                'photographer' => ['name' => 'Photographer', 'price' => $validated['venueaddons_price4'] ?? 0, 'details' => $validated['venueaddons_details4'] ?? ''],
+                'sounds & lights' => ['name' => 'Sounds & Lights', 'price' => $validated['venueaddons_price5'] ?? 0, 'details' => $validated['venueaddons_details5'] ?? ''],
+                'sounds and lights' => ['name' => 'Sounds & Lights', 'price' => $validated['venueaddons_price5'] ?? 0, 'details' => $validated['venueaddons_details5'] ?? ''],
+            ];
+
+            if (! empty($venueAddOnsInput)) {
+                $addonArray = is_array($venueAddOnsInput) ? $venueAddOnsInput : [$venueAddOnsInput];
+                $addonArray = array_values(array_filter(array_map('trim', $addonArray), fn ($addon) => $addon !== ''));
+
+                foreach ($addonArray as $addonKey) {
+                    $normalizedKey = strtolower(trim((string) $addonKey));
+                    if (isset($legacyAddonMap[$normalizedKey])) {
+                        $venueAddOnsData[] = [
+                            'name' => $legacyAddonMap[$normalizedKey]['name'],
+                            'price' => (float) ($legacyAddonMap[$normalizedKey]['price'] ?? 0),
+                            'details' => (string) ($legacyAddonMap[$normalizedKey]['details'] ?? ''),
+                        ];
+                    } else {
+                        $venueAddOnsData[] = [
+                            'name' => trim((string) $addonKey),
+                            'price' => 0.0,
+                            'details' => '',
+                        ];
+                    }
+                }
+            }
+
+            foreach (self::normalizeCustomAddOns($request) as $addon) {
+                $venueAddOnsData[] = [
+                    'name' => $addon['name'],
+                    'price' => (float) $addon['price'],
+                    'details' => (string) $addon['details'],
+                ];
+            }
+
+            $venueAddOnsData = array_values(array_filter($venueAddOnsData, fn ($addon) => ! empty(trim((string) ($addon['name'] ?? '')))));
+            if (! empty($venueAddOnsData)) {
+                $venueAddOns = json_encode($venueAddOnsData);
             }
         }
 

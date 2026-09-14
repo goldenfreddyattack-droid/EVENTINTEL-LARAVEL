@@ -109,7 +109,7 @@ class SupplierDashboardController extends Controller
             }
         }
 
-        $monthlySummary = collect();
+        $monthlySummary = [];
         foreach ($bookingRows as $row) {
             $monthKey = isset($row['event_date']) && $row['event_date']
                 ? \Carbon\Carbon::parse($row['event_date'])->format('Y-m')
@@ -144,7 +144,7 @@ class SupplierDashboardController extends Controller
             }
         }
 
-        $monthlySummary = $monthlySummary->sortKeys()->values();
+        $monthlySummary = collect($monthlySummary)->sortKeys()->values();
 
         return view('supplier.dashboard', [
             'stats'        => $stats,

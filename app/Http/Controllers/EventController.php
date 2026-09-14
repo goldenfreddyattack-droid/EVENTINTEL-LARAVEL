@@ -80,6 +80,7 @@ class EventController extends Controller
         $venue = DB::table('supplier_services')
             ->whereRaw('LOWER(TRIM(name)) = ?', [$normalizedVenueName])
             ->first();
+
         $addonMap = [
             'catering' => 'catering',
             'clothing' => 'clothes',
@@ -106,12 +107,39 @@ class EventController extends Controller
             'photographer' => 'venueaddons_details4',
             'sounds_lights' => 'venueaddons_details5',
         ];
+
         $addons = collect();
         if ($venue && Schema::hasColumn('supplier_services', 'venue_add_ons')) {
-            $addons = collect(json_decode($venue->venue_add_ons ?? '[]', true) ?: [])
+            $rawAddons = json_decode($venue->venue_add_ons ?? '[]', true);
+            $rawAddons = is_array($rawAddons) ? $rawAddons : [];
+
+            $addons = collect($rawAddons)
                 ->values()
-                ->map(function (string $addon) use ($addonMap, $addonPriceColumns, $addonDetailColumns, $venue) {
-                    $key = $addonMap[strtolower(trim($addon))] ?? null;
+                ->map(function ($addon) use ($addonMap, $addonPriceColumns, $addonDetailColumns, $venue) {
+                    if (is_array($addon)) {
+                        $name = trim((string) ($addon['name'] ?? $addon['label'] ?? $addon['title'] ?? ''));
+                        if ($name === '') {
+                            return null;
+                        }
+
+                        $normalizedKey = strtolower($name);
+                        $fallbackKey = $addonMap[$normalizedKey] ?? $normalizedKey;
+
+                        return [
+                            'key' => str_replace(' ', '_', strtolower($name)),
+                            'label' => $name,
+                            'price' => isset($addon['price']) && is_numeric($addon['price']) ? (float) $addon['price'] : 0.0,
+                            'details' => (string) ($addon['details'] ?? $addon['description'] ?? ''),
+                            '_fallback_key' => $fallbackKey,
+                        ];
+                    }
+
+                    $name = trim((string) $addon);
+                    if ($name === '') {
+                        return null;
+                    }
+
+                    $key = $addonMap[strtolower($name)] ?? null;
                     if (!$key) {
                         return null;
                     }
@@ -126,8 +154,12 @@ class EventController extends Controller
                     ];
                 })
                 ->filter()
-                ->unique('key')
-                ->values();
+                ->unique(fn ($addon) => $addon['key'] ?? json_encode($addon))
+                ->values()
+                ->map(function ($addon) {
+                    unset($addon['_fallback_key']);
+                    return $addon;
+                });
         }
 
         return response()->json(['dates' => $dates, 'addons' => $addons]);

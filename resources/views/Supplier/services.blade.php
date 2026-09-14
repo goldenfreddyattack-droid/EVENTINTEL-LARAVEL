@@ -39,15 +39,15 @@
     .services-grid-wrapper { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
     .service-card-item { background: #ffffff; border: 1px solid #ebebeb; border-radius: 14px; overflow: hidden; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; position: relative; display: flex; flex-direction: column; }
     .service-card-item:hover { transform: translateY(-3px); border-color: var(--border); box-shadow: 0 8px 20px rgba(0,0,0,0.04); }
-    
+
     .service-card-img-wrapper { position: relative; width: 100%; height: 140px; background: #f8f8f8; }
     .service-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    
+
     .service-card-body { padding: 14px; display: flex; flex-direction: column; flex-grow: 1; gap: 4px; }
     .service-card-body h4 { font-size: 15px; font-weight: 600; color: var(--text); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .service-category { font-size: 12px; color: var(--muted); font-weight: 500; }
     .service-desc { color: var(--muted); font-size: 12px; line-height: 1.4; margin: 4px 0 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    
+
     .service-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid #f4f4f4; margin-top: auto; }
     .service-rating { color: var(--gold); font-weight: 600; font-size: 12px; }
     .service-price { color: var(--gold3); font-weight: 700; font-size: 15px; }
@@ -104,11 +104,11 @@
                     </form>
 
                     <div class="service-card-img-wrapper">
-                        <img 
-                            class="service-card-img" 
-                            src="{{ $service->service_pic ? route('supplier.services.image', $service->service_id) : asset('images/AdminLTELogo.png') }}" 
-                            alt="{{ $service->name }}" 
-                            onerror="this.onerror=null;this.src='{{ asset('images/AdminLTELogo.png') }}';" 
+                        <img
+                            class="service-card-img"
+                            src="{{ $service->service_pic ? route('supplier.services.image', $service->service_id) : asset('images/AdminLTELogo.png') }}"
+                            alt="{{ $service->name }}"
+                            onerror="this.onerror=null;this.src='{{ asset('images/AdminLTELogo.png') }}';"
                             loading="lazy"
                         />
                     </div>
@@ -249,8 +249,9 @@
             {{-- Venue Add-ons Section (Conditional) --}}
             <div class="venue-addons-section" id="venue_addons_section" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #f0f0f0; display: none;">
                 <h4 style="font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px;">Venue Add-ons Services</h4>
-                <p style="font-size: 13px; color: #666; margin-bottom: 14px;">Select which services your venue can provide:</p>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                <p style="font-size: 13px; color: #666; margin-bottom: 14px;">Add the services your venue can offer, including custom packages like Filipino catering, Western menu, Halal dishes, and more.</p>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
                     <label class="venue-addon-option" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer;">
                         <input type="checkbox" name="venue_add_ons[]" value="catering" data-price-input="venueaddons_price1" style="width: 18px; height: 18px; cursor: pointer;">
                         <span>Catering</span><input type="number" name="venueaddons_price1" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;"><textarea name="venueaddons_details1" data-details-input="venueaddons_details1" placeholder="Describe the catering add-on" rows="2" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
@@ -272,6 +273,15 @@
                         <span>Sounds & Lights</span><input type="number" name="venueaddons_price5" min="0" step="0.01" placeholder="Add-on price" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px;"><textarea name="venueaddons_details5" data-details-input="venueaddons_details5" placeholder="Describe the sounds and lights add-on" rows="2" style="display: none; width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
                     </label>
                 </div>
+
+                <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid #f0f0f0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; flex-wrap: wrap;">
+                        <h5 style="font-size: 14px; font-weight: 700; color: var(--text); margin: 0;">Custom Add-ons</h5>
+                        <button type="button" id="add_custom_addon" style="padding: 8px 12px; background: var(--gold); color: #1c1c1c; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">+ Add custom add-on</button>
+                    </div>
+                    <div id="custom_addon_list" style="display: grid; gap: 12px;"></div>
+                    <p style="font-size: 12px; color: #666; margin-top: 10px;">Examples: Filipino Style Catering, Western Buffet, Halal Menu, Premium Dessert Station, Live Music Setup.</p>
+                </div>
             </div>
 
             <div class="form-submit-row">
@@ -280,16 +290,16 @@
                 </button>
             </div>
         </form>
-        
+
         <script>
             function toggleVenueAddons() {
                 const category = document.getElementById('service_category').value;
                 const venueAddonsSection = document.getElementById('venue_addons_section');
                 const capacityField = document.getElementById('capacity_field');
-                
+
                 // Show/hide venue add-ons based on category
                 venueAddonsSection.style.display = category === 'Venue' ? 'block' : 'none';
-                
+
                 // Show/hide capacity field for venues
                 capacityField.style.display = category === 'Venue' ? 'block' : 'none';
             }
@@ -307,11 +317,11 @@
                     }
                 });
             });
-            
+
             function previewPic(picNumber) {
                 const input = document.getElementById(`pic${picNumber}_input`);
                 const preview = document.getElementById(`pic${picNumber}_preview`);
-                
+
                 if (input.files && input.files[0]) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
@@ -320,10 +330,35 @@
                     reader.readAsDataURL(input.files[0]);
                 }
             }
-            
+
+            function addCustomAddonRow() {
+                const list = document.getElementById('custom_addon_list');
+                const row = document.createElement('div');
+                row.className = 'custom-addon-row';
+                row.style.display = 'grid';
+                row.style.gridTemplateColumns = 'minmax(180px, 1.3fr) minmax(120px, 0.55fr) minmax(180px, 1.4fr) auto';
+                row.style.gap = '10px';
+                row.style.padding = '12px';
+                row.style.border = '1px solid #eee';
+                row.style.borderRadius = '10px';
+                row.style.background = '#fafafa';
+                row.innerHTML = `
+                    <input type="text" name="venue_addon_name[]" placeholder="e.g. Filipino Style Catering" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;">
+                    <input type="number" name="venue_addon_price[]" min="0" step="0.01" placeholder="Price" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;">
+                    <textarea name="venue_addon_details[]" rows="2" placeholder="What do they offer? e.g. Native dishes, halal menu, live dessert station..." style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; resize: vertical;"></textarea>
+                    <button type="button" class="remove-custom-addon" style="align-self: start; border: none; background: #f3d6d6; color: #7d2323; border-radius: 8px; padding: 10px 12px; font-weight: 700; cursor: pointer;">Remove</button>
+                `;
+                row.querySelector('.remove-custom-addon').addEventListener('click', function () {
+                    row.remove();
+                });
+                list.appendChild(row);
+            }
+
             // Initialize on page load
             document.addEventListener('DOMContentLoaded', function() {
                 toggleVenueAddons();
+                document.getElementById('add_custom_addon').addEventListener('click', addCustomAddonRow);
+                addCustomAddonRow();
             });
         </script>
     </div>
