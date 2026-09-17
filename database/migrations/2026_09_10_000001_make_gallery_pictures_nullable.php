@@ -8,21 +8,27 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('supplier_services', function (Blueprint $table) {
-            // Laravel does not support longBlob() in this project's schema builder setup,
-            // so use the closest supported binary column type for the existing MySQL columns.
-            $table->binary('service_pic3')->nullable()->change();
-            $table->binary('service_pic4')->nullable()->change();
-            $table->binary('service_pic5')->nullable()->change();
-        });
+        foreach (['service_pic2', 'service_pic3', 'service_pic4', 'service_pic5'] as $column) {
+            if (Schema::hasColumn('supplier_services', $column)) {
+                Schema::table('supplier_services', function (Blueprint $table) use ($column) {
+                    $table->binary($column)->nullable()->change();
+                });
+            } else {
+                Schema::table('supplier_services', function (Blueprint $table) use ($column) {
+                    $table->binary($column)->nullable();
+                });
+            }
+        }
     }
 
     public function down(): void
     {
-        Schema::table('supplier_services', function (Blueprint $table) {
-            $table->binary('service_pic3')->nullable(false)->change();
-            $table->binary('service_pic4')->nullable(false)->change();
-            $table->binary('service_pic5')->nullable(false)->change();
-        });
+        foreach (['service_pic2', 'service_pic3', 'service_pic4', 'service_pic5'] as $column) {
+            if (Schema::hasColumn('supplier_services', $column)) {
+                Schema::table('supplier_services', function (Blueprint $table) use ($column) {
+                    $table->binary($column)->nullable(false)->change();
+                });
+            }
+        }
     }
 };

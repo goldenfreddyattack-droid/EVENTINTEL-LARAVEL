@@ -11,6 +11,8 @@ Route::get('/email/verify/{user}', [App\Http\Controllers\Auth\VerificationContro
     ->name('verification.verify');
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/review/{token}', [App\Http\Controllers\EventReviewController::class, 'publicReview'])->name('reviews.public');
+Route::post('/review/{token}', [App\Http\Controllers\EventReviewController::class, 'storePublicReview'])->name('reviews.public.store');
 
 Route::middleware('auth')->group(function () {
     Route::view('about', 'about')->name('about');
@@ -54,6 +56,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/your-events/{eventId}/status', [\App\Http\Controllers\YourEventsController::class, 'status'])->name('your.events.status');
     Route::post('/your-events/{eventId}/reselect', [\App\Http\Controllers\YourEventsController::class, 'reselect'])->name('your.events.reselect');
     Route::post('/your-events/{eventId}/pay', [\App\Http\Controllers\YourEventsController::class, 'pay'])->name('your.events.pay');
+    Route::get('/your-events/{eventId}/reviews', [\App\Http\Controllers\EventReviewController::class, 'getReviewableServices'])->name('your.events.reviews');
+    Route::post('/your-events/{eventId}/reviews', [\App\Http\Controllers\EventReviewController::class, 'storeReview'])->name('your.events.reviews.store');
+    Route::post('/your-events/{eventId}/review-link', [\App\Http\Controllers\EventReviewController::class, 'createShareLink'])->name('your.events.review-link');
     Route::match(['get', 'post'], '/rsvp', [\App\Http\Controllers\YourEventsController::class, 'rsvp'])->name('rsvp');
     Route::post('/payments/gcash/create', [\App\Http\Controllers\GcashController::class, 'create'])->name('payments.gcash.create');
     Route::post('/payments/gcash/webhook', [\App\Http\Controllers\GcashController::class, 'webhook'])->name('payments.gcash.webhook');

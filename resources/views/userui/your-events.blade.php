@@ -20,6 +20,8 @@
         .pagination [aria-disabled="true"] span { color: #b9b09a; background: #fafafa; }
         .decline-note { margin-top: 8px; padding: 8px 10px; border-left: 3px solid #d9534f; border-radius: 6px; background: #fff1f1; color: #8b2622; font-size: 13px; line-height: 1.45; }
         .note-modal-text { margin: 0; padding: 18px; border-radius: 12px; background: #fff1f1; color: #8b2622; line-height: 1.6; white-space: pre-wrap; }
+        .star-btn:hover { transform: scale(1.15); }
+        .supplier-review-form textarea:focus { border-color: #f3c547 !important; outline: none; box-shadow: 0 0 0 3px rgba(243, 197, 71, 0.15); }
     </style>
 </head>
 <body>
@@ -61,6 +63,8 @@
                                     <a class="event-button" href="{{ route('your.events.invitation', $event->event_id) }}">Edit Invitation</a>
                                     <a class="event-button" href="{{ route('your.events.map', $event->event_id) }}">GPS</a>
                                     <button class="event-button" type="button" data-status-event="{{ $event->event_id }}">Status</button>
+                                    <button class="event-button" type="button" data-review-event="{{ $event->event_id }}">⭐ Review Folder</button>
+                                    <button class="event-button" type="button" data-qr-event="{{ $event->event_id }}">🔗 QR & Link</button>
                                     <a class="event-button" href="{{ route('your.messages', ['event_id' => $event->event_id]) }}">Messages</a>
                                 </div>
                             </div>
@@ -119,6 +123,35 @@
             <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
                 <button type="button" data-close-payment style="background:#eee;color:#333;padding:10px 20px;border:0;border-radius:10px;">Cancel</button>
                 <button type="button" id="confirmPayment" style="background:linear-gradient(135deg,#ffe27d,#f3c547);color:#111;padding:10px 20px;border:0;border-radius:10px;">Confirm Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Folder Modal -->
+    <div class="events-modal" id="reviewModal" aria-hidden="true">
+        <div class="events-modal-content" style="max-width: 600px;">
+            <header>
+                <h2><i class="fas fa-folder-open" style="color:#f3c547;"></i> Event Supplier Reviews Folder</h2>
+                <button type="button" data-close-review>&times;</button>
+            </header>
+            <div id="reviewContent" style="padding: 16px; max-height: 70vh; overflow-y: auto;">
+                <p class="modal-loading">Loading reviewable suppliers...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code & Link Share Modal -->
+    <div class="events-modal" id="qrModal" aria-hidden="true">
+        <div class="events-modal-content" style="max-width: 440px; text-align: center;">
+            <header>
+                <h2>Review Folder QR & Link</h2>
+                <button type="button" data-close-qr>&times;</button>
+            </header>
+            <div style="padding: 20px;">
+                <p style="font-size: 13px; color: #666; margin-bottom: 14px;">Scan this QR code or copy the link to rate suppliers directly:</p>
+                <img id="qrCodeImage" src="" alt="Review Folder QR Code" style="width: 200px; height: 200px; margin: 0 auto 14px; display: block; background: #fff; padding: 6px; border: 1px solid #ddd; border-radius: 8px;">
+                <input type="text" id="reviewFolderLinkInput" readonly style="width: 100%; padding: 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; text-align: center; margin-bottom: 12px;">
+                <button type="button" id="copyReviewLinkBtn" style="background: #f3c547; border: 0; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer;">Copy Link</button>
             </div>
         </div>
     </div>
@@ -267,6 +300,148 @@
             }
         });
         function closePaymentModal() { paymentModal.classList.remove('show'); paymentModal.setAttribute('aria-hidden', 'true'); paymentContext = null; }
+
+        // --- Review Folder Modal Logic ---
+        const reviewModal = document.getElementById('reviewModal');
+        const reviewContent = document.getElementById('reviewContent');
+
+        document.querySelectorAll('[data-review-event]').forEach(button => {
+            button.addEventListener('click', async () => {
+                const eventId = button.dataset.reviewEvent;
+                reviewModal.classList.add('show');
+                reviewModal.setAttribute('aria-hidden', 'false');
+                reviewContent.innerHTML = '<p class="modal-loading">Loading suppliers folder...</p>';
+
+                try {
+                    const response = await fetch(`{{ url('/your-events') }}/${eventId}/reviews`, {headers: {'Accept': 'application/json'}});
+                    const data = await response.json();
+                    
+                    if (!response.ok || !data.services?.length) {
+                        reviewContent.innerHTML = '<p class="modal-loading">No suppliers selected for this event yet to review.</p>';
+                        return;
+                    }
+
+                    reviewContent.innerHTML = `<div class="review-list" style="display:flex; flex-direction:column; gap:16px;">
+                        ${data.services.map(service => {
+                            const currentRating = Number(service.rating) || 0;
+                            return `
+                            <div class="review-card" style="padding:16px; border:1px solid #e5e5e5; border-radius:12px; background:#fafafa;">
+                                <div style="font-weight:700; font-size:16px; margin-bottom:2px;">${escapeHtml(service.name)}</div>
+                                <div style="font-size:13px; color:#666; margin-bottom:12px;">Category: ${escapeHtml(service.category)}</div>
+                                
+                                <form class="supplier-review-form" data-event="${eventId}" data-column="${escapeHtml(service.service_column)}">
+                                    <div style="margin-bottom:12px;">
+                                        <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Rating Scale</label>
+                                        <div class="star-rating-group" data-rating="${currentRating}" style="display:flex; gap:6px; cursor:pointer;">
+                                            ${[1, 2, 3, 4, 5].map(star => `
+                                                <button type="button" class="star-btn" data-value="${star}" style="background:none; border:none; font-size:24px; cursor:pointer; padding:0; color:${star <= currentRating ? '#f3c547' : '#dcdcdc'}; transition:color 0.2s;">★</button>
+                                            `).join('')}
+                                        </div>
+                                        <input type="hidden" name="rating" value="${currentRating}" class="rating-input" required>
+                                    </div>
+                                    <div style="margin-bottom:12px;">
+                                        <textarea name="review_text" placeholder="Write your review about this supplier's service..." style="width:100%; height:70px; padding:8px; border-radius:8px; border:1px solid #ccc; font-family:inherit; font-size:13px;">${escapeHtml(service.review_text)}</textarea>
+                                    </div>
+                                    <button type="submit" style="background:linear-gradient(135deg,#ffe27d,#f3c547); color:#111; border:0; padding:8px 16px; border-radius:8px; font-weight:700; cursor:pointer;">Save Review</button>
+                                </form>
+                            </div>
+                        `;}).join('')}
+                    </div>`;
+
+                    // Star hover and selection logic
+                    reviewContent.querySelectorAll('.star-rating-group').forEach(group => {
+                        const stars = group.querySelectorAll('.star-btn');
+                        const hiddenInput = group.parentElement.querySelector('.rating-input');
+
+                        stars.forEach(star => {
+                            star.addEventListener('mouseenter', () => {
+                                const val = Number(star.dataset.value);
+                                stars.forEach(s => { s.style.color = Number(s.dataset.value) <= val ? '#f3c547' : '#dcdcdc'; });
+                            });
+                            group.addEventListener('mouseleave', () => {
+                                const currentVal = Number(hiddenInput.value) || 0;
+                                stars.forEach(s => { s.style.color = Number(s.dataset.value) <= currentVal ? '#f3c547' : '#dcdcdc'; });
+                            });
+                            star.addEventListener('click', () => {
+                                const val = Number(star.dataset.value);
+                                hiddenInput.value = val;
+                                stars.forEach(s => { s.style.color = Number(s.dataset.value) <= val ? '#f3c547' : '#dcdcdc'; });
+                            });
+                        });
+                    });
+
+                    // Review form submission handler
+                    reviewContent.querySelectorAll('.supplier-review-form').forEach(form => {
+                        form.addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            const formData = new FormData(form);
+                            const ratingVal = Number(formData.get('rating'));
+                            
+                            if (!ratingVal || ratingVal < 1) {
+                                alert('Please select at least 1 star before saving.');
+                                return;
+                            }
+
+                            try {
+                                const res = await fetch(`{{ url('/your-events') }}/${form.dataset.event}/reviews`, {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json'},
+                                    body: JSON.stringify({
+                                        service_column: form.dataset.column,
+                                        rating: ratingVal,
+                                        review_text: formData.get('review_text')
+                                    })
+                                });
+                                const result = await res.json();
+                                if (!res.ok || !result.success) throw new Error(result.message || 'Failed to save review.');
+                                alert('Review saved successfully!');
+                            } catch (err) {
+                                alert(err.message);
+                            }
+                        });
+                    });
+
+                } catch (error) {
+                    reviewContent.innerHTML = '<p class="modal-loading">Error loading review folder.</p>';
+                }
+            });
+        });
+
+        document.querySelector('[data-close-review]').addEventListener('click', () => { reviewModal.classList.remove('show'); reviewModal.setAttribute('aria-hidden', 'true'); });
+        reviewModal.addEventListener('click', e => { if (e.target === reviewModal) { reviewModal.classList.remove('show'); reviewModal.setAttribute('aria-hidden', 'true'); } });
+
+        // --- QR & Link Modal Logic ---
+        const qrModal = document.getElementById('qrModal');
+        const qrCodeImage = document.getElementById('qrCodeImage');
+        const reviewFolderLinkInput = document.getElementById('reviewFolderLinkInput');
+
+        document.querySelectorAll('[data-qr-event]').forEach(button => {
+            button.addEventListener('click', async () => {
+                const eventId = button.dataset.qrEvent;
+                const linkResponse = await fetch(`{{ url('/your-events') }}/${eventId}/review-link`, {method: 'POST', headers: {'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json'}});
+                const linkData = await linkResponse.json().catch(() => ({}));
+                if (!linkResponse.ok || !linkData.success) {
+                    alert(linkData.message || 'Unable to create the review link.');
+                    return;
+                }
+                const publicUrl = linkData.url;
+                
+                qrCodeImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}`;
+                reviewFolderLinkInput.value = publicUrl;
+                
+                qrModal.classList.add('show');
+                qrModal.setAttribute('aria-hidden', 'false');
+            });
+        });
+
+        document.getElementById('copyReviewLinkBtn').addEventListener('click', () => {
+            reviewFolderLinkInput.select();
+            navigator.clipboard.writeText(reviewFolderLinkInput.value);
+            alert('Review link copied to clipboard!');
+        });
+
+        document.querySelector('[data-close-qr]').addEventListener('click', () => { qrModal.classList.remove('show'); qrModal.setAttribute('aria-hidden', 'true'); });
+        qrModal.addEventListener('click', e => { if (e.target === qrModal) { qrModal.classList.remove('show'); qrModal.setAttribute('aria-hidden', 'true'); } });
     </script>
 </body>
 </html>

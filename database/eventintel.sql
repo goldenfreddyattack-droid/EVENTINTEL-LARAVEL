@@ -555,6 +555,17 @@ INSERT INTO `users` (`user_id`, `username`, `full_name`, `email`, `password`, `r
 (20, 'visionphotography', 'Vision Photography', 'visionphotography@gmail.com', 'password', 'supplier', '2026-09-04', 'approved', NULL, NULL, NULL, NULL, NULL, NULL, 'Pampanga', 'Apalit', 'Sampaloc', '2016', 'Vision Photography', 'Andal Reaidence, 316 Purok uno, Sampaloc, Apalit, Pampanga', NULL, NULL, NULL, '2026-08-23 15:26:59'),
 (22, 'JC18', 'Jan Clyde L Gutierrez', 'goldenfreddyattack@gmail.com', '$2y$12$Vo/EZYdYeGK3IlUSSmIN2ez5j7i67vgA8hThe7sfCpmjzv82TeXiO', 'client', '2026-09-16', 'pending', 'Jan Clyde', 'Gutierrez', 'L', 21, 'male', '0905 630 3625', 'Pampanga', 'Apalit', 'San Juan', '2016', NULL, NULL, NULL, NULL, NULL, '2026-09-09 08:01:44');
 
+CREATE TABLE event_supplier_reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    service_column VARCHAR(50) NOT NULL, -- e.g., 'venue', 'catering', 'host', etc.
+    supplier_name VARCHAR(150) NOT NULL,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    review_text TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_event_service (event_id, service_column)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 --
 -- Indexes for dumped tables
 --
