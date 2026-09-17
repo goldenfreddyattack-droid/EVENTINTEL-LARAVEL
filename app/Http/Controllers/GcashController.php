@@ -14,13 +14,20 @@ class GcashController extends Controller
             'event_id' => ['required', 'integer'],
             'service_type' => ['required', 'string'],
             'amount' => ['required', 'numeric', 'min:1'],
+            'success_url' => ['nullable', 'url'],
+            'cancel_url' => ['nullable', 'url'],
         ]);
+
+        $successUrl = $data['success_url'] ?? route('your.events', ['payment_status' => 'success', 'event_id' => $data['event_id'], 'service' => $data['service_type']]);
+        $cancelUrl = $data['cancel_url'] ?? route('your.events', ['payment_status' => 'cancelled', 'event_id' => $data['event_id'], 'service' => $data['service_type']]);
 
         $payload = [
             'external_id' => 'ei-gcash-' . $data['event_id'] . '-' . $data['service_type'] . '-' . now()->timestamp,
             'amount' => (float) $data['amount'],
             'description' => 'EventIntel GCash payment for ' . ucfirst($data['service_type']),
             'currency' => 'PHP',
+            'success_url' => $successUrl,
+            'cancel_url' => $cancelUrl,
             'metadata' => [
                 'event_id' => $data['event_id'],
                 'service_type' => $data['service_type'],

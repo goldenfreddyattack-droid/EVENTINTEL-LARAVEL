@@ -8,6 +8,59 @@ class GcashService
 {
     public function createPayment(array $payload): array
     {
+        $paymongoEnabled = config('services.paymongo.enabled', false);
+        $paymongoKey = config('services.paymongo.secret_key');
+
+        if ($paymongoEnabled && ! empty($paymongoKey)) {
+            $amountInCentavos = (int) round(((float) ($payload['amount'] ?? 0)) * 100);
+            $checkoutData = [
+                'data' => [
+                    'attributes' => [
+                        'line_items' => [[
+                            'amount' => $amountInCentavos,
+                            'currency' => 'PHP',
+                            'description' => $payload['description'] ?? 'EventIntel payment',
+                            'quantity' => 1,
+                            'name' => $payload['description'] ?? 'EventIntel service payment',
+                        ]],
+                        'payment_method_types' => ['card', 'gcash', 'paymaya'],
+                        'success_url' => $payload['success_url'] ?? route('your.events', ['payment_status' => 'success']),
+                        'cancel_url' => $payload['cancel_url'] ?? route('your.events', ['payment_status' => 'cancelled']),
+                        'description' => $payload['description'] ?? 'EventIntel payment',
+                        'reference_number' => $payload['external_id'] ?? 'eventintel-payment',
+                    ],
+                ],
+            ];
+            $response = Http::withHeaders([
+                'Authorization' => 'Basic ' . base64_encode($paymongoKey . ':'),
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ])->post(config('services.paymongo.base_url') . '/checkout_sessions', $checkoutData);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $session = $data['data']['attributes'] ?? [];
+
+                return [
+                    'status' => 'created',
+                    'checkout_url' => $session['checkout_url'] ?? null,
+                    'reference' => $data['data']['id'] ?? ($payload['external_id'] ?? 'paymongo-reference'),
+                    'amount' => $payload['amount'] ?? 0,
+                    'message' => 'PayMongo checkout created successfully.',
+                    'qr_code' => null,
+                ];
+            }
+
+            return [
+                'status' => 'error',
+                'checkout_url' => null,
+                'reference' => $payload['external_id'] ?? 'paymongo-reference',
+                'amount' => $payload['amount'] ?? 0,
+                'message' => 'PayMongo payment request failed.',
+                'qr_code' => null,
+            ];
+        }
+
         $enabled = config('services.gcash.enabled', false);
         $apiKey = config('services.gcash.api_key');
 
@@ -17,7 +70,7 @@ class GcashService
                 'checkout_url' => null,
                 'reference' => $payload['external_id'] ?? 'sandbox-reference',
                 'amount' => $payload['amount'] ?? 0,
-                'message' => 'GCash integration is not configured. Sandbox mode is active.',
+                'message' => 'Online payment is not configured. Add PAYMONGO_ENABLED=true and PAYMONGO_SECRET_KEY to the environment.',
                 'qr_code' => null,
             ];
         }

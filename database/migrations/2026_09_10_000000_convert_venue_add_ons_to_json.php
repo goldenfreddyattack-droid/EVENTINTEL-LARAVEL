@@ -9,6 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('supplier_services') || !Schema::hasColumn('supplier_services', 'venue_add_ons')) {
+            return;
+        }
+
         // Convert existing comma-separated venue_add_ons to JSON arrays
         $services = DB::table('supplier_services')
             ->whereNotNull('venue_add_ons')
@@ -39,6 +43,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (!Schema::hasTable('supplier_services') || !Schema::hasColumn('supplier_services', 'venue_add_ons')) {
+            return;
+        }
+
         // Convert back to comma-separated format
         $services = DB::table('supplier_services')
             ->whereNotNull('venue_add_ons')

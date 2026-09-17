@@ -14,6 +14,35 @@ class YourEventsController extends Controller
 
     public function index(Request $request)
     {
+        $paymentStatus = $request->query('payment_status');
+        if (in_array($paymentStatus, ['success', 'verified', 'paid'], true) && $request->query('event_id') && $request->query('service')) {
+            $eventId = (int) $request->query('event_id');
+            $serviceType = (string) $request->query('service');
+            $event = $this->ownedEvent($eventId);
+            $statusColumn = $serviceType === 'sounds_lights' ? 'soundsnlights_status' : $serviceType . '_status';
+            $updates = [$statusColumn => 'Paid'];
+
+            if ($serviceType === 'venue') {
+                $venueName = trim((string) ($event->venue_name ?? ''));
+                $addonStatusMap = [
+                    'catering_status' => 'catering',
+                    'host_status' => 'host',
+                    'photographer_status' => 'photographer',
+                    'clothes_status' => 'clothes',
+                    'soundsnlights_status' => 'soundsnlights',
+                ];
+
+                foreach ($addonStatusMap as $field => $valueField) {
+                    $selectedValue = trim((string) ($event->{$valueField} ?? ''));
+                    if ($selectedValue !== '' && strtolower($selectedValue) === strtolower($venueName)) {
+                        $updates[$field] = 'Paid';
+                    }
+                }
+            }
+
+            DB::table('events')->where('event_id', $event->event_id)->update($updates);
+        }
+
         $status = in_array($request->query('status', 'all'), self::STATUSES, true)
             ? $request->query('status', 'all')
             : 'all';
@@ -253,9 +282,34 @@ class YourEventsController extends Controller
             'clothes' => ['label' => 'Clothing/Attire', 'field' => 'clothes', 'status' => 'clothes_status', 'note' => 'clothes_note'],
         ];
 
+        $venueAddons = [];
+        $venueAddOnPrices = 0.0;
+        $venueService = null;
+        $normalizedVenueName = trim((string) ($event->venue_name ?? ''));
+        $venueSupplier = $normalizedVenueName !== '' && Schema::hasTable('supplier_services')
+            ? DB::table('supplier_services')->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($normalizedVenueName)])->first()
+            : null;
+
         foreach ($serviceFields as $key => $definition) {
             $name = $event->{$definition['field']} ?? null;
             $serviceStatus = $event->{$definition['status']} ?? 'pending';
+
+            if ($key === 'venue') {
+                if ($name || $serviceStatus !== 'pending') {
+                    $venueService = [
+                        'service_key' => 'venue',
+                        'name' => $name ?: $definition['label'],
+                        'type' => $definition['label'],
+                        'status' => $serviceStatus,
+                        'raw_status' => $serviceStatus,
+                        'price' => $venueSupplier?->price ?? 0,
+                        'note' => $event->{$definition['note']} ?? null,
+                        'supplier_user_id' => $venueSupplier?->user_id,
+                    ];
+                }
+                continue;
+            }
+
             if ($name || $serviceStatus !== 'pending') {
                 $supplier = Schema::hasTable('supplier_services')
                     ? DB::table('supplier_services')->whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim((string) $name))])->first()
@@ -272,7 +326,8 @@ class YourEventsController extends Controller
                     $priceColumn = $addonPriceColumns[$key] ?? null;
                     $price = $priceColumn ? ($supplier->{$priceColumn} ?? 0) : 0;
                 }
-                $services[] = [
+
+                $serviceEntry = [
                     'service_key' => $key,
                     'name' => $name ?: $definition['label'],
                     'type' => $definition['label'],
@@ -282,7 +337,26 @@ class YourEventsController extends Controller
                     'note' => $event->{$definition['note']} ?? null,
                     'supplier_user_id' => $supplier?->user_id,
                 ];
+
+                if ($normalizedVenueName !== '' && strtolower(trim((string) $name)) === strtolower($normalizedVenueName)) {
+                    $venueAddons[] = $definition['label'];
+                    $venueAddOnPrices += (float) ($price ?? 0);
+                    continue;
+                }
+
+                $services[] = $serviceEntry;
             }
+        }
+
+        if ($venueService) {
+            $combinedLabels = array_values(array_unique(array_filter($venueAddons, fn ($label) => $label !== '')));
+            if (!empty($combinedLabels)) {
+                $addonLabelText = implode(' + ', $combinedLabels);
+                $venueService['name'] = $venueService['name'] . ' + ' . $addonLabelText;
+                $venueService['type'] = 'Venue + Add-ons';
+                $venueService['price'] = ((float) ($venueService['price'] ?? 0)) + $venueAddOnPrices;
+            }
+            $services[] = $venueService;
         }
 
         if ($event->coordinator) {
@@ -374,9 +448,43 @@ class YourEventsController extends Controller
             'service_type' => ['required', 'in:venue,catering,host,sounds_lights,photographer,clothes,coordinator'],
             'payment_method' => ['required', 'in:cash,online'],
             'amount' => ['nullable', 'numeric', 'min:1'],
+            'payment_status' => ['nullable', 'in:success,verified,paid,pending'],
         ]);
         $event = $this->ownedEvent($eventId);
         $statusColumn = $data['service_type'] === 'sounds_lights' ? 'soundsnlights_status' : $data['service_type'] . '_status';
+        $normalizedPaymentStatus = $data['payment_status'] ?? null;
+
+        if (in_array($normalizedPaymentStatus, ['success', 'verified', 'paid'], true)) {
+            $paymentStatusValue = 'Paid';
+            $storedPaymentStatus = 'paid';
+        } else {
+            $paymentStatusValue = 'Pending Confirmation';
+            $storedPaymentStatus = $data['payment_method'] === 'online' ? 'pending_verification' : 'pending';
+        }
+
+        $updates = [
+            $statusColumn => $paymentStatusValue,
+            'payment_method' => $data['payment_method'],
+            'payment_status' => $storedPaymentStatus,
+        ];
+
+        if ($data['service_type'] === 'venue') {
+            $venueName = trim((string) ($event->venue_name ?? ''));
+            $addonStatusMap = [
+                'catering_status' => 'catering',
+                'host_status' => 'host',
+                'photographer_status' => 'photographer',
+                'clothes_status' => 'clothes',
+                'soundsnlights_status' => 'soundsnlights',
+            ];
+
+            foreach ($addonStatusMap as $statusField => $fieldName) {
+                $selectedValue = trim((string) ($event->{$fieldName} ?? ''));
+                if ($selectedValue !== '' && strtolower($selectedValue) === strtolower($venueName)) {
+                    $updates[$statusField] = $paymentStatusValue;
+                }
+            }
+        }
 
         $paymentMethod = $data['payment_method'];
         $amount = (float) ($data['amount'] ?? 0);
@@ -394,18 +502,17 @@ class YourEventsController extends Controller
                     'service_type' => $data['service_type'],
                     'user_id' => Auth::id(),
                 ],
+                'success_url' => route('your.events', ['payment_status' => 'success', 'event_id' => $eventId, 'service' => $data['service_type']]),
+                'cancel_url' => route('your.events', ['payment_status' => 'cancelled', 'event_id' => $eventId, 'service' => $data['service_type']]),
             ]);
         }
 
-        DB::table('events')->where('event_id', $event->event_id)->update([
-            $statusColumn => 'Pending Confirmation',
-            'payment_method' => $paymentMethod,
-            'payment_status' => $paymentMethod === 'online' ? 'pending_verification' : 'pending',
-        ]);
+        DB::table('events')->where('event_id', $event->event_id)->update($updates);
 
         return response()->json([
             'success' => true,
             'payment_method' => $paymentMethod,
+            'payment_status' => $paymentStatusValue,
             'gcash' => $gcashResponse,
         ]);
     }

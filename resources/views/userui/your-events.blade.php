@@ -106,10 +106,15 @@
             <label style="display:flex;gap:12px;align-items:center;padding:16px;border:2px solid rgba(243,197,71,.2);border-radius:14px;margin-bottom:10px;cursor:pointer;background:#fafafa;">
                 <input type="radio" name="payment_method_choice" value="online" style="width:18px;height:18px;accent-color:#f3c547;">
                 <i class="fas fa-credit-card" style="font-size:22px;color:#f3c547;"></i>
-                <span><strong>Online Payment</strong><small style="display:block;color:#888;">GCash / Bank transfer</small></span>
+                <span><strong>Online Payment</strong><small style="display:block;color:#888;">GCash / Maya / Card</small></span>
             </label>
             <div id="gcashSection" style="display:none;margin-top:14px;padding:16px;border-radius:14px;background:rgba(243,197,71,.05);border:1px dashed rgba(243,197,71,.4);text-align:center;">
                 <p style="font-size:13px;color:#666;">After paying online, the supplier will be notified and can confirm your payment.</p>
+                <div id="paymentQrResult" style="display:none;margin-top:14px;">
+                    <p style="font-size:13px;color:#555;margin-bottom:10px;">Scan this QR code to open the secure checkout.</p>
+                    <img id="paymentQr" width="220" height="220" alt="Payment checkout QR code" style="display:block;width:220px;height:220px;margin:0 auto 12px;background:#fff;padding:8px;border-radius:8px;">
+                    <a id="paymentCheckoutLink" href="#" target="_blank" rel="noopener" style="color:#856404;font-weight:700;">Open secure checkout</a>
+                </div>
             </div>
             <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
                 <button type="button" data-close-payment style="background:#eee;color:#333;padding:10px 20px;border:0;border-radius:10px;">Cancel</button>
@@ -154,7 +159,7 @@
                 statusContent.innerHTML = `<div class="status-table">${data.services.map(service => {
                     const key = statusKey(service.status);
                     const badgeClass = key === 'pending_confirmation' ? 'pending' : key.replace(/_/g, '-');
-                    const canPay = ['pending', 'pending_confirmation', 'payment_pending', 'accepted', 'proposal_accepted', 'pending_verification'].includes(key);
+                    const canPay = ['pending_confirmation', 'payment_pending', 'accepted', 'proposal_accepted', 'pending_verification'].includes(key);
                     const messageUrl = service.supplier_user_id ? `{{ url('/messages') }}?event_id=${button.dataset.statusEvent}&user_id=${service.supplier_user_id}` : `{{ url('/messages') }}?event_id=${button.dataset.statusEvent}`;
                     const isDeclined = ['declined', 'proposal_declined'].includes(key);
                     const noteButton = isDeclined && service.note
@@ -205,6 +210,7 @@
             document.getElementById('payAmount').textContent = `₱${Number(button.dataset.price || 0).toLocaleString()}`;
             document.querySelectorAll('input[name="payment_method_choice"]').forEach(input => { input.checked = false; });
             document.getElementById('gcashSection').style.display = 'none';
+            document.getElementById('paymentQrResult').style.display = 'none';
             paymentModal.classList.add('show');
             paymentModal.setAttribute('aria-hidden', 'false');
         }
@@ -228,6 +234,27 @@
             const confirmButton = document.getElementById('confirmPayment');
             confirmButton.disabled = true;
             try {
+                if (method.value === 'online') {
+                    const amount = Number(document.getElementById('payAmount').textContent.replace(/[^0-9.-]+/g, '')) || 0;
+                    const checkoutResponse = await fetch(`{{ url('/payments/gcash/create') }}`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json'},
+                        body: JSON.stringify({
+                            event_id: Number(paymentContext.event),
+                            service_type: paymentContext.service,
+                            amount: amount,
+                            success_url: `{{ url('/your-events') }}?payment_status=success&event_id=${encodeURIComponent(paymentContext.event)}&service=${encodeURIComponent(paymentContext.service)}`,
+                            cancel_url: `{{ url('/your-events') }}?payment_status=cancelled&event_id=${encodeURIComponent(paymentContext.event)}&service=${encodeURIComponent(paymentContext.service)}`
+                        })
+                    });
+                    const checkoutData = await checkoutResponse.json().catch(() => ({}));
+                    if (!checkoutResponse.ok || !checkoutData.success || !checkoutData.payment?.checkout_url) {
+                        throw new Error(checkoutData.payment?.message || checkoutData.message || 'Online payment could not be started.');
+                    }
+                    window.location.assign(checkoutData.payment.checkout_url);
+                    return;
+                }
+
                 const response = await fetch(`{{ url('/your-events') }}/${paymentContext.event}/pay`, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json'}, body: JSON.stringify({service_type: paymentContext.service, payment_method: method.value})});
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok || !data.success) {
