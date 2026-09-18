@@ -63,8 +63,10 @@
                                     <a class="event-button" href="{{ route('your.events.invitation', $event->event_id) }}">Edit Invitation</a>
                                     <a class="event-button" href="{{ route('your.events.map', $event->event_id) }}">GPS</a>
                                     <button class="event-button" type="button" data-status-event="{{ $event->event_id }}">Status</button>
-                                    <button class="event-button" type="button" data-review-event="{{ $event->event_id }}">⭐ Review Folder</button>
-                                    <button class="event-button" type="button" data-qr-event="{{ $event->event_id }}">🔗 QR & Link</button>
+                                    @if (in_array($eventStatus, ['ongoing', 'completed'], true))
+                                        <button class="event-button" type="button" data-review-event="{{ $event->event_id }}">⭐ Review Folder</button>
+                                        <button class="event-button" type="button" data-qr-event="{{ $event->event_id }}">🔗 QR & Link</button>
+                                    @endif
                                     <a class="event-button" href="{{ route('your.messages', ['event_id' => $event->event_id]) }}">Messages</a>
                                 </div>
                             </div>

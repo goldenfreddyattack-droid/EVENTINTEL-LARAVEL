@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Schema;
 
 class YourEventsController extends Controller
 {
-    private const STATUSES = ['all', 'pending', 'planning', 'ongoing', 'completed', 'cancelled'];
+   private const STATUSES = ['all', 'planning', 'pending', 'ongoing', 'completed', 'cancelled'];
+
 
     public function index(Request $request)
     {
@@ -41,6 +42,7 @@ class YourEventsController extends Controller
             }
 
             DB::table('events')->where('event_id', $event->event_id)->update($updates);
+            $this->markEventPendingWhenServicesArePaid($event->event_id);
         }
 
         $status = in_array($request->query('status', 'all'), self::STATUSES, true)
@@ -48,6 +50,7 @@ class YourEventsController extends Controller
             : 'all';
 
         $baseQuery = DB::table('events')->where('user_id', Auth::id());
+        $baseQuery->pluck('event_id')->each(fn ($eventId) => $this->markEventPendingWhenServicesArePaid((int) $eventId));
         $counts = collect(self::STATUSES)->mapWithKeys(fn (string $key) => [
             $key => $key === 'all'
                 ? (clone $baseQuery)->count()
@@ -508,6 +511,7 @@ class YourEventsController extends Controller
         }
 
         DB::table('events')->where('event_id', $event->event_id)->update($updates);
+        $this->markEventPendingWhenServicesArePaid($event->event_id);
 
         return response()->json([
             'success' => true,
@@ -515,6 +519,44 @@ class YourEventsController extends Controller
             'payment_status' => $paymentStatusValue,
             'gcash' => $gcashResponse,
         ]);
+    }
+
+    private function markEventPendingWhenServicesArePaid(int $eventId): void
+    {
+        $event = DB::table('events')->where('event_id', $eventId)->first();
+        if (!$event) {
+            return;
+        }
+
+        $services = [
+            ['name' => 'venue_name', 'status' => 'venue_status'],
+            ['name' => 'catering', 'status' => 'catering_status'],
+            ['name' => 'host', 'status' => 'host_status'],
+            ['name' => 'soundsnlights', 'status' => 'soundsnlights_status'],
+            ['name' => 'photographer', 'status' => 'photographer_status'],
+            ['name' => 'clothes', 'status' => 'clothes_status'],
+            ['name' => 'coordinator', 'status' => 'coordinator_status'],
+        ];
+
+        $selectedServices = array_filter($services, fn (array $service): bool =>
+            trim((string) ($event->{$service['name']} ?? '')) !== ''
+        );
+
+        $allServicesPaid = $selectedServices !== [] && array_reduce(
+            $selectedServices,
+            fn (bool $allPaid, array $service): bool => $allPaid
+                && strtolower(trim((string) ($event->{$service['status']} ?? ''))) === 'paid',
+            true
+        );
+
+        if ($allServicesPaid) {
+            $eventStatus = !empty($event->event_date)
+                && \Illuminate\Support\Carbon::parse($event->event_date)->isBefore(today())
+                ? 'completed'
+                : 'pending';
+
+            DB::table('events')->where('event_id', $eventId)->update(['status' => $eventStatus]);
+        }
     }
 
     private function ownedEvent(int $eventId): object
