@@ -27,7 +27,7 @@
                         <option value="{{ $type }}" @selected($eventKey === strtolower($type))>{{ $type }}</option>
                     @endforeach
                 </select>
-                <a id="packagesBackCreateEvent" class="packages-back" href="{{ route('events.create') }}" data-planning-limit="{{ $planningLimitReached ? '1' : '0' }}">Back to Create Event</a>
+                <a id="packagesBackCreateEvent" class="packages-back" href="{{ route('events.create') }}" data-active-event-limit="{{ $planningLimitReached ? '1' : '0' }}">Back to Create Event</a>
             </form>
 
             <section class="packages-grid" aria-label="Available packages">

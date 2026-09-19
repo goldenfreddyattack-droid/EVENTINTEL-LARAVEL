@@ -10,21 +10,34 @@ use Illuminate\Support\Carbon;
 
 class EventController extends Controller
 {
-    private const MAX_PLANNING_EVENTS = 3;
+    private const MAX_ACTIVE_EVENTS = 3;
 
-    private function hasReachedPlanningEventLimit(int $userId): bool
+    private function hasReachedActiveEventLimit(int $userId): bool
     {
-        $planningCount = DB::table('events')
+        $activeEventCount = DB::table('events')
             ->where('user_id', $userId)
-            ->where('status', 'planning')
+            ->whereIn('status', ['planning', 'pending', 'ongoing'])
             ->count();
 
-        return $planningCount >= self::MAX_PLANNING_EVENTS;
+        return $activeEventCount >= self::MAX_ACTIVE_EVENTS;
     }
 
     public function __construct()
     {
         $this->middleware('auth');
+    }
+
+    private function eventError(Request $request, string $field, string $message)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => [$field => [$message]],
+            ], 422);
+        }
+
+        return back()->withInput()->withErrors([$field => $message]);
     }
 
     public function create(Request $request)
@@ -34,9 +47,9 @@ class EventController extends Controller
             ? DB::table('supplier_services')->select('name', 'category', 'price', 'capacity', 'address')->whereNotNull('name')->orderBy('category')->orderBy('price')->get()
             : collect();
 
-        $planningCount = DB::table('events')
+        $activeEventCount = DB::table('events')
             ->where('user_id', Auth::id())
-            ->where('status', 'planning')
+            ->whereIn('status', ['planning', 'pending', 'ongoing'])
             ->count();
 
         return view('userui.create-event', [
@@ -47,8 +60,8 @@ class EventController extends Controller
                 'services' => array_filter(array_map('trim', explode(',', (string) $request->input('services')))),
             ],
             'availableServices' => $availableServices,
-            'planningCount' => $planningCount,
-            'planningLimitReached' => $planningCount >= 3,
+            'activeEventCount' => $activeEventCount,
+            'activeEventLimitReached' => $activeEventCount >= self::MAX_ACTIVE_EVENTS,
         ]);
     }
 
@@ -169,10 +182,8 @@ class EventController extends Controller
     {
         abort_unless(in_array(Auth::user()->role, ['client', 'coordinator'], true), 403, 'Client or coordinator access only.');
 
-        if ($this->hasReachedPlanningEventLimit(Auth::id())) {
-            return back()->withInput()->withErrors([
-                'event_name' => 'You already have three planning events. Finish one before creating another event.',
-            ]);
+        if ($this->hasReachedActiveEventLimit(Auth::id())) {
+            return $this->eventError($request, 'event_name', 'You already have three planning, pending, or ongoing events. Finish one before creating another event.');
         }
 
         $data = $request->validate([
@@ -201,13 +212,13 @@ class EventController extends Controller
         $endTime = $data['event_end_time'] ?: $data['event_time'];
 
         if (Carbon::parse($data['event_date'] . ' ' . $endTime)->lessThanOrEqualTo(Carbon::parse($data['event_date'] . ' ' . $data['event_time']))) {
-            return back()->withInput()->withErrors(['event_end_time' => 'End time must be after the start time.']);
+            return $this->eventError($request, 'event_end_time', 'End time must be after the start time.');
         }
 
         $venue = DB::table('supplier_services')->where('name', $data['venue_name'])->first();
         $capacity = $venue?->capacity ?: 200;
         if ($data['guest_count'] > $capacity) {
-            return back()->withInput()->withErrors(['guest_count' => "The selected venue can accommodate up to {$capacity} guests."]);
+            return $this->eventError($request, 'guest_count', "The selected venue can accommodate up to {$capacity} guests.");
         }
 
         $overlap = DB::table('events')
@@ -218,7 +229,7 @@ class EventController extends Controller
             ->where('event_end_time', '>', $data['event_time'])
             ->exists();
         if ($overlap) {
-            return back()->withInput()->withErrors(['venue_name' => 'The selected venue is not available at that date and time.']);
+            return $this->eventError($request, 'venue_name', 'The selected venue is not available at that date and time.');
         }
 
         $services = array_values(array_unique($data['services'] ?? []));
@@ -269,6 +280,14 @@ class EventController extends Controller
 
             return $eventId;
         });
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'event_id' => $eventId,
+                'message' => 'Event created successfully.',
+            ]);
+        }
 
         return redirect()->route('your.events')->with('success', 'Event created successfully.');
     }

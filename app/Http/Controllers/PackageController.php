@@ -64,13 +64,13 @@ class PackageController extends Controller
             ['tier' => 'Premium', 'name' => 'Premium Package', 'price' => 90000, 'services' => ['venue', 'catering', 'host', 'sounds_lights', 'photographer', 'clothes'], 'desc' => 'Complete event experience'],
         ];
 
-        $planningCount = Auth::check()
+        $activeEventCount = Auth::check()
             ? DB::table('events')
                 ->where('user_id', Auth::id())
-                ->where('status', 'planning')
+                ->whereIn('status', ['planning', 'pending', 'ongoing'])
                 ->count()
             : 0;
-        $planningLimitReached = $planningCount >= 3;
+        $planningLimitReached = $activeEventCount >= 3;
 
         $allocation = [
             'Venue' => 0.30,

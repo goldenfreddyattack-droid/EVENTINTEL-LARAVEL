@@ -95,7 +95,7 @@ class CoordinatorController extends Controller
         $ongoing = $events->filter(fn ($event) => in_array($status($event), ['pending confirmation', 'accepted', 'proposal sent', 'payment pending', 'paid', 'ongoing'], true))->count();
         $totalSuppliers = DB::table('supplier_services')->distinct('user_id')->count('user_id');
 
-        $monthlySummary = collect();
+        $monthlySummary = [];
         foreach ($events as $event) {
             $monthKey = !empty($event->event_date)
                 ? \Carbon\Carbon::parse($event->event_date)->format('Y-m')

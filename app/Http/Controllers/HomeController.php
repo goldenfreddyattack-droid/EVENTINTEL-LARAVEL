@@ -25,14 +25,14 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $planningCount = DB::table('events')
+        $activeEventCount = DB::table('events')
             ->where('user_id', Auth::id())
-            ->where('status', 'planning')
+            ->whereIn('status', ['planning', 'pending', 'ongoing'])
             ->count();
 
         return view('userui.homepage', [
-            'planningCount' => $planningCount,
-            'planningLimitReached' => $planningCount >= 3,
+            'planningCount' => $activeEventCount,
+            'planningLimitReached' => $activeEventCount >= 3,
         ]);
     }
 }

@@ -30,9 +30,9 @@
         <div class="form-card" style="margin-bottom:18px;color:#8b1e1e;background:#fff7f7;"><strong>Please review these details:</strong><ul style="margin:8px 0 0 18px;">@foreach ($validationErrors as $error)<li>{{ $error }}</li>@endforeach</ul></div>
     @endif
 
-    @if (($planningCount ?? 0) >= 3)
+    @if (($activeEventLimitReached ?? false))
         <div class="form-card" style="margin-bottom:18px;color:#8b1e1e;background:#fff7f7;">
-            <strong>You already have three planning events.</strong>
+            <strong>You already have three active events.</strong>
             <div style="margin-top:8px;">Finish one before creating another event.</div>
         </div>
     @endif
@@ -108,12 +108,15 @@
     </div>
 </div>
 <div class="review-modal" id="reviewModal" aria-hidden="true"><div class="review-panel" role="dialog" aria-modal="true" aria-labelledby="reviewTitle"><h2 id="reviewTitle">Review Selected Services</h2><p class="step-note">Check your selected services and estimated total before creating the event.</p><div class="review-list" id="reviewList"></div><div class="review-total"><span>Total</span><span id="reviewTotal">₱0.00</span></div><div class="review-actions"><button type="button" class="secondary" data-close-review>Back</button><button type="button" class="primary" data-confirm-review>Confirm and Create Event</button></div></div></div>
+<div class="review-modal" id="eventSuccessModal" aria-hidden="true"><div class="review-panel" role="dialog" aria-modal="true" aria-labelledby="eventSuccessTitle"><h2 id="eventSuccessTitle">Event Created Successfully</h2><p class="step-note">Your event has been created successfully and is ready for planning.</p><div class="review-actions"><a class="button primary" href="{{ route('your.events') }}">Go to Your Events</a></div></div></div>
 <div class="service-modal" id="serviceModal" aria-hidden="true"><div class="service-panel"><header><div><h3 id="serviceModalTitle">Available Services</h3><a class="service-catalog-link" id="serviceCatalogLink" href="#">Open full catalog</a></div><button class="close-service" type="button" data-close-service aria-label="Close">&times;</button></header><div id="serviceResults"></div></div></div>
 <style>
     .venue-modal{display:none;position:fixed;inset:0;z-index:30;align-items:center;justify-content:center;padding:20px;background:#12161999}.venue-modal.open{display:flex}.venue-panel{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:24px;padding:24px;box-shadow:0 20px 60px #0004}.venue-panel h2{margin:0 0 8px}.venue-panel p{color:#666;margin:0 0 18px}.venue-calendar-heading{display:flex;align-items:center;justify-content:space-between;margin:20px 0 12px;color:#171717}.venue-calendar-heading strong{font-size:18px}.venue-legend{display:flex;gap:14px;color:#777;font-size:12px}.venue-legend span{display:flex;align-items:center;gap:5px}.venue-legend i{width:9px;height:9px;border-radius:50%;background:#35a45b}.venue-legend .booked-dot{background:#d95b5b}.venue-weekdays,.venue-dates{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.venue-weekdays{margin-bottom:7px;text-align:center;color:#888;font-size:11px;font-weight:800;text-transform:uppercase}.venue-date,.venue-date-empty{min-height:82px}.venue-date{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid #d7eadb;border-radius:12px;padding:8px 4px;background:#effbf1;color:#17652b;font-weight:800}.venue-date .day-name{font-size:11px;color:#569167;font-weight:700}.venue-date strong{font-size:22px;line-height:1}.venue-date span:last-child{font-size:11px}.venue-date.booked{border-color:#f4caca;background:#fff0f0;color:#ad2929}.venue-date.booked .day-name{color:#c87979}.venue-addon{display:flex;gap:10px;align-items:center;padding:13px;border:1px solid #eee2b7;border-radius:14px;background:#fff;color:#222;font-weight:800}.venue-addon input{accent-color:#d6a91d}.venue-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.venue-modal-actions button{height:42px;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer}.venue-modal-actions .secondary{background:#f1f1f1}.venue-modal-actions .primary{background:#f3c547}@media(max-width:520px){.venue-panel{padding:18px}.venue-weekdays,.venue-dates{gap:4px}.venue-date,.venue-date-empty{min-height:70px}.venue-date strong{font-size:18px}.venue-legend{gap:8px;font-size:11px}}
 </style>
 <div class="venue-modal" id="venueAvailabilityModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Availability</h2><p id="venueAvailabilityText">Check available dates for this venue.</p><div class="venue-calendar-heading"><strong id="venueCalendarMonth">Available dates</strong><div class="venue-legend"><span><i></i>Open</span><span><i class="booked-dot"></i>Booked</span></div></div><div class="venue-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="venue-dates" id="venueDates"></div><div class="venue-modal-actions"><button class="secondary" type="button" data-close-venue>Cancel</button><button class="primary" type="button" data-venue-addons>Continue to Add-ons</button></div></div></div>
 <div class="venue-modal" id="venueAddonsModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Add-ons</h2><p>Select additional services this venue can provide.</p><div class="venue-addons" id="venueAddons"></div><div class="venue-addon-total"><span>Add-ons total</span><strong id="venueAddonsTotal">₱0.00</strong></div><div class="venue-modal-actions"><button class="secondary" type="button" data-back-venue>Back</button><button class="primary" type="button" data-confirm-venue>Confirm and Select Venue</button></div></div></div>
+<div class="venue-modal" id="venueConfirmModal" aria-hidden="true"><div class="venue-panel"><h2>Confirm Venue Booking</h2><p id="venueConfirmText">Are you sure you want to book this venue and selected add-ons?</p><div class="venue-modal-actions"><button class="secondary" type="button" data-back-venue-confirm>Back</button><button class="primary" type="button" data-final-confirm-venue>Yes, Book Venue</button></div></div></div>
+<div class="venue-modal" id="venueSuccessModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Booking Confirmed</h2><p>Your venue and selected add-ons have been added to this event.</p><div class="venue-modal-actions"><button class="primary" type="button" data-close-venue-success>Back to Services</button></div></div></div>
 <div class="venue-modal" id="addonDetailsModal" aria-hidden="true"><div class="venue-panel addon-details-panel"><h2 id="addonDetailsTitle">Add-on Details</h2><p id="addonDetailsText">No additional details were provided for this add-on.</p><div class="venue-modal-actions"><button class="secondary" type="button" data-close-addon-details>Close</button></div></div></div>
 <script>
     const eventTypeInputs = document.querySelectorAll('input[name="event_type"]');
@@ -227,6 +230,8 @@
     });
     const venueAvailabilityModal = document.getElementById('venueAvailabilityModal');
     const venueAddonsModal = document.getElementById('venueAddonsModal');
+    const venueConfirmModal = document.getElementById('venueConfirmModal');
+    const venueSuccessModal = document.getElementById('venueSuccessModal');
     const venueDates = document.getElementById('venueDates');
     const venueAddons = document.getElementById('venueAddons');
     const venueAddonsTotal = document.getElementById('venueAddonsTotal');
@@ -238,6 +243,8 @@
     function closeVenueModals() {
         venueAvailabilityModal.classList.remove('open');
         venueAddonsModal.classList.remove('open');
+        venueConfirmModal.classList.remove('open');
+        venueSuccessModal.classList.remove('open');
     }
     async function openVenueAvailability(name, price) {
         pendingVenue = {name, price};
@@ -291,6 +298,19 @@
     document.querySelector('[data-back-venue]').addEventListener('click', () => { venueAddonsModal.classList.remove('open'); venueAvailabilityModal.classList.add('open'); });
     document.querySelector('[data-confirm-venue]').addEventListener('click', () => {
         if (!pendingVenue) return;
+        document.getElementById('venueConfirmText').textContent = `Are you sure you want to book ${pendingVenue.name} and the selected add-ons?`;
+        venueAddonsModal.classList.remove('open');
+        venueConfirmModal.classList.add('open');
+        venueConfirmModal.setAttribute('aria-hidden', 'false');
+    });
+    document.querySelector('[data-back-venue-confirm]').addEventListener('click', () => {
+        venueConfirmModal.classList.remove('open');
+        venueConfirmModal.setAttribute('aria-hidden', 'true');
+        venueAddonsModal.classList.add('open');
+        venueAddonsModal.setAttribute('aria-hidden', 'false');
+    });
+    document.querySelector('[data-final-confirm-venue]').addEventListener('click', () => {
+        if (!pendingVenue) return;
         document.getElementById('venue_name').value = pendingVenue.name;
         document.getElementById('selected-venue').textContent = pendingVenue.name;
         document.querySelector('[data-service-row="venue"] input[type="checkbox"]').checked = true;
@@ -306,7 +326,10 @@
             }
         });
         closeVenueModals();
+        venueSuccessModal.classList.add('open');
+        venueSuccessModal.setAttribute('aria-hidden', 'false');
     });
+    document.querySelector('[data-close-venue-success]').addEventListener('click', closeVenueModals);
     window.addEventListener('message', event => {
         if (!event.data || event.data.type !== 'serviceSelected') return;
         const key = event.data.service;
@@ -380,7 +403,7 @@
     });
     document.querySelector('[data-review]').addEventListener('click', openReview);
     document.querySelector('[data-close-review]').addEventListener('click', closeReview);
-    document.querySelector('[data-confirm-review]').addEventListener('click', () => {
+    document.querySelector('[data-confirm-review]').addEventListener('click', async () => {
         const form = document.querySelector('form[action="{{ route('events.store') }}"]');
         if (!form || !form.checkValidity()) {
             closeReview();
@@ -397,7 +420,33 @@
             document.getElementById('event_end_time').focus();
             return;
         }
-        form.submit();
+        const confirmButton = document.querySelector('[data-confirm-review]');
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'Creating Event...';
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success) {
+                const validationMessage = result.errors
+                    ? Object.values(result.errors).flat().join(' ')
+                    : '';
+                throw new Error(validationMessage || result.message || 'Unable to create the event. Please check the form and try again.');
+            }
+            closeReview();
+            document.getElementById('eventSuccessModal').classList.add('open');
+            document.getElementById('eventSuccessModal').setAttribute('aria-hidden', 'false');
+        } catch (error) {
+            alert(error.message);
+            confirmButton.disabled = false;
+            confirmButton.textContent = 'Confirm and Create Event';
+        }
     });
 
     const steps = [...document.querySelectorAll('.section[data-step]')];
