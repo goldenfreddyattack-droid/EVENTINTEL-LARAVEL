@@ -42,6 +42,25 @@ class YourEventsController extends Controller
             }
 
             DB::table('events')->where('event_id', $event->event_id)->update($updates);
+
+            if (Schema::hasTable('payments')) {
+                $payment = DB::table('payments')
+                    ->where('event_id', $event->event_id)
+                    ->where('user_id', Auth::id())
+                    ->whereIn('status', ['pending', 'pending_verification'])
+                    ->orderByDesc('payment_id')
+                    ->first();
+
+                if ($payment) {
+                    DB::table('payments')
+                        ->where('payment_id', $payment->payment_id)
+                        ->update([
+                            'status' => 'verified',
+                            'verified_at' => now(),
+                        ]);
+                }
+            }
+
             $this->markEventPendingWhenServicesArePaid($event->event_id);
         }
 
@@ -495,8 +514,9 @@ class YourEventsController extends Controller
 
         if ($paymentMethod === 'online') {
             $amount = $amount > 0 ? $amount : 500;
+            $externalId = 'ei-event-' . $event->event_id . '-' . $data['service_type'] . '-' . now()->timestamp;
             $gcashResponse = app(GcashService::class)->createPayment([
-                'external_id' => 'ei-event-' . $event->event_id . '-' . $data['service_type'] . '-' . now()->timestamp,
+                'external_id' => $externalId,
                 'amount' => $amount,
                 'description' => 'EventIntel payment for ' . ucfirst(str_replace('_', ' ', $data['service_type'])) . ' service',
                 'currency' => 'PHP',
@@ -508,6 +528,20 @@ class YourEventsController extends Controller
                 'success_url' => route('your.events', ['payment_status' => 'success', 'event_id' => $eventId, 'service' => $data['service_type']]),
                 'cancel_url' => route('your.events', ['payment_status' => 'cancelled', 'event_id' => $eventId, 'service' => $data['service_type']]),
             ]);
+
+            if (Schema::hasTable('payments')) {
+                DB::table('payments')->updateOrInsert(
+                    ['reference_no' => $externalId],
+                    [
+                        'event_id' => $event->event_id,
+                        'user_id' => Auth::id(),
+                        'amount' => $amount,
+                        'status' => 'pending',
+                        'verified_at' => null,
+                        'created_at' => now(),
+                    ]
+                );
+            }
         }
 
         DB::table('events')->where('event_id', $event->event_id)->update($updates);
@@ -537,6 +571,7 @@ class YourEventsController extends Controller
             ['name' => 'clothes', 'status' => 'clothes_status'],
             ['name' => 'coordinator', 'status' => 'coordinator_status'],
         ];
+
 
         $selectedServices = array_filter($services, fn (array $service): bool =>
             trim((string) ($event->{$service['name']} ?? '')) !== ''

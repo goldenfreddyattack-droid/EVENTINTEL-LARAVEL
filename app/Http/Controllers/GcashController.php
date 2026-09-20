@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\GcashService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class GcashController extends Controller
@@ -36,6 +37,18 @@ class GcashController extends Controller
 
         $payment = $gcashService->createPayment($payload);
 
+        DB::table('payments')->updateOrInsert(
+            ['reference_no' => $payload['external_id']],
+            [
+                'event_id' => $data['event_id'],
+                'user_id' => Auth::id(),
+                'amount' => $data['amount'],
+                'status' => 'pending',
+                'verified_at' => null,
+                'created_at' => now(),
+            ]
+        );
+
         return response()->json([
             'success' => true,
             'payment' => $payment,
@@ -66,10 +79,24 @@ class GcashController extends Controller
         $reference = (string) ($payload['external_id'] ?? $payload['reference'] ?? '');
 
         if ($reference !== '') {
-            DB::table('payments')->where('reference_no', $reference)->update([
-                'status' => $status === 'paid' ? 'verified' : 'pending',
-                'verified_at' => $status === 'paid' ? now() : null,
-            ]);
+            $paymentStatus = $status === 'paid' ? 'verified' : 'pending';
+
+            $payment = DB::table('payments')
+                ->where('reference_no', $reference)
+                ->first();
+
+            if ($payment) {
+                DB::table('payments')
+                    ->where('payment_id', $payment->payment_id)
+                    ->update([
+                        'status' => $paymentStatus,
+                        'verified_at' => $paymentStatus === 'verified' ? now() : null,
+                    ]);
+
+                DB::table('events')
+                    ->where('event_id', $payment->event_id)
+                    ->update(['payment_status' => $paymentStatus]);
+            }
         }
 
         return response()->json(['success' => true]);

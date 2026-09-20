@@ -138,6 +138,7 @@ erDiagram
         string reference_no
         decimal amount
         string status
+        timestamp verified_at
         timestamp created_at
     }
 
@@ -207,7 +208,7 @@ These are excluded because they are framework-only, legacy, unused by active Lar
 
 ## Schema Note
 
-`payments`, `guests`, and `coordinator_proposals` are directly referenced by active controllers, but their table-creation migrations are not included in the current migration directory. Their displayed columns are therefore based on the fields used by those controllers. The ERD shows application relationships, not database-enforced foreign keys.
+`payments`, `guests`, and `coordinator_proposals` are directly referenced by active controllers. The payments table is created by the `2026_09_20_000000_create_payments_table` migration and stores local checkout records and webhook verification status. The ERD shows application relationships; the payment migration uses indexed references rather than database-enforced foreign keys to match the existing schema.
 
 `event_supplier_reviews.review_token` separates reviews submitted through different QR/link sessions. `event_review_links` receives a new token whenever QR & Link is generated, while `event_review_folder_tokens` creates one reusable token per event for the authenticated Review Folder.
 
