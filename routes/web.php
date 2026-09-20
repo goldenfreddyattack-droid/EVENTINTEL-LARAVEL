@@ -12,7 +12,7 @@ Route::get('/email/verify/{user}', [App\Http\Controllers\Auth\VerificationContro
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/review/{token}', [App\Http\Controllers\EventReviewController::class, 'publicReview'])->name('reviews.public');
-Route::post('/review/{token}', [App\Http\Controllers\EventReviewController::class, 'storePublicReview'])->name('reviews.public.store');
+Route::post('/review/{token}', [App\Http\Controllers\EventReviewController::class, 'storePublicReviews'])->name('reviews.public.store');
 
 Route::middleware('auth')->group(function () {
     Route::view('about', 'about')->name('about');

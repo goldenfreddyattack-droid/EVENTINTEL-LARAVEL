@@ -331,7 +331,7 @@
                                 <div style="font-weight:700; font-size:16px; margin-bottom:2px;">${escapeHtml(service.name)}</div>
                                 <div style="font-size:13px; color:#666; margin-bottom:12px;">Category: ${escapeHtml(service.category)}</div>
                                 
-                                <form class="supplier-review-form" data-event="${eventId}" data-column="${escapeHtml(service.service_column)}">
+                                <form class="supplier-review-form" data-event="${eventId}" data-column="${escapeHtml(service.service_column)}" data-review-token="${escapeHtml(data.review_token)}">
                                     <div style="margin-bottom:12px;">
                                         <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Rating Scale</label>
                                         <div class="star-rating-group" data-rating="${currentRating}" style="display:flex; gap:6px; cursor:pointer;">
@@ -391,7 +391,8 @@
                                     body: JSON.stringify({
                                         service_column: form.dataset.column,
                                         rating: ratingVal,
-                                        review_text: formData.get('review_text')
+                                        review_text: formData.get('review_text'),
+                                        review_token: form.dataset.reviewToken
                                     })
                                 });
                                 const result = await res.json();

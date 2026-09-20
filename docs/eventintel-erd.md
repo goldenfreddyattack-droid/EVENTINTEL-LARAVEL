@@ -101,10 +101,12 @@ erDiagram
     EVENT_SUPPLIER_REVIEWS {
         bigint id PK
         bigint event_id FK
+        string review_token
         string service_column
         string supplier_name
         int rating
         text review_text
+        string reviewer_name
         timestamp created_at
     }
 
@@ -112,6 +114,13 @@ erDiagram
         bigint id PK
         bigint event_id FK
         string token
+        timestamp created_at
+    }
+
+    EVENT_REVIEW_FOLDER_TOKENS {
+        bigint id PK
+        bigint event_id FK
+        string token UK
         timestamp created_at
     }
 
@@ -132,15 +141,6 @@ erDiagram
         timestamp created_at
     }
 
-    REVIEWS {
-        bigint review_id PK
-        bigint event_id FK
-        bigint service_id FK
-        int user_id FK
-        int rating
-        text comment
-        timestamp created_at
-    }
 
     USERS ||--o{ EVENTS : creates
     USERS ||--o{ SUPPLIER_SERVICES : owns
@@ -148,7 +148,6 @@ erDiagram
     USERS ||--o{ COORDINATOR_PROPOSALS : coordinates
     USERS ||--o{ USER_SERVICE_BOOKMARKS : saves
     USERS ||--o{ PAYMENTS : makes
-    USERS ||--o{ REVIEWS : writes
 
     EVENTS ||--o| INVITATIONS : has
     EVENTS ||--o{ GUESTS : contains
@@ -156,11 +155,33 @@ erDiagram
     EVENTS ||--o{ COORDINATOR_PROPOSALS : receives
     EVENTS ||--o{ EVENT_SUPPLIER_REVIEWS : receives
     EVENTS ||--o| EVENT_REVIEW_LINKS : exposes
+    EVENTS ||--o| EVENT_REVIEW_FOLDER_TOKENS : owns
     EVENTS ||--o{ PAYMENTS : has
-    EVENTS ||--o{ REVIEWS : receives
 
     SUPPLIER_SERVICES ||--o{ USER_SERVICE_BOOKMARKS : bookmarked
-    SUPPLIER_SERVICES ||--o{ REVIEWS : reviewed
+```
+
+## Firebase Realtime Database
+
+Firebase is used as a separate document tree for messaging and the newsfeed. These paths are not MySQL tables and are shown separately from the relational ERD.
+
+```mermaid
+flowchart TD
+    MESSAGES["messages/{threadKey}/{eventId}/{messageId}"]
+    MESSAGE_FIELDS["message_id, sender_id, sender_name, receiver_id, event_id, message, timestamp, read_by"]
+    POSTS["newsfeed/posts/{postId}"]
+    POST_FIELDS["user_id, content, image_path, created_at"]
+    COMMENTS["newsfeed/comments/{commentId}"]
+    COMMENT_FIELDS["post_id, user_id, comment, created_at"]
+    LIKES["newsfeed/likes/{postId}/{userId}"]
+    LIKE_VALUE["boolean: liked"]
+
+    MESSAGES --> MESSAGE_FIELDS
+    POSTS --> POST_FIELDS
+    COMMENTS --> COMMENT_FIELDS
+    LIKES --> LIKE_VALUE
+    POSTS -->|has| COMMENTS
+    POSTS -->|has| LIKES
 ```
 
 ## Included Tables
@@ -170,10 +191,9 @@ erDiagram
 - `supplier_services`: supplier catalog, capacity, pricing, availability, and ratings.
 - `invitations` and `guests`: invitation and RSVP management.
 - `custom_event_requests` and `coordinator_proposals`: coordinator booking workflow.
-- `event_supplier_reviews` and `event_review_links`: event-specific review workflow.
+- `event_supplier_reviews`, `event_review_links`, and `event_review_folder_tokens`: event-specific review workflow and review sessions.
 - `user_service_bookmarks`: saved supplier services.
 - `payments`: referenced by the GCash payment webhook and payment status flow.
-- `reviews`: referenced by the supplier review listing flow.
 
 ## Excluded Tables
 
@@ -187,4 +207,8 @@ These are excluded because they are framework-only, legacy, unused by active Lar
 
 ## Schema Note
 
-`payments`, `reviews`, `guests`, and `coordinator_proposals` are directly referenced by active controllers, but their table-creation migrations are not included in the current migration directory. Their displayed columns are therefore based on the fields used by those controllers. The ERD shows application relationships, not database-enforced foreign keys.
+`payments`, `guests`, and `coordinator_proposals` are directly referenced by active controllers, but their table-creation migrations are not included in the current migration directory. Their displayed columns are therefore based on the fields used by those controllers. The ERD shows application relationships, not database-enforced foreign keys.
+
+`event_supplier_reviews.review_token` separates reviews submitted through different QR/link sessions. `event_review_links` receives a new token whenever QR & Link is generated, while `event_review_folder_tokens` creates one reusable token per event for the authenticated Review Folder.
+
+Firebase Realtime Database uses the paths shown above. Message threads are keyed by event and participant IDs; newsfeed posts, comments, and likes are stored under their respective Firebase branches.

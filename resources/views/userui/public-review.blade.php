@@ -15,13 +15,18 @@
         .category { color:#9d7612; font:700 11px Arial,sans-serif; letter-spacing:.12em; text-transform:uppercase; } h2 { margin:7px 0 16px; font-size:22px; }
         .stars { display:flex; gap:5px; } .star { color:#d8d4c8; background:transparent; border:0; cursor:pointer; font-size:32px; line-height:1; padding:0 2px; } .star.selected,.star:hover { color:var(--gold); }
         textarea,input { width:100%; border:1px solid var(--line); border-radius:9px; background:#fffefb; font:14px Arial,sans-serif; padding:11px; } textarea { min-height:82px; resize:vertical; margin-top:14px; }
-        .reviewer { margin-top:10px; } .save { margin-top:13px; border:0; border-radius:9px; background:var(--gold); color:var(--ink); cursor:pointer; font:700 14px Arial,sans-serif; padding:11px 16px; } .save:disabled { opacity:.55; cursor:wait; }
+        .review-actions { margin-top:14px; } .name-field { margin-bottom:14px; } .save { margin-top:13px; border:0; border-radius:9px; background:var(--gold); color:var(--ink); cursor:pointer; font:700 14px Arial,sans-serif; padding:11px 16px; } .save:disabled { opacity:.55; cursor:wait; }
         .message { display:none; margin-top:10px; color:#39734b; font:13px Arial,sans-serif; } .message.show { display:block; } .empty { text-align:center; color:var(--muted); font:15px Arial,sans-serif; padding:30px; }
     </style>
 </head>
 <body>
     <main class="shell">
         <header class="masthead"><div class="mark">EventIntel guest review</div><h1>{{ $event->title ?: 'Your event' }}</h1><p class="intro">How was your experience? Rate the suppliers who helped make this event happen.</p></header>
+        @if (count($services))
+            <div class="review-actions name-field">
+                <input id="reviewerName" type="text" maxlength="100" placeholder="Your name (optional)">
+            </div>
+        @endif
         <section class="review-list" aria-label="Selected event services">
             @forelse ($services as $service)
                 <article class="review-card" data-column="{{ $service['service_column'] }}">
@@ -30,13 +35,17 @@
                         @for ($star = 1; $star <= 5; $star++)<button type="button" class="star {{ $star <= $service['rating'] ? 'selected' : '' }}" data-value="{{ $star }}" aria-label="{{ $star }} stars">★</button>@endfor
                     </div>
                     <textarea placeholder="Share a note about this service...">{{ $service['review_text'] }}</textarea>
-                    <input class="reviewer" type="text" maxlength="100" placeholder="Your name (optional)">
-                    <button class="save" type="button">Save review</button><div class="message" role="status"></div>
                 </article>
             @empty
                 <div class="empty">No selected services are available for review yet.</div>
             @endforelse
         </section>
+        @if (count($services))
+            <div class="review-actions">
+                <button id="saveReviews" class="save" type="button">Save all reviews</button>
+                <div id="reviewMessage" class="message" role="status"></div>
+            </div>
+        @endif
     </main>
     <script>
         const token = @json($token);
@@ -46,16 +55,32 @@
             let rating = stars.filter(star => star.classList.contains('selected')).length;
             const paint = value => stars.forEach(star => star.classList.toggle('selected', Number(star.dataset.value) <= value));
             stars.forEach(star => star.addEventListener('click', () => { rating = Number(star.dataset.value); paint(rating); }));
-            card.querySelector('.save').addEventListener('click', async () => {
-                const button = card.querySelector('.save'); const message = card.querySelector('.message');
-                if (!rating) { message.textContent = 'Please choose a star rating first.'; message.style.color = '#9a3d32'; message.classList.add('show'); return; }
-                button.disabled = true;
-                try {
-                    const response = await fetch(`/review/${encodeURIComponent(token)}`, { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':csrf}, body:JSON.stringify({service_column:card.dataset.column,rating,review_text:card.querySelector('textarea').value,reviewer_name:card.querySelector('.reviewer').value}) });
-                    const data = await response.json(); if (!response.ok || !data.success) throw new Error(data.message || 'Unable to save review.');
-                    message.textContent = 'Thanks, your review was saved.'; message.style.color = '#39734b'; message.classList.add('show');
-                } catch (error) { message.textContent = error.message; message.style.color = '#9a3d32'; message.classList.add('show'); } finally { button.disabled = false; }
-            });
+            card.reviewState = () => ({ service_column: card.dataset.column, rating, review_text: card.querySelector('textarea').value });
+        });
+
+        const saveButton = document.getElementById('saveReviews');
+        const reviewMessage = document.getElementById('reviewMessage');
+        saveButton?.addEventListener('click', async () => {
+            const reviews = [...document.querySelectorAll('.review-card')].map(card => card.reviewState());
+            if (reviews.some(review => !review.rating)) {
+                reviewMessage.textContent = 'Please choose a star rating for every service.';
+                reviewMessage.style.color = '#9a3d32';
+                reviewMessage.classList.add('show');
+                return;
+            }
+            saveButton.disabled = true;
+            try {
+                const response = await fetch(`/review/${encodeURIComponent(token)}`, { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':csrf}, body:JSON.stringify({reviews,reviewer_name:document.getElementById('reviewerName').value}) });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'Unable to save reviews.');
+                reviewMessage.textContent = 'Thanks, your reviews were saved.';
+                reviewMessage.style.color = '#39734b';
+                reviewMessage.classList.add('show');
+            } catch (error) {
+                reviewMessage.textContent = error.message;
+                reviewMessage.style.color = '#9a3d32';
+                reviewMessage.classList.add('show');
+            } finally { saveButton.disabled = false; }
         });
     </script>
 </body>

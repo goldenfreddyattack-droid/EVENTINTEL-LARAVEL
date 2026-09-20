@@ -21,10 +21,12 @@ class SupplierReviewsController extends Controller
 
     public function index()
     {
-        $reviewRows = DB::table('reviews as r')
+        $reviewRows = DB::table('event_supplier_reviews as r')
             ->join('events as e', 'r.event_id', '=', 'e.event_id')
-            ->join('supplier_services as s', 'r.service_id', '=', 's.service_id')
-            ->join('users as u', 'r.user_id', '=', 'u.user_id')
+            ->join('supplier_services as s', function ($join) {
+                $join->whereRaw('LOWER(TRIM(r.supplier_name)) = LOWER(TRIM(s.name))');
+            })
+            ->join('users as u', 'e.user_id', '=', 'u.user_id')
             ->where('s.user_id', Auth::id())
             ->select('r.*', 'e.title as event_title', 's.name as service_name', 'u.full_name as reviewer_name')
             ->orderByDesc('r.created_at')
