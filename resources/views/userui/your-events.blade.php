@@ -194,7 +194,7 @@
                 statusContent.innerHTML = `<div class="status-table">${data.services.map(service => {
                     const key = statusKey(service.status);
                     const badgeClass = key === 'pending_confirmation' ? 'pending' : key.replace(/_/g, '-');
-                    const canPay = ['pending_confirmation', 'payment_pending', 'accepted', 'proposal_accepted', 'pending_verification'].includes(key);
+                    const canPay = ['payment_pending', 'accepted', 'proposal_accepted', 'pending_verification'].includes(key);
                     const messageUrl = service.supplier_user_id ? `{{ url('/messages') }}?event_id=${button.dataset.statusEvent}&user_id=${service.supplier_user_id}` : `{{ url('/messages') }}?event_id=${button.dataset.statusEvent}`;
                     const isDeclined = ['declined', 'proposal_declined'].includes(key);
                     const noteButton = isDeclined && service.note

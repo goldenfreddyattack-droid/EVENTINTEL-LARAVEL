@@ -462,7 +462,7 @@ class YourEventsController extends Controller
             $storedPaymentStatus = 'paid';
         } else {
             $paymentStatusValue = 'Pending Confirmation';
-            $storedPaymentStatus = $data['payment_method'] === 'online' ? 'pending_verification' : 'pending';
+            $storedPaymentStatus = $data['payment_method'] === 'online' ? 'pending_verification' : 'pending_confirmation';
         }
 
         $updates = [
