@@ -72,19 +72,19 @@ class EventController extends Controller
         $venueName = trim((string) $request->query('venue'));
         abort_unless($venueName !== '', 422, 'A venue is required.');
 
-        $monthStart = now()->startOfMonth();
-        $monthEnd = $monthStart->copy()->endOfMonth();
+        $dateStart = now()->startOfDay();
+        $dateEnd = $dateStart->copy()->addYears(2)->endOfDay();
         $normalizedVenueName = strtolower($venueName);
         $bookedDates = DB::table('events')
             ->whereRaw('LOWER(TRIM(venue_name)) = ?', [$normalizedVenueName])
-            ->whereBetween('event_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+            ->whereBetween('event_date', [$dateStart->toDateString(), $dateEnd->toDateString()])
             ->whereNotIn('status', ['cancelled', 'Cancelled'])
             ->pluck('event_date')
             ->map(fn ($date) => Carbon::parse($date)->toDateString())
             ->flip();
 
-        $dates = collect(range(0, $monthStart->daysInMonth - 1))->map(function (int $offset) use ($monthStart, $bookedDates) {
-            $date = $monthStart->copy()->addDays($offset);
+        $dates = collect(range(0, $dateStart->diffInDays($dateEnd)))->map(function (int $offset) use ($dateStart, $bookedDates) {
+            $date = $dateStart->copy()->addDays($offset);
             $booked = $bookedDates->has($date->toDateString());
 
             return ['date' => $date->toDateString(), 'label' => $date->format('M j'), 'available' => ! $booked];
@@ -213,6 +213,10 @@ class EventController extends Controller
 
         if (Carbon::parse($data['event_date'] . ' ' . $endTime)->lessThanOrEqualTo(Carbon::parse($data['event_date'] . ' ' . $data['event_time']))) {
             return $this->eventError($request, 'event_end_time', 'End time must be after the start time.');
+        }
+
+        if (Carbon::parse($data['event_date'])->startOfDay()->isBefore(now()->startOfDay())) {
+            return $this->eventError($request, 'event_date', 'The event date cannot be in the past.');
         }
 
         $venue = DB::table('supplier_services')->where('name', $data['venue_name'])->first();

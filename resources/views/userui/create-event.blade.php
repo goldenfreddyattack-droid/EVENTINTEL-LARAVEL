@@ -182,11 +182,7 @@
 
     const dateInput = document.getElementById('event_date');
     function updateMinimumDate() {
-        const selected = document.querySelector('input[name="event_type"]:checked')?.value;
-        const minimum = new Date();
-        if (selected === 'Wedding') minimum.setMonth(minimum.getMonth() + 3);
-        else minimum.setDate(minimum.getDate() + 7);
-        dateInput.min = minimum.toISOString().slice(0, 10);
+        dateInput.min = new Date().toISOString().slice(0, 10);
     }
     eventTypeInputs.forEach(input => input.addEventListener('change', updateMinimumDate));
     updateMinimumDate();
@@ -269,14 +265,15 @@
             inline: true,
             monthSelectorType: 'static',
             dateFormat: 'Y-m-d',
+            minDate: 'today',
             defaultDate: dateInput.value || null,
-            enable: openDates,
             disable: bookedDates,
             onChange: function(selectedDates, dateStr) {
                 if (!dateStr) return;
                 dateInput.value = dateStr;
+                if (pendingVenue) pendingVenue.eventDate = dateStr;
                 dateInput.dispatchEvent(new Event('input', { bubbles: true }));
-                closeVenueModals();
+                document.getElementById('venueAvailabilityText').textContent = `Selected ${new Date(`${dateStr}T00:00:00`).toLocaleDateString('en-US', { dateStyle: 'long' })}. Continue to confirm this venue booking.`;
             },
             locale: {
                 weekdays: {
