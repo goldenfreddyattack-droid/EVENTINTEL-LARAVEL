@@ -6,7 +6,7 @@
 <style>
     .coord-container { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-top: 4px; }
     .coord-card-floating { background: #ffffff; border: 1px solid #ebebeb; border-radius: 16px; padding: 20px 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.02); }
-    
+
     .coord-header-bar { border-bottom: 1px solid #f0f0f0; padding-bottom: 12px; margin-bottom: 16px; }
     .coord-header-bar h2 { font-size: 22px; font-weight: 700; color: var(--text); margin: 0 0 2px; }
     .coord-header-bar p { color: var(--muted); font-size: 13px; margin: 0; }
@@ -38,7 +38,7 @@
 
 @section('content')
 <div class="coord-container">
-    
+
     {{-- FLOATING PANEL 1: Form & Header --}}
     <div class="coord-card-floating">
         <header class="coord-header-bar">
@@ -53,22 +53,28 @@
         <form method="POST" action="{{ route('coordinator.packages.store') }}">
             @csrf
             <input type="hidden" name="package_id" id="package_id">
-            
+
             <div class="form-grid">
+                <select name="event_type" required>
+                    @foreach(['Birthday', 'Debut', 'Wedding', 'Anniversary', 'Christening', 'Gender Reveal', 'Reunion'] as $type)
+                        <option value="{{ $type }}">{{ $type }}</option>
+                    @endforeach
+                </select>
                 <input name="name" placeholder="Package name *" required>
                 <input name="price" type="number" min="0" step=".01" placeholder="Price (₱) *" required>
             </div>
-            
+
             <div class="form-field-full">
                 <textarea name="description" placeholder="Short description"></textarea>
             </div>
-            
-            <div class="form-field-full">
-                <textarea name="inclusions" placeholder="Inclusions, one per line (or separated by |)"></textarea>
-            </div>
 
-            <div style="margin-bottom: 14px; font-size: 13px;">
-                <label style="cursor:pointer; font-weight: 600; color: var(--text);"><input type="checkbox" name="is_featured" style="accent-color: var(--gold);"> Featured package</label>
+            <div class="form-field-full">
+                <strong style="display:block;margin-bottom:8px;font-size:13px;">Real supplier services</strong>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:220px;overflow:auto;padding:10px;border:1px solid #e0e0e0;border-radius:8px;background:#fafafa;">
+                    @foreach($serviceCatalog as $service)
+                        <label style="margin:0;font-size:12px;"><input type="checkbox" name="service_ids[]" value="{{ $service->service_id }}"> {{ $service->name }} <small>{{ $service->category }} @if($service->price) · ₱{{ number_format($service->price) }}@endif</small></label>
+                    @endforeach
+                </div>
             </div>
 
             <button class="btn-submit" type="submit"><i class="fas fa-plus"></i> Save Package</button>
@@ -78,7 +84,7 @@
     {{-- FLOATING PANEL 2: Package List Grid --}}
     <div class="coord-card-floating">
         <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid #f4f4f4;">Your Packages ({{ count($packages) }})</h3>
-        
+
         <div class="pkg-cards-grid">
             @forelse($packages as $package)
                 <article class="pkg-card-item">
@@ -86,13 +92,11 @@
                     <div class="price">₱{{ number_format($package->price,2) }}</div>
                     <p>{{ $package->description }}</p>
                     <ul>
-                        @foreach(explode('|',$package->inclusions ?? '') as $item) 
-                            @if(trim($item))
-                                <li>{{ trim($item) }}</li>
-                            @endif 
+                        @foreach(DB::table('supplier_services')->whereIn('service_id', json_decode($package->service_ids, true) ?: [])->pluck('name') as $item)
+                            <li>{{ $item }}</li>
                         @endforeach
                     </ul>
-                    
+
                     <form method="POST" action="{{ route('coordinator.packages.delete',$package->package_id) }}" onsubmit="return confirm('Delete this package?')">
                         @csrf @method('DELETE')
                         <button class="delete-btn-sm" type="submit"><i class="fas fa-trash"></i> Delete Package</button>

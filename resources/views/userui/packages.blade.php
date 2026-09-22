@@ -31,6 +31,30 @@
             </form>
 
             <section class="packages-grid" aria-label="Available packages">
+                @if(session('success'))<p class="success">{{ session('success') }}</p>@endif
+                @if(Auth::user()->role === 'coordinator')
+                <article class="package-card package-builder-card">
+                    <p class="package-tier">Create a real package</p>
+                    <h2>Build your package</h2>
+                    <p class="package-description">Choose supplier services that already exist on EventIntel. Only selected real services will be included.</p>
+                    <form method="POST" action="{{ route('packages.store') }}">
+                        @csrf
+                        <input type="hidden" name="event_type" value="{{ $eventType ?: 'Wedding' }}">
+                        <label>Package name<input name="name" value="{{ old('name') }}" placeholder="e.g. Garden Wedding Essentials" required></label>
+                        <label>Price<input name="price" type="number" min="0" step="0.01" value="{{ old('price') }}" required></label>
+                        <label>Description<textarea name="description" rows="3" placeholder="What makes this package useful?">{{ old('description') }}</textarea></label>
+                        <div class="package-service-picker">
+                            @foreach($serviceCatalog as $service)
+                                <label><input type="checkbox" name="service_ids[]" value="{{ $service->service_id }}"> {{ $service->name }} <small>{{ $service->category }} @if($service->price) · &#8369;{{ number_format($service->price) }}@endif</small></label>
+                            @endforeach
+                        </div>
+                        <button class="package-choose" type="submit">Save real package</button>
+                    </form>
+                </article>
+                @endif
+                @if(!$activePackages)
+                    <p class="package-empty">No packages have been created for this event type yet. Build one from real supplier services above.</p>
+                @endif
                 @foreach ($activePackages as $index => $package)
                     <article class="package-card {{ $index === 1 ? 'recommended' : '' }}">
                         @if ($index === 1)
@@ -65,6 +89,7 @@
                             data-price="{{ $package['price'] }}"
                             data-event-type="{{ $eventType }}"
                             data-services='@json($package['services'])'
+                            data-service-options='@json($package['service_options'] ?? [])'
                             data-planning-limit="{{ $planningLimitReached ? '1' : '0' }}">
                             Choose this package
                         </button>
@@ -125,11 +150,13 @@
             }
 
             const services = JSON.parse(button.dataset.services || '[]');
+            const serviceOptions = JSON.parse(button.dataset.serviceOptions || '{}');
             const payload = {
                 selectedPackage: button.dataset.name,
                 budget: Number(button.dataset.price),
                 eventType: button.dataset.eventType,
-                services
+                services,
+                serviceOptions
             };
 
             sessionStorage.setItem('event_package_selection', JSON.stringify(payload));

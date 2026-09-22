@@ -129,6 +129,14 @@ class YourEventsController extends Controller
     {
         $eventId = (int) ($request->query('event', $request->input('event_id', 0)));
         $event = DB::table('events')->where('event_id', $eventId)->first();
+        if ($event && (!$event->venue_address || !$event->latitude || !$event->longitude) && $event->venue_name) {
+            $venue = DB::table('supplier_services')->where('name', $event->venue_name)->first();
+            if ($venue) {
+                $event->venue_address = $event->venue_address ?: $venue->address;
+                $event->latitude = $event->latitude ?: $venue->latitude;
+                $event->longitude = $event->longitude ?: $venue->longitude;
+            }
+        }
         $invitation = $event ? DB::table('invitations')->where('event_id', $eventId)->first() : null;
 
         if ($request->isMethod('post')) {
@@ -163,7 +171,6 @@ class YourEventsController extends Controller
                     'qr_code' => $guest->qr_code ?? $qrCode,
                     'rsvp_status' => 'confirmed',
                     'attended' => $guest->attended ?? 0,
-                    'updated_at' => now(),
                 ]);
                 $guestQr = $guest->qr_code ?? $qrCode;
             } else {
@@ -241,6 +248,16 @@ class YourEventsController extends Controller
     public function invitation(Request $request, int $eventId)
     {
         $event = $this->ownedEvent($eventId);
+        if ((!$event->venue_address || !$event->latitude || !$event->longitude) && $event->venue_name) {
+            $venue = DB::table('supplier_services')
+                ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($event->venue_name))])
+                ->first();
+            if ($venue) {
+                $event->venue_address = $event->venue_address ?: $venue->address;
+                $event->latitude = $event->latitude ?: $venue->latitude;
+                $event->longitude = $event->longitude ?: $venue->longitude;
+            }
+        }
         $hasTemplateColumn = Schema::hasColumn('invitations', 'template');
 
         if ($request->isMethod('post')) {

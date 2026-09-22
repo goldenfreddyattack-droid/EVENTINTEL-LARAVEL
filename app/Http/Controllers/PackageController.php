@@ -9,6 +9,15 @@ use Illuminate\Support\Facades\Schema;
 
 class PackageController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware(function ($request, $next) {
+            abort_unless(Auth::user()->role === 'coordinator', 403, 'Only coordinators can create packages.');
+            return $next($request);
+        })->only('store');
+    }
+
     public function index(Request $request)
     {
         $eventType = trim((string) $request->query('event_type', ''));
@@ -58,11 +67,68 @@ class PackageController extends Controller
         ];
 
         $eventKey = strtolower($eventType);
-        $activePackages = $packages[$eventKey] ?? [
-            ['tier' => 'Basic', 'name' => 'Basic Package', 'price' => 25000, 'services' => ['venue', 'catering', 'host'], 'desc' => 'Essential event services'],
-            ['tier' => 'Standard', 'name' => 'Standard Package', 'price' => 50000, 'services' => ['venue', 'catering', 'host', 'sounds_lights', 'photographer'], 'desc' => 'Popular balanced choice'],
-            ['tier' => 'Premium', 'name' => 'Premium Package', 'price' => 90000, 'services' => ['venue', 'catering', 'host', 'sounds_lights', 'photographer', 'clothes'], 'desc' => 'Complete event experience'],
+        $activePackages = [];
+
+        $serviceNames = [
+            'venue' => 'Venue',
+            'catering' => 'Catering/Food',
+            'host' => 'Host/MC',
+            'sounds_lights' => 'Sounds & Lights',
+            'photographer' => 'Photographer',
+            'clothes' => 'Clothing/Attire',
         ];
+        $serviceIcons = [
+            'venue' => 'fa-location-dot',
+            'catering' => 'fa-utensils',
+            'host' => 'fa-microphone',
+            'sounds_lights' => 'fa-lightbulb',
+            'photographer' => 'fa-camera',
+            'clothes' => 'fa-shirt',
+        ];
+        $serviceCatalog = Schema::hasTable('supplier_services')
+            ? DB::table('supplier_services')->select('service_id', 'name', 'category', 'price')->whereNotNull('name')->orderBy('category')->orderBy('name')->get()
+            : collect();
+        $activePackages = Schema::hasTable('event_packages')
+            ? DB::table('event_packages')->where(function ($query) use ($eventKey) {
+                $query->whereRaw('LOWER(event_type) = ?', [$eventKey])->orWhere('event_type', 'All');
+            })->orderBy('price')->get()->map(function ($package) use ($serviceCatalog) {
+                $ids = json_decode($package->service_ids, true) ?: [];
+                $selected = $serviceCatalog->whereIn('service_id', $ids);
+                $services = $selected->map(function ($service) {
+                    return match (strtolower(trim((string) $service->category))) {
+                        'venue' => 'venue',
+                        'catering' => 'catering',
+                        'host', 'mc' => 'host',
+                        'sounds & lights', 'sounds and lights', 'sounds_lights' => 'sounds_lights',
+                        'photographer' => 'photographer',
+                        'clothing', 'clothes', 'styling' => 'clothes',
+                        default => null,
+                    };
+                })->filter()->unique()->values()->all();
+                $serviceOptions = $selected->mapWithKeys(function ($service) {
+                    $key = match (strtolower(trim((string) $service->category))) {
+                        'venue' => 'venue',
+                        'catering' => 'catering',
+                        'host', 'mc' => 'host',
+                        'sounds & lights', 'sounds and lights', 'sounds_lights' => 'sounds_lights',
+                        'photographer' => 'photographer',
+                        'clothing', 'clothes', 'styling' => 'clothes',
+                        default => null,
+                    };
+                    return $key ? [$key => $service->name] : [];
+                })->all();
+                return [
+                    'package_id' => $package->package_id,
+                    'tier' => 'Community package',
+                    'name' => $package->name,
+                    'price' => (float) $package->price,
+                    'services' => $services,
+                    'service_names' => $selected->pluck('name')->values()->all(),
+                    'service_options' => $serviceOptions,
+                    'desc' => $package->description ?: 'Created from real supplier services.',
+                ];
+            })->filter(fn ($package) => count($package['services']) > 0)->values()->all()
+            : [];
 
         $activeEventCount = Auth::check()
             ? DB::table('events')
@@ -80,27 +146,6 @@ class PackageController extends Controller
             'Sounds & Lights' => 0.08,
             'Clothing/Attire' => 0.05,
             'Decorations' => 0.04,
-        ];
-
-        $serviceNames = [
-            'venue' => 'Venue',
-            'catering' => 'Catering/Food',
-            'host' => 'Host/MC',
-            'sounds_lights' => 'Sounds & Lights',
-            'photographer' => 'Photographer',
-            'clothes' => 'Clothing/Attire',
-            'church' => 'Church',
-            'rental_car' => 'Rental Car',
-        ];
-        $serviceIcons = [
-            'venue' => 'fa-location-dot',
-            'catering' => 'fa-utensils',
-            'host' => 'fa-microphone',
-            'sounds_lights' => 'fa-lightbulb',
-            'photographer' => 'fa-camera',
-            'clothes' => 'fa-shirt',
-            'church' => 'fa-church',
-            'rental_car' => 'fa-car',
         ];
 
         $minByCategory = [];
@@ -133,10 +178,45 @@ class PackageController extends Controller
             'eventKey',
             'eventType',
             'minByCategory',
+            'serviceCatalog',
             'selectedBudget',
             'serviceIcons',
             'serviceNames',
             'planningLimitReached'
         ));
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'event_type' => ['required', 'string', 'max:100'],
+            'name' => ['required', 'string', 'max:150'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'service_ids' => ['required', 'array', 'min:1'],
+            'service_ids.*' => ['integer', 'distinct'],
+        ]);
+
+        $serviceIds = DB::table('supplier_services')->whereIn('service_id', $data['service_ids'])->pluck('service_id')->map(fn ($id) => (int) $id)->values()->all();
+        if (!$serviceIds) {
+            return back()->withInput()->withErrors(['service_ids' => 'Select at least one real supplier service.']);
+        }
+        $hasVenue = DB::table('supplier_services')->whereIn('service_id', $serviceIds)->whereRaw('LOWER(TRIM(category)) = ?', ['venue'])->exists();
+        if (!$hasVenue) {
+            return back()->withInput()->withErrors(['service_ids' => 'Every package must include a real venue.']);
+        }
+
+        DB::table('event_packages')->insert([
+            'user_id' => Auth::id(),
+            'event_type' => $data['event_type'],
+            'name' => $data['name'],
+            'price' => $data['price'],
+            'description' => $data['description'] ?? null,
+            'service_ids' => json_encode($serviceIds),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return redirect()->route('packages', ['event_type' => $data['event_type']])->with('success', 'Real package created successfully.');
     }
 }

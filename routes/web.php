@@ -13,6 +13,7 @@ Route::get('/email/verify/{user}', [App\Http\Controllers\Auth\VerificationContro
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/review/{token}', [App\Http\Controllers\EventReviewController::class, 'publicReview'])->name('reviews.public');
 Route::post('/review/{token}', [App\Http\Controllers\EventReviewController::class, 'storePublicReviews'])->name('reviews.public.store');
+Route::match(['get', 'post'], '/rsvp', [App\Http\Controllers\YourEventsController::class, 'rsvp'])->name('rsvp');
 
 Route::middleware('auth')->group(function () {
     Route::view('about', 'about')->name('about');
@@ -32,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/recommendation/generate', [\App\Http\Controllers\RecommendationController::class, 'generate'])->name('recommendation.generate');
     Route::post('/recommendation/use', [\App\Http\Controllers\RecommendationController::class, 'useRecommendation'])->name('recommendation.use');
     Route::get('/packages', [\App\Http\Controllers\PackageController::class, 'index'])->name('packages');
+    Route::post('/packages', [\App\Http\Controllers\PackageController::class, 'store'])->name('packages.store');
     Route::get('/events/create', [App\Http\Controllers\EventController::class, 'create'])->name('events.create');
     Route::post('/events', [App\Http\Controllers\EventController::class, 'store'])->name('events.store');
     Route::get('/events/venue-availability', [App\Http\Controllers\EventController::class, 'venueAvailability'])->name('events.venue-availability');
@@ -59,7 +61,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/your-events/{eventId}/reviews', [\App\Http\Controllers\EventReviewController::class, 'getReviewableServices'])->name('your.events.reviews');
     Route::post('/your-events/{eventId}/reviews', [\App\Http\Controllers\EventReviewController::class, 'storeReview'])->name('your.events.reviews.store');
     Route::post('/your-events/{eventId}/review-link', [\App\Http\Controllers\EventReviewController::class, 'createShareLink'])->name('your.events.review-link');
-    Route::match(['get', 'post'], '/rsvp', [\App\Http\Controllers\YourEventsController::class, 'rsvp'])->name('rsvp');
     Route::post('/payments/gcash/create', [\App\Http\Controllers\GcashController::class, 'create'])->name('payments.gcash.create');
     Route::post('/payments/gcash/webhook', [\App\Http\Controllers\GcashController::class, 'webhook'])->name('payments.gcash.webhook');
     Route::get('/payments/gcash/verify/{reference}', [\App\Http\Controllers\GcashController::class, 'verify'])->name('payments.gcash.verify');

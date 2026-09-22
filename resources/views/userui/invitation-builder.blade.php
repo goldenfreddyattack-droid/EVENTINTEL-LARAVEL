@@ -36,6 +36,11 @@
         .preview h3 { position: relative; z-index: 1; margin-bottom: 24px; color: var(--preview-color, #f3c547); font-size: 44px; line-height: 1.1; }
         .preview p { position: relative; z-index: 1; max-width: 520px; margin-bottom: 28px; font-size: 21px; line-height: 1.7; white-space: pre-line; }
         .preview .preview-button { position: relative; z-index: 1; padding: 12px 18px; border-radius: 12px; color: #242a2f; background: var(--preview-color, #f3c547); font-weight: 700; }
+        .preview-location { position: relative; z-index: 1; width: min(100%, 480px); margin: -8px 0 24px; padding: 13px 16px; border: 1px solid rgba(36,42,47,.14); border-radius: 12px; background: rgba(255,255,255,.72); text-align: left; }
+        .preview-location strong { display: block; margin-bottom: 4px; }
+        .preview-location span { display: block; color: #586269; font-size: 14px; line-height: 1.45; }
+        .preview-location a { display: inline-block; margin-top: 8px; color: #8d6500; font-size: 13px; font-weight: 800; text-decoration: none; }
+        .preview-location a:hover { text-decoration: underline; }
         .share-link { margin-top: 16px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
         .share-link a { color: #b07c00; font-weight: 700; }
         @media (max-width: 900px) { .container { padding: 6px 20px 30px; } .builder { grid-template-columns: 1fr; } .preview { min-height: 430px; } }
@@ -99,6 +104,19 @@
                 <div class="preview" id="preview" style="--preview-color: {{ $invitation->theme_color }}; font-family: {{ $invitation->font_style }};{{ $invitation->background_image ? ' background-image: url(' . asset('storage/' . $invitation->background_image) . ');' : '' }}">
                     <h3 id="previewTitle">{{ $invitation->title }}</h3>
                     <p id="previewMessage">{{ $invitation->message }}</p>
+                    @if(!empty($event->venue_name) || !empty($event->venue_address) || (!empty($event->latitude) && !empty($event->longitude)))
+                        @php
+                            $destination = !empty($event->latitude) && !empty($event->longitude)
+                                ? $event->latitude . ',' . $event->longitude
+                                : ($event->venue_address ?: $event->venue_name);
+                            $locationUrl = 'https://www.google.com/maps/dir/?api=1&destination=' . urlencode($destination);
+                        @endphp
+                        <div class="preview-location">
+                            <strong><i class="fas fa-location-dot" aria-hidden="true"></i> Event location</strong>
+                            <span>{{ $event->venue_name ?: 'Venue location' }}@if(!empty($event->venue_address))<br>{{ $event->venue_address }}@endif</span>
+                            <a href="{{ $locationUrl }}" target="_blank" rel="noopener">Open GPS / Get directions</a>
+                        </div>
+                    @endif
                     <span class="preview-button" id="previewButton">{{ $invitation->button_text }}</span>
                 </div>
                 <p class="share-link">Guest link: <a href="{{ url('/rsvp?event=' . $event->event_id) }}">{{ url('/rsvp?event=' . $event->event_id) }}</a></p>

@@ -1,3 +1,10 @@
+@php
+    $inviteColor = $invitation->theme_color ?? '#f3c547';
+    $inviteFont = $invitation->font_style ?? 'Segoe UI';
+    $inviteBackground = !empty($invitation->background_image)
+        ? asset('storage/' . $invitation->background_image)
+        : null;
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,7 +26,7 @@
 
         * { box-sizing: border-box; }
         body {
-            margin: 0; min-height: 100vh; font-family: 'Segoe UI', sans-serif;
+            margin: 0; min-height: 100vh; font-family: var(--invite-font, 'Segoe UI'), sans-serif;
             background: linear-gradient(180deg, #f7f2ea 0%, #f3efe9 100%);
             color: var(--text); display: flex; align-items: center; justify-content: center; padding: 32px 18px;
         }
@@ -29,9 +36,9 @@
         }
         .rsvp-top {
             padding: 26px 28px 20px; border-bottom: 1px solid var(--border);
-            background: linear-gradient(135deg, #fffaf1 0%, #f6f0e9 100%);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--invite-color, #f3c547) 16%, white), #fff);
         }
-        .eyebrow { display: inline-block; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold-deep); font-weight: 700; }
+        .eyebrow { display: inline-block; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--invite-color, var(--gold-deep)); font-weight: 700; }
         h1 { margin: 12px 0 6px; font-size: clamp(26px, 4vw, 40px); line-height: 1.1; color: var(--text); }
         .sub { color: var(--muted); margin: 0; }
         .rsvp-body { padding: 26px 28px 30px; }
@@ -42,7 +49,7 @@
         .invite-card h2 { margin: 0 0 10px; font-size: clamp(22px, 3vw, 32px); }
         .invite-card p { margin: 0 0 10px; line-height: 1.6; color: var(--muted); }
         .invite-card .button {
-            display: inline-block; background: var(--gold); color: #1c1d1f; border: none; text-decoration: none;
+            display: inline-block; background: var(--invite-color, var(--gold)); color: #1c1d1f; border: none; text-decoration: none;
             font-weight: 800; padding: 12px 18px; border-radius: 10px; margin-top: 8px;
         }
         form { margin-top: 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
@@ -55,7 +62,7 @@
         }
         input:focus { border-color: rgba(243,197,71,0.9); box-shadow: 0 0 0 4px rgba(243,197,71,0.12); }
         button {
-            margin-top: 8px; grid-column: 1 / -1; background: linear-gradient(135deg, #f9d86d, #f3c547, #dcae1d);
+            margin-top: 8px; grid-column: 1 / -1; background: var(--invite-color, var(--gold));
             color: #1f2430; border: none; font-weight: 800; border-radius: 12px; padding: 14px 18px; cursor: pointer;
             box-shadow: 0 12px 22px rgba(243,197,71,0.18);
         }
@@ -65,10 +72,14 @@
         }
         .status-box strong { color: var(--text); }
         .qr-code { font-size: 18px; letter-spacing: 1px; }
+        .location-card { margin-top: 18px; padding: 16px 18px; border: 1px solid #d9e6dc; border-radius: 14px; background: #f3fbf5; }
+        .location-card strong { display: block; margin-bottom: 6px; }
+        .location-card p { margin: 0 0 12px; color: var(--muted); line-height: 1.5; }
+        .location-button { display: inline-block; padding: 10px 14px; border-radius: 9px; background: #277a4b; color: #fff; text-decoration: none; font-weight: 800; }
         @media (max-width: 640px) { form { grid-template-columns: 1fr; } }
     </style>
 </head>
-<body>
+<body style="--invite-color: {{ $inviteColor }}; --invite-font: '{{ $inviteFont }}';@if($inviteBackground) background-image: linear-gradient(rgba(255,255,255,.72),rgba(255,255,255,.72)), url('{{ $inviteBackground }}'); background-size: cover; background-position: center; background-attachment: fixed; @endif">
     <div class="rsvp-shell">
         <div class="rsvp-top">
             <span class="eyebrow">Invitation</span>
@@ -83,6 +94,25 @@
                     <span class="button">{{ $invitation->button_text }}</span>
                 @endif
             </div>
+
+            @if(!empty($event->venue_name) || !empty($event->venue_address) || (!empty($event->latitude) && !empty($event->longitude)))
+                @php
+                    $destination = !empty($event->latitude) && !empty($event->longitude)
+                        ? $event->latitude . ',' . $event->longitude
+                        : ($event->venue_address ?: $event->venue_name ?: 'Event venue');
+                    $locationUrl = 'https://www.google.com/maps/dir/?api=1&destination=' . urlencode($destination);
+                @endphp
+                <div class="location-card">
+                    <strong>Event location</strong>
+                    <p>{{ $event->venue_name ?: 'Venue location' }}@if(!empty($event->venue_address))<br>{{ $event->venue_address }}@endif</p>
+                    <a class="location-button" href="{{ $locationUrl }}" target="_blank" rel="noopener">Open GPS / Get directions</a>
+                </div>
+            @else
+                <div class="location-card">
+                    <strong>Event location not set</strong>
+                    <p>The organizer has not selected a venue for this event yet.</p>
+                </div>
+            @endif
 
             @if($success && $guest)
                 <div class="status-box">

@@ -44,8 +44,29 @@ class EventController extends Controller
     {
         abort_unless(in_array(Auth::user()->role, ['client', 'coordinator'], true), 403, 'Client or coordinator access only.');
         $availableServices = Schema::hasTable('supplier_services')
-            ? DB::table('supplier_services')->select('name', 'category', 'price', 'capacity', 'address')->whereNotNull('name')->orderBy('category')->orderBy('price')->get()
+            ? DB::table('supplier_services')->select('service_id', 'name', 'category', 'price', 'capacity', 'address')->whereNotNull('name')->orderBy('category')->orderBy('price')->get()
             : collect();
+        $packageRecords = collect();
+        $eventType = strtolower((string) $request->input('event_type', ''));
+        if (Schema::hasTable('event_packages') && $eventType !== '') {
+            $packageRecords = DB::table('event_packages')
+                ->whereRaw('LOWER(event_type) = ?', [$eventType])
+                ->orderBy('price')
+                ->get()
+                ->map(function ($package) use ($availableServices) {
+                    $selected = $availableServices->whereIn('service_id', json_decode($package->service_ids, true) ?: []);
+                    $options = $selected->mapWithKeys(function ($service) {
+                        $key = match (strtolower(trim((string) $service->category))) {
+                            'venue' => 'venue', 'catering' => 'catering', 'host', 'mc' => 'host',
+                            'sounds & lights', 'sounds and lights', 'sounds_lights' => 'sounds_lights',
+                            'photographer' => 'photographer', 'clothing', 'clothes', 'styling' => 'clothes',
+                            default => null,
+                        };
+                        return $key ? [$key => $service->name] : [];
+                    })->all();
+                    return ['name' => $package->name, 'price' => (float) $package->price, 'serviceOptions' => $options];
+                });
+        }
 
         $activeEventCount = DB::table('events')
             ->where('user_id', Auth::id())
@@ -60,6 +81,7 @@ class EventController extends Controller
                 'services' => array_filter(array_map('trim', explode(',', (string) $request->input('services')))),
             ],
             'availableServices' => $availableServices,
+            'packageRecords' => $packageRecords,
             'activeEventCount' => $activeEventCount,
             'activeEventLimitReached' => $activeEventCount >= self::MAX_ACTIVE_EVENTS,
         ]);
@@ -241,7 +263,7 @@ class EventController extends Controller
             $services[] = 'venue';
         }
 
-        $eventId = DB::transaction(function () use ($data, $eventType, $endTime, $services) {
+        $eventId = DB::transaction(function () use ($data, $eventType, $endTime, $services, $venue) {
             $eventId = DB::table('events')->insertGetId([
                 'user_id' => Auth::id(),
                 'title' => $data['event_name'],
@@ -253,6 +275,9 @@ class EventController extends Controller
                 'event_end_time' => $endTime,
                 'guest_count' => $data['guest_count'],
                 'venue_name' => $data['venue_name'],
+                'venue_address' => $venue?->address,
+                'latitude' => $venue?->latitude,
+                'longitude' => $venue?->longitude,
                 'clothes' => $data['clothes'] ?? null,
                 'catering' => $data['catering'] ?? null,
                 'host' => $data['host'] ?? null,

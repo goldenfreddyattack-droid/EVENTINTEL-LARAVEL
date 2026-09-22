@@ -154,22 +154,45 @@ class CoordinatorController extends Controller
 
     public function packages()
     {
-        $packages = Schema::hasTable('coordinator_packages') ? DB::table('coordinator_packages')->where('coordinator_id', Auth::id())->orderByDesc('is_featured')->orderBy('price')->get() : collect();
-        return view('coordinator.packages', compact('packages'));
+        $packages = Schema::hasTable('event_packages')
+            ? DB::table('event_packages')->where('user_id', Auth::id())->orderBy('event_type')->orderBy('price')->get()
+            : collect();
+        $serviceCatalog = Schema::hasTable('supplier_services')
+            ? DB::table('supplier_services')->select('service_id', 'name', 'category', 'price')->whereNotNull('name')->orderBy('category')->orderBy('name')->get()
+            : collect();
+        return view('coordinator.packages', compact('packages', 'serviceCatalog'));
     }
 
     public function storePackage(Request $request)
     {
-        $data = $request->validate(['package_id' => ['nullable', 'integer'], 'name' => ['required', 'string', 'max:150'], 'price' => ['required', 'numeric', 'min:0.01'], 'description' => ['nullable', 'string'], 'inclusions' => ['nullable', 'string']]);
-        $values = ['name' => $data['name'], 'price' => $data['price'], 'description' => $data['description'] ?? null, 'inclusions' => implode('|', array_filter(array_map('trim', preg_split('/[\r\n]+/', $data['inclusions'] ?? '')))), 'is_featured' => $request->boolean('is_featured')];
-        if (!empty($data['package_id'])) DB::table('coordinator_packages')->where('package_id', $data['package_id'])->where('coordinator_id', Auth::id())->update($values);
-        else DB::table('coordinator_packages')->insert($values + ['coordinator_id' => Auth::id()]);
+        $data = $request->validate([
+            'event_type' => ['required', 'string', 'max:100'],
+            'name' => ['required', 'string', 'max:150'],
+            'price' => ['required', 'numeric', 'min:0.01'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'service_ids' => ['required', 'array', 'min:1'],
+            'service_ids.*' => ['integer', 'distinct'],
+        ]);
+        $serviceIds = DB::table('supplier_services')->whereIn('service_id', $data['service_ids'])->pluck('service_id')->map(fn ($id) => (int) $id)->values()->all();
+        if (!DB::table('supplier_services')->whereIn('service_id', $serviceIds)->whereRaw('LOWER(TRIM(category)) = ?', ['venue'])->exists()) {
+            return back()->withInput()->withErrors(['service_ids' => 'Every package must include a real venue.']);
+        }
+        DB::table('event_packages')->insert([
+            'user_id' => Auth::id(),
+            'event_type' => $data['event_type'],
+            'name' => $data['name'],
+            'price' => $data['price'],
+            'description' => $data['description'] ?? null,
+            'service_ids' => json_encode($serviceIds),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
         return redirect()->route('coordinator.packages')->with('success', 'Package saved successfully.');
     }
 
     public function deletePackage($id)
     {
-        DB::table('coordinator_packages')->where('package_id', $id)->where('coordinator_id', Auth::id())->delete();
+        DB::table('event_packages')->where('package_id', $id)->where('user_id', Auth::id())->delete();
         return back()->with('success', 'Package deleted.');
     }
 

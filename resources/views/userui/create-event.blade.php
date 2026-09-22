@@ -131,12 +131,7 @@
         reunion:['Family Picnic','Grand Gathering','Backyard Party','Classic Filipino','Nostalgia','Custom'],
         default:['Classic','Garden','Elegant','Modern','Custom']
     };
-    const packagesByEvent = {
-        birthday:[['Basic Birthday',25000,['venue','catering','host']],['Standard Birthday',50000,['venue','catering','host','sounds_lights']],['Premium Birthday',85000,['venue','catering','host','sounds_lights','photographer','clothes']]],
-        debut:[['Basic Debut',40000,['venue','catering','host']],['Standard Debut',80000,['venue','catering','host','sounds_lights','photographer']],['Premium Debut',150000,['venue','catering','host','sounds_lights','photographer','clothes']]],
-        wedding:[['Basic Wedding',60000,['venue','catering','host']],['Standard Wedding',120000,['venue','catering','host','sounds_lights','photographer']],['Premium Wedding',250000,['venue','catering','host','sounds_lights','photographer','clothes']]],
-        default:[['Basic Package',25000,['venue','catering','host']],['Standard Package',50000,['venue','catering','host','sounds_lights','photographer']],['Premium Package',90000,['venue','catering','host','sounds_lights','photographer','clothes']]]
-    };
+    const packagesByEvent = @json($packageRecords->map(fn ($package) => [$package->name, $package->price, array_keys($package->serviceOptions), $package->serviceOptions])->values());
     function renderEventOptions() {
         const selected = document.querySelector('input[name="event_type"]:checked')?.value || 'default';
         const eventKey = selected === 'Others' ? (otherInput.value.trim() || 'default').toLowerCase() : selected.toLowerCase();
@@ -150,7 +145,7 @@
         }));
         const packageCards = document.getElementById('packageCards');
         const selectedPackageKey = 'selectedPackageCard';
-        packageCards.innerHTML = (packagesByEvent[key] || packagesByEvent.default).map(([name, price, services]) => `<button type="button" class="package-card" data-price="${price}" data-services="${services.join(',')}"><strong>${name}</strong><b>₱${price.toLocaleString()}</b><small>${services.join(' + ').replace('sounds_lights','Sounds & Lights')}</small></button>`).join('');
+        packageCards.innerHTML = (packagesByEvent || []).map(([name, price, services, serviceOptions]) => `<button type="button" class="package-card" data-price="${price}" data-services="${services.join(',')}" data-service-options='${JSON.stringify(serviceOptions)}'><strong>${name}</strong><b>₱${price.toLocaleString()}</b><small>${services.join(' + ').replace('sounds_lights','Sounds & Lights')}</small></button>`).join('') || '<p>No real packages exist for this event type yet. Continue without a package and choose services yourself.</p>';
         packageCards.querySelectorAll('.package-card').forEach(card => card.addEventListener('click', () => {
             const isAlreadySelected = card.classList.contains('selected');
 
@@ -167,6 +162,13 @@
             document.getElementById('event_budget').value = card.dataset.price;
             const selectedServices = card.dataset.services.split(',');
             document.querySelectorAll('input[name="services[]"]').forEach(input => { input.checked = selectedServices.includes(input.value); });
+            const serviceOptions = JSON.parse(card.dataset.serviceOptions || '{}');
+            Object.entries(serviceOptions).forEach(([key, value]) => {
+                const field = document.getElementById(key === 'venue' ? 'venue_name' : key);
+                const label = document.getElementById(`selected-${key}`);
+                if (field) field.value = value;
+                if (label) label.textContent = value;
+            });
         }));
     }
     function toggleOther() {
