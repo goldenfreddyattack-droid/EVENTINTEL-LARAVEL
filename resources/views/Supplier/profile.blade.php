@@ -32,6 +32,10 @@
                         <label>Phone</label>
                         <input type="text" name="phone" value="{{ old('phone', $profile->phone ?? '') }}">
                     </div>
+                    <div>
+                        <label>Business Permit Expiry Date</label>
+                        <input type="date" name="business_permit_expiry_date" value="{{ old('business_permit_expiry_date', $profile->business_permit_expiry_date ?? '') }}">
+                    </div>
                     <div style="grid-column:1/-1;">
                         <label>Business Address</label>
                         <input type="text" name="business_address" value="{{ old('business_address', $profile->business_address ?? '') }}">

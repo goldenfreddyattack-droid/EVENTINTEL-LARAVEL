@@ -17,7 +17,7 @@
             <div class="recommendation-visual" aria-hidden="true"></div>
 
             <section class="recommendation-panel">
-                <h1>Smart Recommendation Engine</h1>
+                <h1>AI Recommendation</h1>
                 <p class="recommendation-subtitle">Get event planning suggestions with a detailed timeline</p>
 
                 <div class="recommendation-input">

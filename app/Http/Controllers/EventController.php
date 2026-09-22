@@ -289,6 +289,8 @@ class EventController extends Controller
             ]);
         }
 
-        return redirect()->route('your.events')->with('success', 'Event created successfully.');
+        $redirectRoute = Auth::user()->role === 'coordinator' ? 'coordinator.events' : 'your.events';
+
+        return redirect()->route($redirectRoute)->with('success', 'Event created successfully.');
     }
 }

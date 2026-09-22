@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -76,10 +77,18 @@ class AdminController extends Controller
         return redirect()->route('admin.dashboard')->with('success', 'Account created successfully.');
     }
 
-    public function requests()
+    public function requests(Request $request)
     {
-        $requests = DB::table('users')
-            ->whereIn('role', ['supplier', 'coordinator'])
+        $status = $request->query('status');
+        $allowedStatuses = ['approved', 'pending', 'rejected'];
+
+        $query = DB::table('users')->whereIn('role', ['supplier', 'coordinator']);
+
+        if (in_array($status, $allowedStatuses, true)) {
+            $query->where('status', $status);
+        }
+
+        $requests = $query
             ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
             ->orderByDesc('created_at')
             ->paginate(10)
@@ -88,7 +97,64 @@ class AdminController extends Controller
         return view('admin.requests', [
             'requests' => $requests,
             'stats' => $this->stats(),
+            'selectedStatus' => in_array($status, $allowedStatuses, true) ? $status : 'all',
         ]);
+    }
+
+    public function suppliers(Request $request)
+    {
+        $permitStatus = $request->query('permit_status');
+        $allowedPermitStatuses = ['valid', 'expiring_soon', 'expired', 'notified'];
+
+        $query = DB::table('users')->where('role', 'supplier');
+
+        if (in_array($permitStatus, $allowedPermitStatuses, true)) {
+            $query->where(function ($q) use ($permitStatus) {
+                $q->where('permit_status', $permitStatus)
+                  ->orWhere(function ($inner) use ($permitStatus) {
+                      $inner->whereNull('permit_status')
+                            ->whereRaw('CASE WHEN business_permit_expiry_date IS NULL THEN 0 ELSE 1 END = 1');
+                  });
+            });
+        }
+
+        $suppliers = $query
+            ->orderByRaw('COALESCE(business_name, full_name, username) ASC')
+            ->paginate(10)
+            ->withQueryString();
+
+        foreach ($suppliers as $supplier) {
+            $supplier->resolved_permit_status = $this->resolvePermitStatus($supplier);
+        }
+
+        return view('admin.suppliers', [
+            'suppliers' => $suppliers,
+            'stats' => $this->stats(),
+            'selectedPermitStatus' => in_array($permitStatus, $allowedPermitStatuses, true) ? $permitStatus : 'all',
+        ]);
+    }
+
+    public function notifySupplierPermitExpiry(Request $request, $userId)
+    {
+        $supplier = DB::table('users')
+            ->where('user_id', $userId)
+            ->where('role', 'supplier')
+            ->first();
+
+        if (! $supplier) {
+            abort(404, 'Supplier not found.');
+        }
+
+        DB::table('users')
+            ->where('user_id', $userId)
+            ->update([
+                'permit_status' => 'notified',
+                'permit_notice_sent_at' => now(),
+            ]);
+
+        $businessName = $supplier->business_name ?: ($supplier->full_name ?: $supplier->username);
+
+        return redirect()->route('admin.suppliers')->with('success', "Expiry notice sent to {$businessName}.");
     }
 
     public function updateRequest(Request $request, $userId)
@@ -106,6 +172,33 @@ class AdminController extends Controller
     public function legacyDashboard()
     {
         return view('admin.legacy-dashboard', ['stats' => $this->stats()]);
+    }
+
+    private function resolvePermitStatus(object $supplier): string
+    {
+        $status = $supplier->permit_status ?? null;
+
+        if (in_array($status, ['valid', 'expiring_soon', 'expired', 'notified'], true)) {
+            return $status;
+        }
+
+        $expiryDate = $supplier->business_permit_expiry_date ?? null;
+        if (! $expiryDate) {
+            return 'valid';
+        }
+
+        $expiry = Carbon::parse($expiryDate);
+        $today = Carbon::today();
+
+        if ($expiry->lt($today)) {
+            return 'expired';
+        }
+
+        if ($expiry->diffInDays($today) <= 30) {
+            return 'expiring_soon';
+        }
+
+        return 'valid';
     }
 
     private function stats(): array

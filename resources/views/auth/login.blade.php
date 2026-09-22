@@ -300,7 +300,7 @@
                         <div class="input-wrapper">
                             <i class="icon fas fa-lock"></i>
                             <input
-                                id="password"
+                                id="login-password"
                                 type="password"
                                 name="password"
                                 placeholder="Password"
@@ -309,9 +309,6 @@
                                 autocomplete="current-password"
                                 value="{{ old('password') }}"
                             >
-                            <span class="toggle-password" aria-label="Toggle password visibility">
-                                <i class="fas fa-eye"></i>
-                            </span>
                         </div>
                     </div>
 
@@ -325,19 +322,5 @@
         </div>
     </div>
 
-    <script>
-        const togglePassword = document.querySelector('.toggle-password');
-        const passwordInput = document.querySelector('#password');
-
-        if (togglePassword && passwordInput) {
-            togglePassword.addEventListener('click', () => {
-                const type = passwordInput.type === 'password' ? 'text' : 'password';
-                passwordInput.type = type;
-                togglePassword.innerHTML = type === 'password'
-                    ? '<i class="fas fa-eye"></i>'
-                    : '<i class="fas fa-eye-slash"></i>';
-            });
-        }
-    </script>
 </body>
 </html>

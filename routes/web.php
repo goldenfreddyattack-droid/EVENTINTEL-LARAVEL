@@ -111,8 +111,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/supplier/feed', [App\Http\Controllers\SupplierFeedController::class, 'index'])->name('supplier.feed');
         Route::get('/admin', [\App\Http\Controllers\AdminController::class, 'dashboard'])->name('admin.dashboard');
+        Route::get('/admin/dashboard', function () {
+            return redirect()->route('admin.dashboard');
+        });
         Route::post('/admin/users', [\App\Http\Controllers\AdminController::class, 'createUser'])->name('admin.users.store');
         Route::get('/admin/requests', [\App\Http\Controllers\AdminController::class, 'requests'])->name('admin.requests');
+        Route::get('/admin/suppliers', [\App\Http\Controllers\AdminController::class, 'suppliers'])->name('admin.suppliers');
         Route::patch('/admin/requests/{userId}', [\App\Http\Controllers\AdminController::class, 'updateRequest'])->name('admin.requests.update');
         Route::get('/admin/summary', [\App\Http\Controllers\AdminController::class, 'legacyDashboard'])->name('admin.legacy');
 

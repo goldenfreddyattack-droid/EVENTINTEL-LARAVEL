@@ -7,8 +7,8 @@
     <title>EventIntel - Create Event</title>
     <link rel="stylesheet" href="{{ asset('css/fontawesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/userui/navbar.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
-        <style>
             .venue-addon{justify-content:space-between}
             .venue-addon-info{display:flex;align-items:center;gap:10px}
             .addon-details-button{border:1px solid #d6a91d;border-radius:8px;padding:6px 10px;background:#fff8dc;color:#a77700;font-weight:800;font-size:11px;cursor:pointer}
@@ -61,7 +61,7 @@
             <div id="themeChips" class="theme-grid"></div>
             <input id="theme" name="theme" value="{{ old('theme') }}" placeholder="Choose a theme or type your own" style="display:none;">
             @error('theme')<p class="error">{{ $message }}</p>@enderror
-            <div class="actions"><a class="button secondary" href="{{ route('home') }}">Cancel</a><button class="button primary" type="button" data-next>Next</button></div>
+            <div class="actions"><a class="button secondary" href="{{ Auth::check() && Auth::user()->role === 'coordinator' ? route('coordinator.dashboard') : route('home') }}">Cancel</a><button class="button primary" type="button" data-next>Next</button></div>
         </section>
 
         <section class="section" data-step="2">
@@ -113,7 +113,7 @@
 <style>
     .venue-modal{display:none;position:fixed;inset:0;z-index:30;align-items:center;justify-content:center;padding:20px;background:#12161999}.venue-modal.open{display:flex}.venue-panel{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:24px;padding:24px;box-shadow:0 20px 60px #0004}.venue-panel h2{margin:0 0 8px}.venue-panel p{color:#666;margin:0 0 18px}.venue-calendar-heading{display:flex;align-items:center;justify-content:space-between;margin:20px 0 12px;color:#171717}.venue-calendar-heading strong{font-size:18px}.venue-legend{display:flex;gap:14px;color:#777;font-size:12px}.venue-legend span{display:flex;align-items:center;gap:5px}.venue-legend i{width:9px;height:9px;border-radius:50%;background:#35a45b}.venue-legend .booked-dot{background:#d95b5b}.venue-weekdays,.venue-dates{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.venue-weekdays{margin-bottom:7px;text-align:center;color:#888;font-size:11px;font-weight:800;text-transform:uppercase}.venue-date,.venue-date-empty{min-height:82px}.venue-date{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid #d7eadb;border-radius:12px;padding:8px 4px;background:#effbf1;color:#17652b;font-weight:800}.venue-date .day-name{font-size:11px;color:#569167;font-weight:700}.venue-date strong{font-size:22px;line-height:1}.venue-date span:last-child{font-size:11px}.venue-date.booked{border-color:#f4caca;background:#fff0f0;color:#ad2929}.venue-date.booked .day-name{color:#c87979}.venue-addon{display:flex;gap:10px;align-items:center;padding:13px;border:1px solid #eee2b7;border-radius:14px;background:#fff;color:#222;font-weight:800}.venue-addon input{accent-color:#d6a91d}.venue-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.venue-modal-actions button{height:42px;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer}.venue-modal-actions .secondary{background:#f1f1f1}.venue-modal-actions .primary{background:#f3c547}@media(max-width:520px){.venue-panel{padding:18px}.venue-weekdays,.venue-dates{gap:4px}.venue-date,.venue-date-empty{min-height:70px}.venue-date strong{font-size:18px}.venue-legend{gap:8px;font-size:11px}}
 </style>
-<div class="venue-modal" id="venueAvailabilityModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Availability</h2><p id="venueAvailabilityText">Check available dates for this venue.</p><div class="venue-calendar-heading"><strong id="venueCalendarMonth">Available dates</strong><div class="venue-legend"><span><i></i>Open</span><span><i class="booked-dot"></i>Booked</span></div></div><div class="venue-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="venue-dates" id="venueDates"></div><div class="venue-modal-actions"><button class="secondary" type="button" data-close-venue>Cancel</button><button class="primary" type="button" data-venue-addons>Continue to Add-ons</button></div></div></div>
+<div class="venue-modal" id="venueAvailabilityModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Availability</h2><p id="venueAvailabilityText">Check available dates for this venue.</p><div class="venue-calendar-shell"><div class="venue-calendar-header"><strong id="venueCalendarMonth">Available dates</strong><div class="venue-legend"><span><i></i>Open</span><span><i class="booked-dot"></i>Booked</span></div></div><div id="venueDates" class="venue-date-picker"></div></div><div class="venue-modal-actions"><button class="secondary" type="button" data-close-venue>Cancel</button><button class="primary" type="button" data-venue-addons>Continue to Add-ons</button></div></div></div>
 <div class="venue-modal" id="venueAddonsModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Add-ons</h2><p>Select additional services this venue can provide.</p><div class="venue-addons" id="venueAddons"></div><div class="venue-addon-total"><span>Add-ons total</span><strong id="venueAddonsTotal">₱0.00</strong></div><div class="venue-modal-actions"><button class="secondary" type="button" data-back-venue>Back</button><button class="primary" type="button" data-confirm-venue>Confirm and Select Venue</button></div></div></div>
 <div class="venue-modal" id="venueConfirmModal" aria-hidden="true"><div class="venue-panel"><h2>Confirm Venue Booking</h2><p id="venueConfirmText">Are you sure you want to book this venue and selected add-ons?</p><div class="venue-modal-actions"><button class="secondary" type="button" data-back-venue-confirm>Back</button><button class="primary" type="button" data-final-confirm-venue>Yes, Book Venue</button></div></div></div>
 <div class="venue-modal" id="venueSuccessModal" aria-hidden="true"><div class="venue-panel"><h2>Venue Booking Confirmed</h2><p>Your venue and selected add-ons have been added to this event.</p><div class="venue-modal-actions"><button class="primary" type="button" data-close-venue-success>Back to Services</button></div></div></div>
@@ -149,13 +149,24 @@
             button.classList.add('selected');
         }));
         const packageCards = document.getElementById('packageCards');
+        const selectedPackageKey = 'selectedPackageCard';
         packageCards.innerHTML = (packagesByEvent[key] || packagesByEvent.default).map(([name, price, services]) => `<button type="button" class="package-card" data-price="${price}" data-services="${services.join(',')}"><strong>${name}</strong><b>₱${price.toLocaleString()}</b><small>${services.join(' + ').replace('sounds_lights','Sounds & Lights')}</small></button>`).join('');
         packageCards.querySelectorAll('.package-card').forEach(card => card.addEventListener('click', () => {
+            const isAlreadySelected = card.classList.contains('selected');
+
+            packageCards.querySelectorAll('.package-card').forEach(item => item.classList.remove('selected'));
+
+            if (isAlreadySelected) {
+                document.getElementById('event_budget').value = '';
+                document.querySelectorAll('input[name="services[]"]').forEach(input => { input.checked = false; });
+                card.dataset.selected = 'false';
+                return;
+            }
+
+            card.classList.add('selected');
             document.getElementById('event_budget').value = card.dataset.price;
             const selectedServices = card.dataset.services.split(',');
             document.querySelectorAll('input[name="services[]"]').forEach(input => { input.checked = selectedServices.includes(input.value); });
-            packageCards.querySelectorAll('.package-card').forEach(item => item.classList.remove('selected'));
-            card.classList.add('selected');
         }));
     }
     function toggleOther() {
@@ -240,48 +251,93 @@
     const addonDetailsTitle = document.getElementById('addonDetailsTitle');
     const addonDetailsText = document.getElementById('addonDetailsText');
     let pendingVenue = null;
+    let venueDatePicker = null;
+
     function closeVenueModals() {
         venueAvailabilityModal.classList.remove('open');
         venueAddonsModal.classList.remove('open');
         venueConfirmModal.classList.remove('open');
         venueSuccessModal.classList.remove('open');
     }
+
+    function renderVenueCalendar(openDates, bookedDates) {
+        if (venueDatePicker) {
+            venueDatePicker.destroy();
+        }
+
+        flatpickr(venueDates, {
+            inline: true,
+            monthSelectorType: 'static',
+            dateFormat: 'Y-m-d',
+            defaultDate: dateInput.value || null,
+            enable: openDates,
+            disable: bookedDates,
+            onChange: function(selectedDates, dateStr) {
+                if (!dateStr) return;
+                dateInput.value = dateStr;
+                dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+                closeVenueModals();
+            },
+            locale: {
+                weekdays: {
+                    shorthand: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                    longhand: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                },
+                months: {
+                    shorthand: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    longhand: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+                }
+            },
+            onReady: function() {
+                const currentMonth = this.currentYear + '-' + String(this.currentMonth + 1).padStart(2, '0');
+                venueCalendarMonth.textContent = new Date(this.currentYear, this.currentMonth, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            },
+            onMonthChange: function(selectedDates, dateStr) {
+                venueCalendarMonth.textContent = new Date(this.currentYear, this.currentMonth, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            }
+        });
+
+        venueDatePicker = venueDates._flatpickr;
+    }
+
     async function openVenueAvailability(name, price) {
         pendingVenue = {name, price};
         document.getElementById('venueAvailabilityText').textContent = `Availability for ${name}`;
-        venueDates.innerHTML = '<p>Checking availability...</p>';
+        venueDates.innerHTML = '';
+        venueDates.classList.add('loading');
         venueAvailabilityModal.classList.add('open');
+
         try {
-        const response = await fetch(`{{ route('events.venue-availability') }}?venue=${encodeURIComponent(name)}`);
-        const data = await response.json();
-        const firstDate = data.dates.length ? new Date(`${data.dates[0].date}T00:00:00`) : null;
-        if (firstDate) {
-            venueCalendarMonth.textContent = firstDate.toLocaleDateString('en-US', {month:'long', year:'numeric'});
+            const response = await fetch(`{{ route('events.venue-availability') }}?venue=${encodeURIComponent(name)}`);
+            const data = await response.json();
+            const openDates = (data.dates || []).filter(item => item.available).map(item => item.date);
+            const bookedDates = (data.dates || []).filter(item => !item.available).map(item => item.date);
+
+            renderVenueCalendar(openDates, bookedDates);
+            venueDates.classList.remove('loading');
+            if (openDates.length) {
+                venueCalendarMonth.textContent = new Date(`${openDates[0]}T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            }
+
+            pendingVenue.addons = data.addons || [];
+            venueAddons.innerHTML = pendingVenue.addons.map((addon, index) => `<label class="venue-addon"><span><input type="checkbox" value="${addon.key}" data-price="${addon.price}"> ${addon.label}</span><span class="venue-addon-info"><strong>₱${Number(addon.price).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})}</strong><button type="button" class="addon-details-button" data-addon-index="${index}">View Details</button></span></label>`).join('') || '<p>This venue has no listed add-ons.</p>';
+            venueAddons.querySelectorAll('[data-addon-index]').forEach(button => button.addEventListener('click', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                const addon = pendingVenue.addons[Number(button.dataset.addonIndex)];
+                addonDetailsTitle.textContent = `${addon.label} Details`;
+                addonDetailsText.textContent = addon.details || 'No additional details were provided for this add-on.';
+                addonDetailsModal.classList.add('open');
+                addonDetailsModal.setAttribute('aria-hidden', 'false');
+            }));
+            venueAddons.querySelectorAll('input[type="checkbox"]').forEach(input => input.addEventListener('change', () => {
+                const total = [...venueAddons.querySelectorAll('input:checked')].reduce((sum, item) => sum + Number(item.dataset.price || 0), 0);
+                venueAddonsTotal.textContent = '₱' + total.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+            }));
+        } catch (error) {
+            venueDates.innerHTML = '<p>Unable to load availability. Please try again.</p>';
+            venueDates.classList.remove('loading');
         }
-        const leadingCalendarCells = firstDate ? '<span class="venue-date-empty" aria-hidden="true"></span>'.repeat(firstDate.getDay()) : '';
-        venueDates.innerHTML = leadingCalendarCells + data.dates.map(item => {
-            const date = new Date(`${item.date}T00:00:00`);
-            const dayName = date.toLocaleDateString('en-US', {weekday:'short'});
-            return `<div class="venue-date ${item.available ? '' : 'booked'}"><span class="day-name">${dayName}</span><strong>${date.getDate()}</strong><span>${item.available ? 'Open' : 'Booked'}</span></div>`;
-        }).join('');
-        pendingVenue.addons = data.addons || [];
-        venueAddons.innerHTML = pendingVenue.addons.map((addon, index) => `<label class="venue-addon"><span><input type="checkbox" value="${addon.key}" data-price="${addon.price}"> ${addon.label}</span><span class="venue-addon-info"><strong>₱${Number(addon.price).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})}</strong><button type="button" class="addon-details-button" data-addon-index="${index}">View Details</button></span></label>`).join('') || '<p>This venue has no listed add-ons.</p>';
-        venueAddons.querySelectorAll('[data-addon-index]').forEach(button => button.addEventListener('click', event => {
-            event.preventDefault();
-            event.stopPropagation();
-            const addon = pendingVenue.addons[Number(button.dataset.addonIndex)];
-            addonDetailsTitle.textContent = `${addon.label} Details`;
-            addonDetailsText.textContent = addon.details || 'No additional details were provided for this add-on.';
-            addonDetailsModal.classList.add('open');
-            addonDetailsModal.setAttribute('aria-hidden', 'false');
-        }));
-        venueAddons.querySelectorAll('input[type="checkbox"]').forEach(input => input.addEventListener('change', () => {
-            const total = [...venueAddons.querySelectorAll('input:checked')].reduce((sum, item) => sum + Number(item.dataset.price || 0), 0);
-            venueAddonsTotal.textContent = '₱' + total.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
-        }));
-    } catch (error) {
-        venueDates.innerHTML = '<p>Unable to load availability. Please try again.</p>';
-    }
     }
     document.querySelector('[data-close-venue]').addEventListener('click', closeVenueModals);
     document.querySelector('[data-close-addon-details]').addEventListener('click', () => {
@@ -472,5 +528,6 @@
     }));
     document.querySelectorAll('[data-back]').forEach(button => button.addEventListener('click', () => showStep(Math.max(currentStep - 1, 1))));
 </script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
 </html>

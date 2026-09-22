@@ -189,13 +189,11 @@
                     <div class="input-wrapper">
                         <i class="icon fas fa-lock"></i>
                         <input type="password" id="password" name="password" placeholder="Password" class="input-field" required>
-                        <span class="toggle-password"><i class="fas fa-eye"></i></span>
                     </div>
 
                     <div class="input-wrapper">
                         <i class="icon fas fa-lock"></i>
                         <input type="password" id="confirm-password" name="password_confirmation" placeholder="Confirm Password" class="input-field" required>
-                        <span class="toggle-password"><i class="fas fa-eye"></i></span>
                     </div>
 
                     <label class="privacy-label">
@@ -212,18 +210,6 @@
     </div>
 
     <script>
-        const passwordFields = document.querySelectorAll('#password, #confirm-password');
-        document.querySelectorAll('.toggle-password').forEach((toggle) => {
-            toggle.addEventListener('click', function () {
-                const field = this.parentElement.querySelector('input');
-                const icon = this.querySelector('i');
-                const isPassword = field.type === 'password';
-                field.type = isPassword ? 'text' : 'password';
-                icon.classList.toggle('fa-eye', !isPassword);
-                icon.classList.toggle('fa-eye-slash', isPassword);
-            });
-        });
-
         document.querySelector('.signup-form').addEventListener('submit', function (e) {
             const pw = document.getElementById('password').value;
             const confirm = document.getElementById('confirm-password').value;

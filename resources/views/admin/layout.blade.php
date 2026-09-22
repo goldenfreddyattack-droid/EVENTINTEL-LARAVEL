@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Panel')</title>
-    @vite(['resources/css/coordinator.css'])
+    <link rel="stylesheet" href="{{ asset('css/coordinator.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         .admin-card, .admin-panel, .admin-table-wrap { background:var(--panel); border:1px solid var(--border); border-radius:30px; box-shadow:var(--shadow); }
@@ -45,6 +45,7 @@
         <nav class="nav-menu"><ul>
             <li class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"><a href="{{ route('admin.dashboard') }}">DASHBOARD</a></li>
             <li class="{{ request()->routeIs('admin.requests') ? 'active' : '' }}"><a href="{{ route('admin.requests') }}">VERIFICATION REQUESTS</a></li>
+            <li class="{{ request()->routeIs('admin.suppliers') ? 'active' : '' }}"><a href="{{ route('admin.suppliers') }}">SUPPLIERS</a></li>
             <li>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

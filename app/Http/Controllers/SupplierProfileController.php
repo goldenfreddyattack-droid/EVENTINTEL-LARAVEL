@@ -33,7 +33,10 @@ class SupplierProfileController extends Controller
             'email' => ['required', 'email'],
             'phone' => ['nullable', 'string', 'max:20'],
             'business_address' => ['nullable', 'string'],
+            'business_permit_expiry_date' => ['nullable', 'date'],
         ]);
+
+        $permitStatus = $this->resolvePermitStatus($validated['business_permit_expiry_date'] ?? null);
 
         DB::table('users')
             ->where('user_id', Auth::id())
@@ -43,10 +46,32 @@ class SupplierProfileController extends Controller
                 'email' => $validated['email'],
                 'phone' => $validated['phone'] ?? null,
                 'business_address' => $validated['business_address'] ?? null,
+                'business_permit_expiry_date' => $validated['business_permit_expiry_date'] ?? null,
+                'permit_status' => $permitStatus,
             ]);
 
         $request->session()->put('full_name', $validated['full_name']);
 
         return redirect()->route('supplier.profile')->with('success', 'Profile updated successfully.');
+    }
+
+    private function resolvePermitStatus(?string $expiryDate): string
+    {
+        if (! $expiryDate) {
+            return 'valid';
+        }
+
+        $expiry = \Carbon\Carbon::parse($expiryDate);
+        $today = \Carbon\Carbon::today();
+
+        if ($expiry->lt($today)) {
+            return 'expired';
+        }
+
+        if ($expiry->diffInDays($today) <= 30) {
+            return 'expiring_soon';
+        }
+
+        return 'valid';
     }
 }

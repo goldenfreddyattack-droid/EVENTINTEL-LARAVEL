@@ -21,7 +21,7 @@
             <span class="{{ $active === 'home' ? 'active' : '' }}">Home</span>
             <span class="{{ $active === 'create-event' ? 'active' : '' }}">Create Event</span>
             <span class="{{ $active === 'events' ? 'active' : '' }}">Your Events</span>
-            <span class="{{ $active === 'recommendation' ? 'active' : '' }}">Recommendations</span>
+            <span class="{{ $active === 'recommendation' ? 'active' : '' }}">AI Recommendation</span>
             <span class="{{ $active === 'packages' ? 'active' : '' }}">Packages</span>
             <span class="{{ $active === 'newsfeed' ? 'active' : '' }}">Newsfeed</span>
             <span class="userui-profile" aria-label="Profile" title="Profile">
@@ -31,7 +31,7 @@
             <a class="{{ $active === 'home' ? 'active' : '' }}" href="{{ route('home') }}">Home</a>
             <a id="navbarCreateEvent" class="{{ $active === 'create-event' ? 'active' : '' }}" href="{{ route('events.create') }}" data-active-event-limit="{{ $activeEventLimitReached ? '1' : '0' }}">Create Event</a>
             <a class="{{ $active === 'events' ? 'active' : '' }}" href="{{ route('your.events') }}">Your Events</a>
-            <a class="{{ $active === 'recommendation' ? 'active' : '' }}" href="{{ route('recommendation') }}">Recommendations</a>
+            <a class="{{ $active === 'recommendation' ? 'active' : '' }}" href="{{ route('recommendation') }}">AI Recommendation</a>
             <a class="{{ $active === 'packages' ? 'active' : '' }}" href="{{ route('packages') }}">Packages</a>
             <a class="{{ $active === 'newsfeed' ? 'active' : '' }}" href="{{ route('newsfeed') }}">Newsfeed</a>
             <a class="userui-profile" href="{{ route('profile.show') }}" aria-label="Profile" title="Profile">

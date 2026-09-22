@@ -4,7 +4,7 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Coordinator Panel')</title>
-    @vite(['resources/css/coordinator.css'])
+    <link rel="stylesheet" href="{{ asset('css/coordinator.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .nav-menu a { display:block; width:100%; padding:11px 18px; border:1px solid var(--border); border-radius:14px; background:transparent; color:var(--text); font-size:13px; font-weight:600; letter-spacing:.5px; text-decoration:none; transition:.3s; }

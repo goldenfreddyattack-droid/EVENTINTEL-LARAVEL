@@ -2,66 +2,93 @@
 
 @section('title', 'Verification Requests')
 
-@section('styles')
-<style>
-    .admin-table-wrap { overflow-x:auto; background:#fff; border:1px solid #e5e5e5; border-radius:20px; box-shadow:var(--shadow); }
-    .admin-table { width:100%; border-collapse:separate; border-spacing:0 12px; min-width:900px; }
-    .admin-table th, .admin-table td { padding:16px; text-align:left; vertical-align:top; }
-    .admin-table th { color:var(--gold); background:#fffdf6; }
-    .admin-table td { background:#fafafa; border:1px solid #ececec; color:#222; }
-    .status-pill { display:inline-flex; padding:8px 14px; border-radius:999px; background:#fff5d8; color:#b8860b; font-weight:700; }
-    .request-actions { display:flex; gap:8px; flex-wrap:wrap; }
-    .request-actions button { border:1px solid transparent; border-radius:14px; padding:10px 16px; font-weight:800; cursor:pointer; transition:.3s; }
-    .request-actions button:hover { transform:translateY(-2px); box-shadow:0 10px 20px rgba(0,0,0,.12); }
-    .request-actions .approve { border-color:var(--gold); background:linear-gradient(135deg,var(--gold2),var(--gold),var(--gold3)); color:#111; }
-    .request-actions .reject { border-color:rgba(255,80,80,.35); background:rgba(255,80,80,.08); color:#d95353; }
-    .admin-file { color:#007bff; text-decoration:none; }
-    .admin-file:hover { text-decoration:underline; }
-    .admin-thumb { display:block; width:95px; height:95px; object-fit:cover; border-radius:12px; border:1px solid #ddd; margin-top:10px; }
-    .admin-pagination { display:flex; justify-content:center; gap:8px; margin-top:20px; }
-    .admin-pagination a, .admin-pagination span { min-width:38px; padding:9px 12px; border:1px solid var(--border); border-radius:12px; background:var(--panel); color:var(--text); text-align:center; text-decoration:none; }
-    .admin-pagination a:hover, .admin-pagination .active { border-color:var(--gold); background:rgba(212,175,55,.1); color:var(--gold); font-weight:700; }
-    .admin-pagination .disabled { color:#aaa; }
-</style>
-@endsection
-
 @section('content')
-<div class="admin-topbar"><div><h1>Verification Requests</h1><p>Review supplier and coordinator applications, verify documentation, and approve or reject directly from the admin panel.</p></div></div>
-<div class="admin-cards"><article class="admin-card"><div class="num">{{ $stats['users'] }}</div><p>Total users</p></article><article class="admin-card"><div class="num">{{ $stats['pending'] }}</div><p>Pending approvals</p></article><article class="admin-card"><div class="num">{{ $stats['events'] }}</div><p>Total events</p></article></div>
-@if(session('success'))<div class="admin-alert success">{{ session('success') }}</div>@endif
-<div class="admin-table-wrap">
-<table class="admin-table">
-<thead><tr><th>Name</th><th>Role</th><th>Business</th><th>Status</th><th>Documents</th><th>Action</th></tr></thead>
-<tbody>
-@forelse($requests as $user)
-<tr>
-    <td>{{ trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->full_name ?? $user->username) }}<br><small>{{ $user->email }}</small><br><small>{{ $user->phone ?? '' }}</small></td>
-    <td>{{ $user->role }}</td>
-    <td>{{ $user->business_name ?? '' }}<br><small>{{ $user->business_address ?? '' }}</small></td>
-    <td><span class="status-pill">{{ $user->status }}</span></td>
-    <td>
-        @if($user->valid_id)<a class="admin-file" target="_blank" href="{{ asset(ltrim($user->valid_id, '/')) }}">Valid ID</a><br>@endif
-        @if($user->business_permit)<a class="admin-file" target="_blank" href="{{ asset(ltrim($user->business_permit, '/')) }}">Permit</a><br>@endif
-        @if($user->face_capture)<a class="admin-file" target="_blank" href="{{ asset(ltrim($user->face_capture, '/')) }}">Live Face Capture</a><img class="admin-thumb" src="{{ asset(ltrim($user->face_capture, '/')) }}" alt="Face capture">@endif
-        @if(!$user->valid_id && !$user->business_permit && !$user->face_capture)<small>No documents uploaded</small>@endif
-    </td>
-    <td>
-        @if($user->status === 'pending')
-            <div class="request-actions">
-                <form method="POST" action="{{ route('admin.requests.update', $user->user_id) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="approved"><button class="approve" type="submit">Approve</button></form>
-                <form method="POST" action="{{ route('admin.requests.update', $user->user_id) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="rejected"><button class="reject" type="submit">Reject</button></form>
-            </div>
-        @else
-            &mdash;
-        @endif
-    </td>
-</tr>
-@empty
-<tr><td colspan="6" style="text-align:center;padding:40px;">No supplier or coordinator requests found.</td></tr>
-@endforelse
-</tbody>
-</table>
+<div class="admin-topbar">
+    <div>
+        <h1>Verification Requests</h1>
+        <p>Review supplier and coordinator applications, verify documentation, and approve or reject directly from the admin panel.</p>
+    </div>
 </div>
+
+<div class="admin-cards">
+    <article class="admin-card"><div class="num">{{ $stats['users'] }}</div><p>Total users</p></article>
+    <article class="admin-card"><div class="num">{{ $stats['pending'] }}</div><p>Pending approvals</p></article>
+    <article class="admin-card"><div class="num">{{ $stats['events'] }}</div><p>Total events</p></article>
+</div>
+
+@if(session('success'))
+    <div class="admin-alert success">{{ session('success') }}</div>
+@endif
+
+<div class="admin-filter-bar">
+    <form method="GET" action="{{ route('admin.requests') }}" class="admin-filter-form">
+        <label for="statusFilter">Filter by status</label>
+        <select id="statusFilter" name="status">
+            <option value="all" {{ $selectedStatus === 'all' ? 'selected' : '' }}>All</option>
+            <option value="pending" {{ $selectedStatus === 'pending' ? 'selected' : '' }}>Pending</option>
+            <option value="approved" {{ $selectedStatus === 'approved' ? 'selected' : '' }}>Approved</option>
+            <option value="rejected" {{ $selectedStatus === 'rejected' ? 'selected' : '' }}>Rejected</option>
+        </select>
+        <button type="submit" class="admin-button small">Apply</button>
+    </form>
+</div>
+
+<div class="admin-table-wrap">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Business</th>
+                <th>Status</th>
+                <th>Documents</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        @forelse($requests as $user)
+            <tr>
+                <td>{{ trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->full_name ?? $user->username) }}<br><small>{{ $user->email }}</small><br><small>{{ $user->phone ?? '' }}</small></td>
+                <td>{{ $user->role }}</td>
+                <td>{{ $user->business_name ?? '' }}<br><small>{{ $user->business_address ?? '' }}</small></td>
+                <td><span class="status-pill status-{{ strtolower($user->status ?? 'pending') }}">{{ ucfirst($user->status ?? 'Pending') }}</span></td>
+                <td>
+                    @if($user->valid_id)<a class="admin-file" target="_blank" href="{{ asset(ltrim($user->valid_id, '/')) }}">Valid ID</a><br>@endif
+                    @if($user->business_permit)<a class="admin-file" target="_blank" href="{{ asset(ltrim($user->business_permit, '/')) }}">Permit</a><br>@endif
+                    @if($user->face_capture)
+                        <a class="admin-file" target="_blank" href="{{ asset(ltrim($user->face_capture, '/')) }}">Live Face Capture</a>
+                        <img class="admin-thumb" src="{{ asset(ltrim($user->face_capture, '/')) }}" alt="Face capture">
+                    @endif
+                    @if(!$user->valid_id && !$user->business_permit && !$user->face_capture)<small>No documents uploaded</small>@endif
+                </td>
+                <td>
+                    @if($user->status === 'pending')
+                        <div class="request-actions">
+                            <form method="POST" action="{{ route('admin.requests.update', $user->user_id) }}">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="approved">
+                                <button class="approve" type="submit">Approve</button>
+                            </form>
+                            <form method="POST" action="{{ route('admin.requests.update', $user->user_id) }}">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="status" value="rejected">
+                                <button class="reject" type="submit">Reject</button>
+                            </form>
+                        </div>
+                    @else
+                        &mdash;
+                    @endif
+                </td>
+            </tr>
+        @empty
+            <tr><td colspan="6" style="text-align:center;padding:40px;">No supplier or coordinator requests found.</td></tr>
+        @endforelse
+        </tbody>
+    </table>
+</div>
+
 @if($requests->hasPages())
     <div class="admin-pagination">
         @if($requests->onFirstPage())
@@ -85,4 +112,35 @@
         @endif
     </div>
 @endif
+@endsection
+
+@section('styles')
+<style>
+    .admin-filter-bar { margin: 20px 0 24px; display:flex; justify-content:flex-end; }
+    .admin-filter-form { display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:12px 14px; box-shadow:var(--shadow); }
+    .admin-filter-form label { color:var(--muted); font-size:13px; font-weight:700; }
+    .admin-filter-form select { padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff; color:var(--text); }
+    .admin-button.small { padding:10px 16px; font-size:13px; }
+    .status-pill { display:inline-flex; padding:8px 14px; border-radius:999px; font-weight:700; }
+    .status-pending { background:#fff4d6; color:#b98200; }
+    .status-approved { background:#e7f9ee; color:#247a44; }
+    .status-rejected { background:#fdecec; color:#b63e3e; }
+    .admin-table-wrap { overflow-x:auto; background:#fff; border:1px solid #e5e5e5; border-radius:20px; box-shadow:var(--shadow); }
+    .admin-table { width:100%; border-collapse:separate; border-spacing:0 12px; min-width:900px; }
+    .admin-table th, .admin-table td { padding:16px; text-align:left; vertical-align:top; }
+    .admin-table th { color:var(--gold); background:#fffdf6; }
+    .admin-table td { background:#fafafa; border:1px solid #ececec; color:#222; }
+    .request-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .request-actions button { border:1px solid transparent; border-radius:14px; padding:10px 16px; font-weight:800; cursor:pointer; transition:.3s; }
+    .request-actions button:hover { transform:translateY(-2px); box-shadow:0 10px 20px rgba(0,0,0,.12); }
+    .request-actions .approve { border-color:var(--gold); background:linear-gradient(135deg,var(--gold2),var(--gold),var(--gold3)); color:#111; }
+    .request-actions .reject { border-color:rgba(255,80,80,.35); background:rgba(255,80,80,.08); color:#d95353; }
+    .admin-file { color:#007bff; text-decoration:none; }
+    .admin-file:hover { text-decoration:underline; }
+    .admin-thumb { display:block; width:95px; height:95px; object-fit:cover; border-radius:12px; border:1px solid #ddd; margin-top:10px; }
+    .admin-pagination { display:flex; justify-content:center; gap:8px; margin-top:20px; }
+    .admin-pagination a, .admin-pagination span { min-width:38px; padding:9px 12px; border:1px solid var(--border); border-radius:12px; background:var(--panel); color:var(--text); text-align:center; text-decoration:none; }
+    .admin-pagination a:hover, .admin-pagination .active { border-color:var(--gold); background:rgba(212,175,55,.1); color:var(--gold); font-weight:700; }
+    .admin-pagination .disabled { color:#aaa; }
+</style>
 @endsection
