@@ -15,6 +15,7 @@ class GcashController extends Controller
             'event_id' => ['required', 'integer'],
             'service_type' => ['required', 'string'],
             'amount' => ['required', 'numeric', 'min:1'],
+            'payment_method' => ['required', 'in:gcash,paymaya'],
             'success_url' => ['nullable', 'url'],
             'cancel_url' => ['nullable', 'url'],
         ]);
@@ -25,6 +26,7 @@ class GcashController extends Controller
         $payload = [
             'external_id' => 'ei-gcash-' . $data['event_id'] . '-' . $data['service_type'] . '-' . now()->timestamp,
             'amount' => (float) $data['amount'],
+            'payment_method' => $data['payment_method'],
             'description' => 'EventIntel GCash payment for ' . ucfirst($data['service_type']),
             'currency' => 'PHP',
             'success_url' => $successUrl,

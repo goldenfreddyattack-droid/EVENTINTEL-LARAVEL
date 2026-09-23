@@ -28,7 +28,7 @@ class GcashService
                     'attributes' => [
                         'amount' => $amountInCentavos,
                         'currency' => $payload['currency'] ?? 'PHP',
-                        'payment_method_allowed' => ['qrph'],
+                        'payment_method_allowed' => [$payload['payment_method'] ?? 'gcash'],
                         'description' => $payload['description'] ?? 'EventIntel payment',
                         'metadata' => $payload['metadata'] ?? [],
                     ],
@@ -51,8 +51,8 @@ class GcashService
                     'client_key' => $attributes['client_key'] ?? null,
                     'reference' => $intent['id'] ?? ($payload['external_id'] ?? 'paymongo-reference'),
                     'amount' => $payload['amount'] ?? 0,
-                    'message' => 'PayMongo QR Ph payment created successfully.',
-                    'payment_method' => 'qrph',
+                    'message' => 'PayMongo payment authorization created successfully.',
+                    'payment_method' => $payload['payment_method'] ?? 'gcash',
                     'public_key' => $paymongoPublicKey,
                 ];
             }

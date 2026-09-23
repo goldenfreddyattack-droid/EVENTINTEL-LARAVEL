@@ -121,13 +121,13 @@
                 <i class="fas fa-credit-card" style="font-size:22px;color:#f3c547;"></i>
                 <span><strong>Online Payment</strong><small style="display:block;color:#888;">GCash / Maya / Card</small></span>
             </label>
-            <div id="gcashSection" style="display:none;margin-top:14px;padding:16px;border-radius:14px;background:rgba(243,197,71,.05);border:1px dashed rgba(243,197,71,.4);text-align:center;">
-                <p style="font-size:13px;color:#666;">Scan the QR code with GCash, Maya, or a supported bank app. The QR expires after 30 minutes.</p>
-                <div id="paymentQrResult" style="display:none;margin-top:14px;">
-                    <p style="font-size:13px;color:#555;margin-bottom:10px;">Scan this QR Ph code to pay securely.</p>
-                    <img id="paymentQr" width="220" height="220" alt="Payment checkout QR code" style="display:block;width:220px;height:220px;margin:0 auto 12px;background:#fff;padding:8px;border-radius:8px;">
-                    <span style="display:block;color:#856404;font-weight:700;">Use GCash, Maya, or your bank app to scan.</span>
-                </div>
+            <div id="gcashSection" style="display:none;margin-top:14px;padding:16px;border-radius:14px;background:rgba(243,197,71,.05);border:1px dashed rgba(243,197,71,.4);">
+                <label for="onlinePaymentMethod" style="display:block;font-size:13px;color:#555;margin-bottom:8px;">Payment channel</label>
+                <select id="onlinePaymentMethod" style="width:100%;padding:11px 12px;border:1px solid rgba(243,197,71,.6);border-radius:8px;background:#fff;color:#222;">
+                    <option value="gcash">GCash</option>
+                    <option value="paymaya">PayMaya</option>
+                </select>
+                <p style="font-size:13px;color:#666;margin:10px 0 0;">You will be redirected to PayMongo to authorize the payment securely.</p>
             </div>
             <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
                 <button type="button" data-close-payment style="background:#eee;color:#333;padding:10px 20px;border:0;border-radius:10px;">Cancel</button>
@@ -267,7 +267,7 @@
             document.getElementById('payAmount').textContent = `₱${Number(button.dataset.price || 0).toLocaleString()}`;
             document.querySelectorAll('input[name="payment_method_choice"]').forEach(input => { input.checked = false; });
             document.getElementById('gcashSection').style.display = 'none';
-            document.getElementById('paymentQrResult').style.display = 'none';
+            document.getElementById('onlinePaymentMethod').value = 'gcash';
             paymentModal.classList.add('show');
             paymentModal.setAttribute('aria-hidden', 'false');
         }
@@ -300,6 +300,7 @@
                             event_id: Number(paymentContext.event),
                             service_type: paymentContext.service,
                             amount: amount,
+                            payment_method: document.getElementById('onlinePaymentMethod').value,
                             success_url: `{{ url('/your-events') }}?payment_status=success&event_id=${encodeURIComponent(paymentContext.event)}&service=${encodeURIComponent(paymentContext.service)}`,
                             cancel_url: `{{ url('/your-events') }}?payment_status=cancelled&event_id=${encodeURIComponent(paymentContext.event)}&service=${encodeURIComponent(paymentContext.service)}`
                         })
@@ -307,7 +308,7 @@
                     const paymentData = await checkoutResponse.json().catch(() => ({}));
                     const payment = paymentData.payment || {};
                     if (!checkoutResponse.ok || !paymentData.success || !payment.payment_intent_id || !payment.client_key || !payment.public_key) {
-                        throw new Error(payment.message || paymentData.message || 'QR Ph payment could not be started.');
+                        throw new Error(payment.message || paymentData.message || 'PayMongo payment could not be started.');
                     }
 
                     const paymongoBaseUrl = @json(config('services.paymongo.base_url'));
@@ -319,28 +320,30 @@
                     const paymentMethodResponse = await fetch(`${paymongoBaseUrl}/payment_methods`, {
                         method: 'POST',
                         headers: paymongoHeaders,
-                        body: JSON.stringify({data: {attributes: {type: 'qrph'}}})
+                        body: JSON.stringify({data: {attributes: {type: payment.payment_method}}})
                     });
                     const paymentMethodData = await paymentMethodResponse.json().catch(() => ({}));
                     const paymentMethodId = paymentMethodData.data?.id;
                     if (!paymentMethodResponse.ok || !paymentMethodId) {
-                        throw new Error(paymentMethodData.errors?.[0]?.detail || 'PayMongo could not create the QR Ph payment method.');
+                        throw new Error(paymentMethodData.errors?.[0]?.detail || 'PayMongo could not create the payment method.');
                     }
 
                     const attachResponse = await fetch(`${paymongoBaseUrl}/payment_intents/${encodeURIComponent(payment.payment_intent_id)}/attach`, {
                         method: 'POST',
                         headers: paymongoHeaders,
-                        body: JSON.stringify({data: {attributes: {payment_method: paymentMethodId, client_key: payment.client_key}}})
+                        body: JSON.stringify({data: {attributes: {
+                            payment_method: paymentMethodId,
+                            client_key: payment.client_key,
+                            return_url: `{{ url('/your-events') }}?payment_status=success&event_id=${encodeURIComponent(paymentContext.event)}&service=${encodeURIComponent(paymentContext.service)}`
+                        }}})
                     });
                     const attachData = await attachResponse.json().catch(() => ({}));
-                    const qrImage = attachData.data?.attributes?.next_action?.code?.image_url;
-                    if (!attachResponse.ok || !qrImage) {
-                        throw new Error(attachData.errors?.[0]?.detail || 'PayMongo could not generate the QR Ph code.');
+                    const redirectUrl = attachData.data?.attributes?.next_action?.redirect?.url;
+                    if (!attachResponse.ok || !redirectUrl) {
+                        throw new Error(attachData.errors?.[0]?.detail || 'PayMongo could not authorize the payment.');
                     }
 
-                    document.getElementById('paymentQr').src = qrImage.startsWith('data:') ? qrImage : `data:image/png;base64,${qrImage}`;
-                    document.getElementById('paymentQrResult').style.display = 'block';
-                    confirmButton.textContent = 'QR Code Ready';
+                    window.location.href = redirectUrl;
                     return;
                 }
 
