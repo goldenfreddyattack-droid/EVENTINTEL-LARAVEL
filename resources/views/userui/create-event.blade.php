@@ -131,7 +131,7 @@
         reunion:['Family Picnic','Grand Gathering','Backyard Party','Classic Filipino','Nostalgia','Custom'],
         default:['Classic','Garden','Elegant','Modern','Custom']
     };
-    const packagesByEvent = @json($packageRecords->map(fn ($package) => [$package->name, $package->price, array_keys($package->serviceOptions), $package->serviceOptions])->values());
+    const packagesByEvent = @json($packageOptions);
     function renderEventOptions() {
         const selected = document.querySelector('input[name="event_type"]:checked')?.value || 'default';
         const eventKey = selected === 'Others' ? (otherInput.value.trim() || 'default').toLowerCase() : selected.toLowerCase();

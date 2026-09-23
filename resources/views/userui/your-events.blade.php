@@ -22,6 +22,8 @@
         .note-modal-text { margin: 0; padding: 18px; border-radius: 12px; background: #fff1f1; color: #8b2622; line-height: 1.6; white-space: pre-wrap; }
         .star-btn:hover { transform: scale(1.15); }
         .supplier-review-form textarea:focus { border-color: #f3c547 !important; outline: none; box-shadow: 0 0 0 3px rgba(243, 197, 71, 0.15); }
+        .flow-warning-toast { position: fixed; right: 24px; bottom: 24px; z-index: 1000; max-width: 360px; padding: 14px 18px; border: 1px solid #e3b52d; border-radius: 10px; background: #fff8dc; color: #765400; box-shadow: 0 10px 28px rgba(50, 39, 10, .18); font-weight: 700; opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
+        .flow-warning-toast.show { opacity: 1; transform: translateY(0); }
     </style>
 </head>
 <body>
@@ -62,6 +64,11 @@
                                     <a class="event-button" href="{{ route('your.events.guests', $event->event_id) }}">Guests / QR</a>
                                     <a class="event-button" href="{{ route('your.events.invitation', $event->event_id) }}">Edit Invitation</a>
                                     <a class="event-button" href="{{ route('your.events.map', $event->event_id) }}">GPS</a>
+                                    @if ((int) session('recommendation_flow_event_id') === (int) $event->event_id)
+                                        <a class="event-button" href="{{ route('recommendation', ['event_id' => $event->event_id]) }}">My Flow</a>
+                                    @else
+                                        <button class="event-button" type="button" aria-disabled="true" data-flow-warning title="Generate a Flow first on the AI Recommendation Page">My Flow</button>
+                                    @endif
                                     <button class="event-button" type="button" data-status-event="{{ $event->event_id }}">Status</button>
                                     @if (in_array($eventStatus, ['ongoing', 'completed'], true))
                                         <button class="event-button" type="button" data-review-event="{{ $event->event_id }}">⭐ Review Folder</button>
@@ -169,6 +176,21 @@
 
         const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[character]));
         const statusKey = value => String(value ?? '').toLowerCase().replace(/\s+/g, '_');
+
+        document.querySelectorAll('[data-flow-warning]').forEach(button => button.addEventListener('click', () => {
+            let toast = document.getElementById('flowWarningToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'flowWarningToast';
+                toast.className = 'flow-warning-toast';
+                document.body.appendChild(toast);
+            }
+
+            toast.textContent = 'You did not generate a flow for this event. Please generate it on the AI Recommendation Page.';
+            toast.classList.add('show');
+            window.clearTimeout(window.flowWarningTimeout);
+            window.flowWarningTimeout = window.setTimeout(() => toast.classList.remove('show'), 4500);
+        }));
 
         document.querySelectorAll('[data-status-event]').forEach(button => button.addEventListener('click', async () => {
             statusModal.classList.add('show');
@@ -317,7 +339,7 @@
                 try {
                     const response = await fetch(`{{ url('/your-events') }}/${eventId}/reviews`, {headers: {'Accept': 'application/json'}});
                     const data = await response.json();
-                    
+
                     if (!response.ok || !data.services?.length) {
                         reviewContent.innerHTML = '<p class="modal-loading">No suppliers selected for this event yet to review.</p>';
                         return;
@@ -330,7 +352,7 @@
                             <div class="review-card" style="padding:16px; border:1px solid #e5e5e5; border-radius:12px; background:#fafafa;">
                                 <div style="font-weight:700; font-size:16px; margin-bottom:2px;">${escapeHtml(service.name)}</div>
                                 <div style="font-size:13px; color:#666; margin-bottom:12px;">Category: ${escapeHtml(service.category)}</div>
-                                
+
                                 <form class="supplier-review-form" data-event="${eventId}" data-column="${escapeHtml(service.service_column)}" data-review-token="${escapeHtml(data.review_token)}">
                                     <div style="margin-bottom:12px;">
                                         <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Rating Scale</label>
@@ -378,7 +400,7 @@
                             e.preventDefault();
                             const formData = new FormData(form);
                             const ratingVal = Number(formData.get('rating'));
-                            
+
                             if (!ratingVal || ratingVal < 1) {
                                 alert('Please select at least 1 star before saving.');
                                 return;
@@ -428,10 +450,10 @@
                     return;
                 }
                 const publicUrl = linkData.url;
-                
+
                 qrCodeImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(publicUrl)}`;
                 reviewFolderLinkInput.value = publicUrl;
-                
+
                 qrModal.classList.add('show');
                 qrModal.setAttribute('aria-hidden', 'false');
             });

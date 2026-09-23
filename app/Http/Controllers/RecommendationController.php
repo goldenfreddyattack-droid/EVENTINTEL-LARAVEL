@@ -13,44 +13,66 @@ class RecommendationController extends Controller
     {
         $this->middleware('auth');
         $this->middleware(function ($request, $next) {
-            abort_unless(Auth::user()->role === 'client', 403, 'Client access only.');
+            abort_unless(in_array(Auth::user()->role, ['client', 'coordinator'], true), 403, 'Client or coordinator access only.');
             return $next($request);
         });
     }
 
     public function index()
     {
-        $userEvents = DB::table('events')
-            ->where('user_id', Auth::id())
+        $eventQuery = DB::table('events')
+            ->when(Auth::user()->role === 'client', fn ($query) => $query->where('user_id', Auth::id()))
+            ->when(Auth::user()->role === 'coordinator', fn ($query) => $query->where('coordinator', Auth::user()->full_name))
             ->orderByDesc('event_date')
             ->get(['event_id', 'title', 'event_type', 'event_date', 'budget', 'guest_count']);
+        $userEvents = $eventQuery;
 
-        $fallbackEvents = $userEvents->isEmpty()
-            ? DB::table('events')
-                ->orderByDesc('event_date')
-                ->limit(10)
-                ->get(['event_id', 'title', 'event_type', 'event_date', 'budget', 'guest_count'])
+        $bookmarkedServices = Auth::user()->role === 'client'
+            ? app(\App\Http\Controllers\ServiceCatalogController::class)->bookmarkedServices()
             : collect();
 
-        $bookmarkedServices = app(\App\Http\Controllers\ServiceCatalogController::class)->bookmarkedServices();
+        $savedFlow = null;
+        if ((int) request('event_id') === (int) session('recommendation_flow_event_id')) {
+            $savedFlow = session('recommendation_flow_html');
+        }
 
-        return view('userui.recommendation', compact('userEvents', 'fallbackEvents', 'bookmarkedServices'));
+        $view = Auth::user()->role === 'coordinator'
+            ? 'coordinator.recommendation'
+            : 'userui.recommendation';
+
+        return view($view, compact('userEvents', 'bookmarkedServices', 'savedFlow'));
     }
 
     public function generate(Request $request)
     {
         $data = $request->validate([
+            'event_id' => ['nullable', 'integer', 'min:1'],
             'event' => ['nullable', 'string', 'max:100'],
-            'budget' => ['required', 'numeric', 'min:1'],
-            'pax' => ['required', 'integer', 'min:1'],
+            'budget' => ['nullable', 'numeric', 'min:1'],
+            'pax' => ['nullable', 'integer', 'min:1'],
             'services' => ['nullable', 'array'],
             'services.*' => ['nullable', 'string', 'max:100'],
             'regenerate' => ['nullable', 'boolean'],
         ]);
 
-        $event = trim($data['event'] ?? '') ?: 'Event';
-        $budget = (float) $data['budget'];
-        $pax = (int) $data['pax'];
+        $eventRecord = null;
+        if (!empty($data['event_id'])) {
+            $eventQuery = DB::table('events')
+                ->where('event_id', $data['event_id'])
+                ->when(Auth::user()->role === 'client', fn ($query) => $query->where('user_id', Auth::id()))
+                ->when(Auth::user()->role === 'coordinator', fn ($query) => $query->where('coordinator', Auth::user()->full_name));
+            $eventRecord = $eventQuery->first(['event_id', 'title', 'event_type', 'theme', 'budget', 'event_date', 'event_time', 'event_end_time', 'guest_count', 'venue_name', 'venue_address', 'status']);
+
+            if (!$eventRecord) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'event_id' => 'Please select one of your created events.',
+                ]);
+            }
+        }
+
+        $event = trim((string) ($eventRecord->event_type ?? $data['event'] ?? '')) ?: 'Event';
+        $budget = (float) ($eventRecord->budget ?? $data['budget'] ?? 0);
+        $pax = (int) ($eventRecord->guest_count ?? $data['pax'] ?? 0);
         $this->validateRecommendationInputs($event, $budget, $pax);
 
         $services = collect($data['services'] ?? [])
@@ -59,6 +81,10 @@ class RecommendationController extends Controller
             ->unique()
             ->values()
             ->all();
+
+        if (empty($services)) {
+            $services = ['Venue', 'Catering/Food', 'Host/MC', 'Sounds & Lights', 'Photographer', 'Clothing/Attire', 'Decorations'];
+        }
 
         $bookmarkedServices = app(\App\Http\Controllers\ServiceCatalogController::class)->bookmarkedServices();
         if (empty($services) && $bookmarkedServices->isNotEmpty()) {
@@ -72,84 +98,97 @@ class RecommendationController extends Controller
             $bookmarkNames = $bookmarkedServices->take(3)->pluck('name')->filter()->map(fn ($name) => e($name))->implode(', ');
             $html .= '<div class="recommendation-service-note"><strong>Bookmarked place picks:</strong> ' . $bookmarkNames . '</div>';
         }
-        $html .= $this->timelineHtml($event);
+        $eventDetails = [
+            'title' => $eventRecord->title ?? null,
+            'theme' => $eventRecord->theme ?? null,
+            'date' => $eventRecord->event_date ?? null,
+            'start_time' => $eventRecord->event_time ?? null,
+            'end_time' => $eventRecord->event_end_time ?? null,
+            'venue' => $eventRecord->venue_name ?? null,
+            'venue_address' => $eventRecord->venue_address ?? null,
+            'status' => $eventRecord->status ?? null,
+        ];
+        $aiFlow = $this->aiFlow($event, $pax, $budget, $services, $eventDetails, (bool) ($data['regenerate'] ?? false));
+        if ($aiFlow['source'] !== 'openai') {
+            $notice = $aiFlow['source'] === 'offline'
+                ? 'OpenAI could not be reached. This is a local fallback flow, not a new AI result.'
+                : 'OPENAI_API_KEY is not configured. This is a local fallback flow.';
+            $html .= '<div class="recommendation-ai-status recommendation-ai-status-warning"><strong>AI status:</strong> ' . e($notice) . '</div>';
+        } else {
+            $html .= '<div class="recommendation-ai-status recommendation-ai-status-success"><strong>AI status:</strong> OpenAI generated this flow.</div>';
+        }
+        $html .= $this->timelineHtml($event, $aiFlow['timeline']);
         $html .= $this->budgetHtml($budget);
         $html .= $this->serviceHtml($services, $budget, $pax);
 
-        $tip = $this->aiTip($event, $pax, $budget, $data['regenerate'] ?? false, $services);
+        $tip = $aiFlow['tip'] ?: $this->localTip($event, $pax, $budget, $services);
         if ($tip) {
             $html .= '<h4 class="recommendation-section-title">AI Planning Tips</h4><p class="recommendation-ai-tip">' . e($tip) . '</p>';
         }
 
-        return response()->json(['html' => $html . '</div>']);
+        $flowHtml = $html . '</div>';
+        if (!empty($data['event_id'])) {
+            session([
+                'recommendation_flow_event_id' => (int) $data['event_id'],
+                'recommendation_flow_html' => $flowHtml,
+            ]);
+        }
+
+        return response()->json(['html' => $flowHtml]);
     }
 
     public function useRecommendation(Request $request)
     {
         $data = $request->validate([
-            'event_type' => ['nullable', 'string', 'max:100'],
-            'guest_count' => ['nullable', 'integer', 'min:1'],
-            'budget' => ['nullable', 'numeric', 'min:0'],
-            'services' => ['nullable', 'array'],
-            'services.*' => ['nullable', 'string', 'max:100'],
+            'event_id' => ['required', 'integer', 'min:1'],
+            'flow' => ['required', 'string', 'max:20000'],
         ]);
 
-        $eventType = trim((string) ($data['event_type'] ?? 'Event')) ?: 'Event';
-        $guestCount = (int) ($data['guest_count'] ?? 1);
-        $budget = (float) ($data['budget'] ?? 0);
-        $services = collect($data['services'] ?? [])
-            ->map(fn ($service) => $this->normalizeServiceCategory($service))
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+        $event = DB::table('events')
+            ->where('event_id', $data['event_id'])
+            ->where(function ($query) {
+                $query->where('user_id', Auth::id())
+                    ->orWhere('coordinator', Auth::user()->full_name);
+            })
+            ->first(['event_id', 'title', 'event_type', 'theme', 'budget', 'event_date', 'event_time', 'event_end_time', 'guest_count', 'venue_name', 'venue_address', 'status']);
 
-        $messageBody = 'A client selected a ' . e($eventType) . ' recommendation for ' . $guestCount . ' guests with a PHP ' . number_format($budget, 2) . ' budget. Please review the recommendation and confirm availability for the requested services.';
+        if (!$event) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'event_id' => 'Please select one of your created events.',
+            ]);
+        }
 
-        $eventId = DB::table('events')->insertGetId([
-            'user_id' => Auth::id(),
-            'title' => $eventType . ' Recommendation',
-            'event_type' => $eventType,
-            'theme' => 'Recommendation',
-            'budget' => $budget,
-            'event_date' => now()->addDays(30)->toDateString(),
-            'event_time' => '09:00:00',
-            'event_end_time' => '18:00:00',
-            'guest_count' => $guestCount,
-            'venue_name' => '',
-            'status' => 'planning',
-            'payment_method' => 'cash',
-            'payment_status' => 'pending',
-            'created_at' => now(),
-        ]);
+        $messageBody = "AI event flow for {$event->title}:\n"
+            . "Type: {$event->event_type}\n"
+            . "Theme: {$event->theme}\n"
+            . "Date: {$event->event_date}\n"
+            . "Time: {$event->event_time} - {$event->event_end_time}\n"
+            . "Venue: {$event->venue_name}" . ($event->venue_address ? " ({$event->venue_address})" : '') . "\n"
+            . "Guests: {$event->guest_count}\n"
+            . "Budget: PHP " . number_format((float) $event->budget, 2) . "\n"
+            . "Status: {$event->status}\n\n"
+            . "Generated flow:\n{$data['flow']}\n\n"
+            . 'Please review this event and confirm your availability for any services you provide.';
 
-        $matchedSuppliers = $this->matchedSuppliersForServices($services);
+        $supplierIds = DB::table('users')
+            ->where('role', 'supplier')
+            ->where('user_id', '<>', Auth::id())
+            ->pluck('user_id');
         $count = 0;
-        foreach ($matchedSuppliers as $supplier) {
-            $supplierId = (int) ($supplier->user_id ?? 0);
+        foreach ($supplierIds as $supplierId) {
+            $supplierId = (int) $supplierId;
             if ($supplierId <= 0) {
                 continue;
             }
 
-            $this->sendSupplierMessage((int) $eventId, $supplierId, $messageBody);
+            $this->sendSupplierMessage((int) $event->event_id, $supplierId, $messageBody);
             $count++;
         }
-
-        $prefill = ['event_type' => $eventType, 'budget' => $budget, 'services' => $services];
-        session(['event_recommendation_prefill' => json_encode($prefill)]);
-
-        $redirectUrl = route('events.create') . '?' . http_build_query([
-            'event_type' => $eventType,
-            'budget' => (string) $budget,
-            'services' => implode(',', $services),
-            'from' => 'recommendation',
-        ]);
 
         return response()->json([
             'success' => true,
             'supplier_count' => $count,
-            'event_id' => $eventId,
-            'redirect_url' => $redirectUrl,
+            'event_id' => $event->event_id,
         ]);
     }
 
@@ -279,17 +318,18 @@ class RecommendationController extends Controller
         };
     }
 
-    private function timelineHtml(string $event): string
+    private function timelineHtml(string $event, ?array $aiTimeline = null): string
     {
         $flows = [
             'wedding' => [['08:00 AM', 'Guest Arrival & Registration', 'Venue preparation, coat check'], ['09:00 AM', 'Ceremony Starts', 'Bride entrance, vows, rings'], ['10:00 AM', 'Reception & Cocktail Hour', 'Photos, mingling, appetizers'], ['11:30 AM', 'Grand Entrance & First Dance', 'Music cues, lighting effects'], ['12:00 PM', 'Lunch Service', 'Multi-course meal service'], ['01:00 PM', 'Toasts & Speeches', 'Best man, bridesmaids, parents'], ['02:00 PM', 'Cake Cutting & Entertainment', 'Music, dancing, photo booth'], ['04:00 PM', 'Evening Activities & Dessert', 'DJ transitions, special dances'], ['06:00 PM', 'Farewell & Send-off', 'Guest departure arrangements']],
             'birthday' => [['02:00 PM', 'Guest Arrival', 'Welcome drinks, games setup'], ['02:30 PM', 'Icebreaker Activities & Games', 'Team games, music playing'], ['03:30 PM', 'Snack Break', 'Light appetizers, drinks'], ['04:00 PM', 'Main Activities & Entertainment', 'DJ performance, dancing'], ['05:00 PM', 'Dinner Service', 'Main course buffet or plated meal'], ['06:00 PM', 'Birthday Cake & Singing', 'Special lighting, candles'], ['06:30 PM', 'Gifts & Photos', 'Gift opening, group photos'], ['07:30 PM', 'Dessert & Closing Activities', 'Dessert service, farewells']],
             'corporate' => [['08:00 AM', 'Registration & Breakfast', 'Coffee, pastries, name badges'], ['09:00 AM', 'Opening Remarks', 'CEO/Director presentation'], ['09:30 AM', 'Keynote Speech', 'Main speaker presentation'], ['10:30 AM', 'Break & Networking', 'Refreshments, mingling'], ['11:00 AM', 'Breakout Sessions', 'Panel discussions, workshops'], ['12:00 PM', 'Lunch', 'Catered meal, table seating'], ['01:00 PM', 'Awards & Recognition', 'Recognition ceremony'], ['02:00 PM', 'Networking & Team Building', 'Games, activities, mingling'], ['04:00 PM', 'Closing Remarks & Departure', 'Thank you speech, farewell']],
         ];
-        $flow = collect($flows)->first(fn ($timeline, $type) => str_contains(strtolower($event), $type)) ?? [['09:00 AM', 'Event Start & Guest Arrival', 'Registration, welcome drinks'], ['10:00 AM', 'Opening Program', 'Opening remarks, introductions'], ['11:00 AM', 'Main Activities', 'Core event activities'], ['12:00 PM', 'Lunch Service', 'Food service to guests'], ['01:00 PM', 'Afternoon Program', 'Continued activities, entertainment'], ['03:00 PM', 'Snack & Break', 'Refreshment time'], ['04:00 PM', 'Closing Program', 'Final remarks, group photos'], ['05:00 PM', 'Farewell & Departure', 'Thank you, guest exit']];
+        $flow = $aiTimeline ?: collect($flows)->first(fn ($timeline, $type) => str_contains(strtolower($event), $type)) ?? [['09:00 AM', 'Event Start & Guest Arrival', 'Registration, welcome drinks'], ['10:00 AM', 'Opening Program', 'Opening remarks, introductions'], ['11:00 AM', 'Main Activities', 'Core event activities'], ['12:00 PM', 'Lunch Service', 'Food service to guests'], ['01:00 PM', 'Afternoon Program', 'Continued activities, entertainment'], ['03:00 PM', 'Snack & Break', 'Refreshment time'], ['04:00 PM', 'Closing Program', 'Final remarks, group photos'], ['05:00 PM', 'Farewell & Departure', 'Thank you, guest exit']];
 
         $html = '<h4 class="recommendation-section-title">Recommended Event Timeline</h4>';
-        foreach ($flow as [$time, $activity, $prep]) {
+        foreach ($flow as $step) {
+            [$time, $activity, $prep] = $step;
             $html .= '<div class="recommendation-timeline-item"><strong class="recommendation-timeline-time">' . e($time) . '</strong><span class="recommendation-timeline-event"><strong>' . e($activity) . '</strong><br><small>' . e($prep) . '</small></span></div>';
         }
         return $html;
@@ -354,26 +394,62 @@ class RecommendationController extends Controller
         return "For a {$event} with {$pax} guests and a PHP " . number_format($budget) . " budget, prioritize your top essentials: {$selected}. Keep a 30% buffer for vendor changes, guest count adjustments, and last-minute add-ons so the event still feels premium without overspending.";
     }
 
-    private function aiTip(string $event, int $pax, float $budget, bool $regenerate = false, array $services = []): ?string
+    private function aiFlow(string $event, int $pax, float $budget, array $services, array $eventDetails = [], bool $regenerate = false): array
     {
-        if (empty(config('services.openai.key')) && ! $regenerate) {
-            return $this->localTip($event, $pax, $budget, $services);
+        $key = config('services.openai.key');
+        if (empty($key)) {
+            return ['timeline' => null, 'tip' => null, 'source' => 'no_key'];
         }
 
-        if (empty(config('services.openai.key'))) {
-            return $this->localTip($event, $pax, $budget, $services);
+        try {
+            $response = Http::withToken($key)->timeout(20)->post('https://api.openai.com/v1/chat/completions', [
+                'model' => 'gpt-4o-mini',
+                'response_format' => ['type' => 'json_object'],
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'You are an expert event planner. Return valid JSON only with a timeline array and a tip string. Each timeline item must have time, activity, and preparation fields.',
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => json_encode([
+                            'event_type' => $event,
+                            'guest_count' => $pax,
+                            'budget_php' => $budget,
+                            'services' => $services,
+                            'event_details' => $eventDetails,
+                            'requirements' => [
+                                'timeline_items' => $regenerate
+                                    ? 'Create a fresh alternative 6 to 10 step event flow. Do not repeat the previous obvious sequence.'
+                                    : 'Create 6 to 10 realistic event-flow steps with times.',
+                                'tip' => 'Write a concise, practical 3 to 4 sentence planning tip with one creative suggestion.',
+                                'variation_request' => $regenerate ? 'Use a different structure and creative approach for this regeneration.' : null,
+                            ],
+                            'request_id' => bin2hex(random_bytes(8)),
+                        ], JSON_THROW_ON_ERROR),
+                    ],
+                ],
+            ]);
+
+            if (!$response->successful()) {
+                return ['timeline' => null, 'tip' => null, 'source' => 'offline'];
+            }
+
+            $content = data_get($response->json(), 'choices.0.message.content');
+            $result = is_string($content) ? json_decode($content, true, 512, JSON_THROW_ON_ERROR) : null;
+            $timeline = collect($result['timeline'] ?? [])
+                ->filter(fn ($step) => is_array($step) && isset($step['time'], $step['activity'], $step['preparation']))
+                ->map(fn ($step) => [(string) $step['time'], (string) $step['activity'], (string) $step['preparation']])
+                ->values()
+                ->all();
+
+            return [
+                'timeline' => $timeline !== [] ? $timeline : null,
+                'tip' => trim((string) ($result['tip'] ?? '')) ?: null,
+                'source' => $timeline !== [] ? 'openai' : 'offline',
+            ];
+        } catch (\Throwable) {
+            return ['timeline' => null, 'tip' => null, 'source' => 'offline'];
         }
-
-        $response = Http::withToken(config('services.openai.key'))->timeout(10)->post('https://api.openai.com/v1/chat/completions', [
-            'model' => 'gpt-4o-mini',
-            'messages' => [['role' => 'user', 'content' => "Create a brief 3-4 sentence creative event planning tip for a {$event} with {$pax} guests and PHP " . number_format($budget) . ' budget. Include one unique suggestion.']],
-        ]);
-
-        if ($response->successful()) {
-            $tip = trim((string) data_get($response->json(), 'choices.0.message.content', ''));
-            return $tip !== '' ? $tip : $this->localTip($event, $pax, $budget, $services);
-        }
-
-        return $this->localTip($event, $pax, $budget, $services);
     }
 }

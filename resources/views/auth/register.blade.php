@@ -127,7 +127,7 @@
 
                     <div class="input-wrapper">
                         <i class="icon fas fa-phone"></i>
-                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="Phone Number" class="input-field" required>
+                        <input type="tel" name="phone" value="{{ old('phone') }}" placeholder="11-digit phone number" class="input-field" inputmode="numeric" pattern="[0-9]{11}" minlength="11" maxlength="11" required>
                     </div>
 
                     <div>
@@ -162,12 +162,12 @@
                                         <option value="Capalangan">Capalangan</option>
                                         <option value="Colgante">Colgante</option>
                                         <option value="Paligui">Paligui</option>
-                                        <option value="Poblacion">Poblacion</option>
-                                        <option value="San Juan">San Juan</option>
+                                        <option value="Sampaloc">Sampaloc</option>
+                                        <option value="San Juan (Poblacion)">San Juan (Poblacion)</option>
                                         <option value="San Vicente">San Vicente</option>
-                                        <option value="Santa Cruz">Santa Cruz</option>
-                                        <option value="Succad">Succad</option>
-                                        <option value="Tabuyuc">Tabuyuc</option>
+                                        <option value="Sucad">Sucad</option>
+                                        <option value="Sulipan">Sulipan</option>
+                                        <option value="Tabuyuc (Santo Rosario)">Tabuyuc (Santo Rosario)</option>
                                     </select>
                                 </div>
                             </div>
@@ -210,12 +210,23 @@
     </div>
 
     <script>
+        const phoneInput = document.querySelector('input[name="phone"]');
+        phoneInput.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 11);
+        });
+
         document.querySelector('.signup-form').addEventListener('submit', function (e) {
             const pw = document.getElementById('password').value;
             const confirm = document.getElementById('confirm-password').value;
             if (pw !== confirm) {
                 e.preventDefault();
                 alert('Passwords do not match.');
+                return;
+            }
+
+            if (!/^\d{11}$/.test(phoneInput.value)) {
+                e.preventDefault();
+                alert('Phone number must contain exactly 11 digits.');
             }
         });
     </script>

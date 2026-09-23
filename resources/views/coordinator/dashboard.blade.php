@@ -162,7 +162,15 @@
                 <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 2px;">AI Program Flow Generator</h3>
                 <p style="font-size: 13px; color: var(--muted); margin: 0;">Automatically build customized timelines for confirmed client events.</p>
             </div>
-            <button type="button" class="ai-action-btn"><i class="fas fa-magic text-gold"></i> Choose Confirmed Event</button>
+            <form action="{{ route('recommendation') }}" method="GET" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <select name="event_id" required style="min-width:220px;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;background:#fff;color:var(--text);">
+                    <option value="">Choose Assigned Event</option>
+                    @foreach ($events as $event)
+                        <option value="{{ $event->event_id }}">{{ $event->title ?: ($event->event_type ?: 'Untitled event') }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="ai-action-btn"><i class="fas fa-magic text-gold"></i> Generate AI Flow</button>
+            </form>
         </div>
     </div>
 

@@ -72,6 +72,12 @@ class EventController extends Controller
             ->where('user_id', Auth::id())
             ->whereIn('status', ['planning', 'pending', 'ongoing'])
             ->count();
+        $packageOptions = $packageRecords->map(fn ($package) => [
+            $package['name'],
+            $package['price'],
+            array_keys($package['serviceOptions']),
+            $package['serviceOptions'],
+        ])->values();
 
         return view('userui.create-event', [
             'eventTypes' => ['Birthday', 'Debut', 'Wedding', 'Anniversary', 'Christening', 'Gender Reveal', 'Reunion', 'Others'],
@@ -82,6 +88,7 @@ class EventController extends Controller
             ],
             'availableServices' => $availableServices,
             'packageRecords' => $packageRecords,
+            'packageOptions' => $packageOptions,
             'activeEventCount' => $activeEventCount,
             'activeEventLimitReached' => $activeEventCount >= self::MAX_ACTIVE_EVENTS,
         ]);

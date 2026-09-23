@@ -23,28 +23,12 @@
                 <div class="recommendation-input">
                     <label for="eventSelect">SELECT YOUR EVENT</label>
                     <div class="recommendation-event-row">
-                        <select id="eventSelect" onchange="loadEventDetails()">
+                        <select id="eventSelect">
                             <option value="">-- Select an event --</option>
                             @if ($userEvents->isNotEmpty())
                                 <optgroup label="Your Events">
                                     @foreach ($userEvents as $event)
-                                        <option value="{{ $event->event_id }}"
-                                            data-type="{{ $event->event_type }}"
-                                            data-budget="{{ $event->budget }}"
-                                            data-pax="{{ $event->guest_count }}">
-                                            {{ $event->title ?: 'Untitled event' }} - {{ $event->event_type ?: 'Event' }}
-                                            ({{ $event->event_date ? \Carbon\Carbon::parse($event->event_date)->format('M j, Y') : 'Date TBD' }})
-                                        </option>
-                                    @endforeach
-                                </optgroup>
-                            @endif
-                            @if ($fallbackEvents->isNotEmpty())
-                                <optgroup label="Recent Events">
-                                    @foreach ($fallbackEvents as $event)
-                                        <option value="{{ $event->event_id }}"
-                                            data-type="{{ $event->event_type }}"
-                                            data-budget="{{ $event->budget }}"
-                                            data-pax="{{ $event->guest_count }}">
+                                        <option value="{{ $event->event_id }}" @selected((int) request('event_id') === (int) $event->event_id)>
                                             {{ $event->title ?: 'Untitled event' }} - {{ $event->event_type ?: 'Event' }}
                                             ({{ $event->event_date ? \Carbon\Carbon::parse($event->event_date)->format('M j, Y') : 'Date TBD' }})
                                         </option>
@@ -54,39 +38,6 @@
                         </select>
                         <a class="recommendation-create" href="{{ route('home') }}">Create Event</a>
                     </div>
-                </div>
-
-                <div class="recommendation-input-group">
-                    <div class="recommendation-input">
-                        <label for="budget">BUDGET (PHP)</label>
-                        <input type="number" id="budget" placeholder="35000" min="0">
-                    </div>
-                    <div class="recommendation-input">
-                        <label for="pax">NUMBER OF GUESTS</label>
-                        <input type="number" id="pax" placeholder="50" min="1">
-                    </div>
-                </div>
-
-                <div class="recommendation-input">
-                    <label for="event">EVENT TYPE</label>
-                    <input type="text" id="event" placeholder="e.g., Birthday, Wedding, Corporate">
-                </div>
-
-                <div class="recommendation-services" id="services">
-                    @foreach ([
-                        'venue' => 'Venue',
-                        'catering' => 'Catering/Food',
-                        'host' => 'Host/MC',
-                        'sounds_lights' => 'Sounds & Lights',
-                        'photographer' => 'Photographer',
-                        'clothes' => 'Clothing/Attire',
-                        'decorations' => 'Decorations',
-                    ] as $key => $label)
-                        <button class="recommendation-service" type="button" data-service="{{ $key }}">
-                            <span>{{ $label }}</span>
-                            <span class="recommendation-checkbox"><i class="fas fa-check" aria-hidden="true"></i></span>
-                        </button>
-                    @endforeach
                 </div>
 
                 @if ($bookmarkedServices->isNotEmpty())
@@ -109,8 +60,8 @@
                     <h3><i class="fas fa-calendar-days" aria-hidden="true"></i> Your Event Timeline &amp; Recommendations</h3>
                     <div id="resultText"></div>
                     <div class="recommendation-result-actions">
-                        <button class="recommendation-generate" type="button" onclick="applyRecommendationToCreateEvent()">Use This Recommendation</button>
-                        <button class="recommendation-generate" type="button" onclick="generateRecommendation()">Regenerate</button>
+                        <button class="recommendation-generate" type="button" onclick="useRecommendationFlow()">Use This Flow &amp; Notify Suppliers</button>
+                        <button class="recommendation-generate" type="button" onclick="generateRecommendation(true)">Regenerate</button>
                     </div>
                 </div>
             </section>
@@ -119,52 +70,26 @@
 
     <script>
         const recommendationEndpoint = @json(route('recommendation.generate'));
+        const useRecommendationEndpoint = @json(route('recommendation.use'));
+        const initialEventId = @json(request('event_id'));
+        const savedFlow = @json($savedFlow);
 
-        const serviceLabels = {
-            venue: 'Venue',
-            catering: 'Catering/Food',
-            host: 'Host/MC',
-            sounds_lights: 'Sounds & Lights',
-            photographer: 'Photographer',
-            clothes: 'Clothing/Attire',
-            decorations: 'Decorations'
-        };
-
-        let currentRecommendation = null;
-
-        function loadEventDetails() {
-            const select = document.getElementById('eventSelect');
-            const option = select.options[select.selectedIndex];
-            document.getElementById('event').value = option?.dataset.type || '';
-            document.getElementById('budget').value = option?.dataset.budget || '';
-            document.getElementById('pax').value = option?.dataset.pax || '';
-        }
-
-        function selectedServices() {
-            return [...document.querySelectorAll('.recommendation-service.active')]
-                .map(service => serviceLabels[service.dataset.service]);
-        }
-
-        async function generateRecommendation() {
-            const event = document.getElementById('event').value.trim() || 'Event';
-            const budget = Number(document.getElementById('budget').value);
-            const guests = Number(document.getElementById('pax').value);
-            const services = selectedServices();
+        async function generateRecommendation(regenerate = false) {
+            const eventId = document.getElementById('eventSelect').value;
             const result = document.getElementById('result');
             const resultText = document.getElementById('resultText');
 
-            if (!budget || !guests) {
-                alert('Please fill in your budget and guest count before generating recommendations.');
+            if (!eventId) {
+                alert('Please select a created event before generating the flow.');
                 return;
             }
 
-            currentRecommendation = { eventType: event, guestCount: guests, services };
             resultText.innerHTML = '<p class="recommendation-status">Generating timeline and supplier recommendations...</p>';
             result.style.display = 'block';
             const response = await fetch(recommendationEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
-                body: JSON.stringify({ event, budget, pax: guests, services })
+                body: JSON.stringify({ event_id: Number(eventId), regenerate })
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Unable to generate recommendations.');
@@ -172,59 +97,42 @@
             result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        async function applyRecommendationToCreateEvent() {
-            if (!currentRecommendation) {
-                alert('Please generate a recommendation first.');
+        async function useRecommendationFlow() {
+            const eventId = document.getElementById('eventSelect').value;
+            const flow = document.getElementById('resultText').innerText.trim();
+
+            if (!eventId || !flow) {
+                alert('Generate the event flow first.');
                 return;
             }
 
-            const payload = {
-                event_type: currentRecommendation.eventType,
-                budget: Number(document.getElementById('budget').value || 0),
-                guest_count: Number(document.getElementById('pax').value || 0),
-                services: currentRecommendation.services,
-            };
-
             try {
-                const response = await fetch(@json(route('recommendation.use')), {
+                const response = await fetch(useRecommendationEndpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                     },
-                    body: JSON.stringify(payload),
+                    body: JSON.stringify({ event_id: Number(eventId), flow }),
                 });
                 const data = await response.json();
                 if (!response.ok) {
-                    throw new Error(data.message || 'Unable to use the recommendation.');
+                    throw new Error(data.message || 'Unable to notify suppliers.');
                 }
 
-                const prefill = JSON.stringify({
-                    event_type: payload.event_type,
-                    budget: payload.budget,
-                    services: payload.services,
-                });
-                sessionStorage.setItem('event_recommendation_prefill', prefill);
-                document.cookie = `event_recommendation_prefill=${encodeURIComponent(prefill)}; path=/; max-age=3600`;
-
-                const params = new URLSearchParams({
-                    event_type: payload.event_type,
-                    budget: String(payload.budget || 0),
-                    services: payload.services.join(','),
-                    from: 'recommendation',
-                });
-
-                window.location.href = (data.redirect_url || (@json(route('events.create')) + '?' + params.toString()));
+                alert(`The flow was sent to ${data.supplier_count} supplier(s) for this event.`);
             } catch (error) {
                 console.error(error);
-                alert(error.message || 'Unable to use the recommendation right now.');
+                alert(error.message || 'Unable to notify suppliers right now.');
             }
         }
 
-        document.querySelectorAll('.recommendation-service').forEach(service => {
-            service.addEventListener('click', () => service.classList.toggle('active'));
-        });
+        if (initialEventId && savedFlow) {
+            document.getElementById('resultText').innerHTML = savedFlow;
+            document.getElementById('result').style.display = 'block';
+        }
+
     </script>
 </body>
 </html>
