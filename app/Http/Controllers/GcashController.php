@@ -30,15 +30,22 @@ class GcashController extends Controller
             'success_url' => $successUrl,
             'cancel_url' => $cancelUrl,
             'metadata' => [
-                'event_id' => $data['event_id'],
+                'event_id' => (string) $data['event_id'],
                 'service_type' => $data['service_type'],
             ],
         ];
 
         $payment = $gcashService->createPayment($payload);
 
+        if (($payment['status'] ?? null) === 'error') {
+            return response()->json([
+                'success' => false,
+                'payment' => $payment,
+            ], 502);
+        }
+
         DB::table('payments')->updateOrInsert(
-            ['reference_no' => $payload['external_id']],
+            ['reference_no' => $payment['reference'] ?? $payload['external_id']],
             [
                 'event_id' => $data['event_id'],
                 'user_id' => Auth::id(),
@@ -66,7 +73,9 @@ class GcashController extends Controller
     {
         $payload = $request->all();
         $signature = $request->header('x-signature');
+        $paymongoSignature = $request->header('Paymongo-Signature');
         $secret = config('services.gcash.webhook_secret');
+        $paymongoSecret = config('services.paymongo.webhook_secret');
 
         if ($secret && $signature) {
             $expected = hash_hmac('sha256', $request->getContent(), $secret);
@@ -75,11 +84,49 @@ class GcashController extends Controller
             }
         }
 
-        $status = strtolower((string) ($payload['status'] ?? ''));
-        $reference = (string) ($payload['external_id'] ?? $payload['reference'] ?? '');
+        if ($paymongoSecret) {
+            if (! $paymongoSignature) {
+                return response()->json(['success' => false], 403);
+            }
+
+            $parts = collect(explode(',', $paymongoSignature))
+                ->mapWithKeys(function (string $part) {
+                    [$key, $value] = array_pad(explode('=', trim($part), 2), 2, null);
+
+                    return [$key => $value];
+                });
+            $timestamp = $parts->get('t');
+            $testSignature = $parts->get('te');
+            $liveSignature = $parts->get('li');
+            $expected = $timestamp
+                ? hash_hmac('sha256', $timestamp . '.' . $request->getContent(), $paymongoSecret)
+                : null;
+
+            if (! $expected || (! $testSignature && ! $liveSignature) || (! hash_equals($expected, (string) $testSignature) && ! hash_equals($expected, (string) $liveSignature))) {
+                return response()->json(['success' => false], 403);
+            }
+        }
+
+        $eventType = (string) data_get($payload, 'data.attributes.type', '');
+        $resource = data_get($payload, 'data.attributes.data', []);
+        $resourceAttributes = $resource['attributes'] ?? [];
+        $status = strtolower((string) ($resourceAttributes['status'] ?? $payload['status'] ?? ''));
+        $reference = (string) ($resourceAttributes['payment_intent_id'] ?? '');
+
+        if ($reference === '' && ($resource['type'] ?? '') === 'payment_intent') {
+            $reference = (string) ($resource['id'] ?? '');
+        }
+
+        if ($reference === '') {
+            $reference = (string) ($payload['external_id'] ?? $payload['reference'] ?? '');
+        }
 
         if ($reference !== '') {
-            $paymentStatus = $status === 'paid' ? 'verified' : 'pending';
+            $paymentStatus = match (true) {
+                $eventType === 'payment.paid', $eventType === 'payment_intent.succeeded', $status === 'paid', $status === 'succeeded' => 'verified',
+                $eventType === 'payment.failed', $eventType === 'qrph.expired', in_array($status, ['failed', 'expired'], true) => $status === 'expired' ? 'expired' : 'failed',
+                default => 'pending',
+            };
 
             $payment = DB::table('payments')
                 ->where('reference_no', $reference)

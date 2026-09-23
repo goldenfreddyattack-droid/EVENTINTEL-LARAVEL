@@ -14,6 +14,7 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 Route::get('/review/{token}', [App\Http\Controllers\EventReviewController::class, 'publicReview'])->name('reviews.public');
 Route::post('/review/{token}', [App\Http\Controllers\EventReviewController::class, 'storePublicReviews'])->name('reviews.public.store');
 Route::match(['get', 'post'], '/rsvp', [App\Http\Controllers\YourEventsController::class, 'rsvp'])->name('rsvp');
+Route::post('/payments/gcash/webhook', [\App\Http\Controllers\GcashController::class, 'webhook'])->name('payments.gcash.webhook');
 
 Route::middleware('auth')->group(function () {
     Route::view('about', 'about')->name('about');
@@ -62,7 +63,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/your-events/{eventId}/reviews', [\App\Http\Controllers\EventReviewController::class, 'storeReview'])->name('your.events.reviews.store');
     Route::post('/your-events/{eventId}/review-link', [\App\Http\Controllers\EventReviewController::class, 'createShareLink'])->name('your.events.review-link');
     Route::post('/payments/gcash/create', [\App\Http\Controllers\GcashController::class, 'create'])->name('payments.gcash.create');
-    Route::post('/payments/gcash/webhook', [\App\Http\Controllers\GcashController::class, 'webhook'])->name('payments.gcash.webhook');
     Route::get('/payments/gcash/verify/{reference}', [\App\Http\Controllers\GcashController::class, 'verify'])->name('payments.gcash.verify');
     Route::get('/newsfeed', [\App\Http\Controllers\NewsfeedController::class, 'index'])->name('newsfeed');
     Route::post('/newsfeed', [\App\Http\Controllers\NewsfeedController::class, 'store'])->name('newsfeed.store');

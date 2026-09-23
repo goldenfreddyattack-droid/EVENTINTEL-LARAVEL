@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class GcashService
 {
@@ -10,24 +11,26 @@ class GcashService
     {
         $paymongoEnabled = config('services.paymongo.enabled', false);
         $paymongoKey = config('services.paymongo.secret_key');
+        $paymongoPublicKey = config('services.paymongo.public_key');
 
         if ($paymongoEnabled && ! empty($paymongoKey)) {
+            if (empty($paymongoPublicKey)) {
+                return [
+                    'status' => 'error',
+                    'reference' => $payload['external_id'] ?? 'paymongo-reference',
+                    'amount' => $payload['amount'] ?? 0,
+                    'message' => 'PayMongo public key is not configured. Add PAYMONGO_PUBLIC_KEY to the environment.',
+                ];
+            }
             $amountInCentavos = (int) round(((float) ($payload['amount'] ?? 0)) * 100);
-            $checkoutData = [
+            $paymentIntentData = [
                 'data' => [
                     'attributes' => [
-                        'line_items' => [[
-                            'amount' => $amountInCentavos,
-                            'currency' => 'PHP',
-                            'description' => $payload['description'] ?? 'EventIntel payment',
-                            'quantity' => 1,
-                            'name' => $payload['description'] ?? 'EventIntel service payment',
-                        ]],
-                        'payment_method_types' => ['card', 'gcash', 'paymaya'],
-                        'success_url' => $payload['success_url'] ?? route('your.events', ['payment_status' => 'success']),
-                        'cancel_url' => $payload['cancel_url'] ?? route('your.events', ['payment_status' => 'cancelled']),
+                        'amount' => $amountInCentavos,
+                        'currency' => $payload['currency'] ?? 'PHP',
+                        'payment_method_allowed' => ['qrph'],
                         'description' => $payload['description'] ?? 'EventIntel payment',
-                        'reference_number' => $payload['external_id'] ?? 'eventintel-payment',
+                        'metadata' => $payload['metadata'] ?? [],
                     ],
                 ],
             ];
@@ -35,29 +38,37 @@ class GcashService
                 'Authorization' => 'Basic ' . base64_encode($paymongoKey . ':'),
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ])->post(config('services.paymongo.base_url') . '/checkout_sessions', $checkoutData);
+            ])->post(config('services.paymongo.base_url') . '/payment_intents', $paymentIntentData);
 
             if ($response->successful()) {
                 $data = $response->json();
-                $session = $data['data']['attributes'] ?? [];
+                $intent = $data['data'] ?? [];
+                $attributes = $intent['attributes'] ?? [];
 
                 return [
                     'status' => 'created',
-                    'checkout_url' => $session['checkout_url'] ?? null,
-                    'reference' => $data['data']['id'] ?? ($payload['external_id'] ?? 'paymongo-reference'),
+                    'payment_intent_id' => $intent['id'] ?? null,
+                    'client_key' => $attributes['client_key'] ?? null,
+                    'reference' => $intent['id'] ?? ($payload['external_id'] ?? 'paymongo-reference'),
                     'amount' => $payload['amount'] ?? 0,
-                    'message' => 'PayMongo checkout created successfully.',
-                    'qr_code' => null,
+                    'message' => 'PayMongo QR Ph payment created successfully.',
+                    'payment_method' => 'qrph',
+                    'public_key' => $paymongoPublicKey,
                 ];
             }
 
+            $errors = $response->json('errors', []);
+            Log::warning('PayMongo QR Ph Payment Intent creation failed.', [
+                'status' => $response->status(),
+                'errors' => $errors,
+            ]);
+
             return [
                 'status' => 'error',
-                'checkout_url' => null,
                 'reference' => $payload['external_id'] ?? 'paymongo-reference',
                 'amount' => $payload['amount'] ?? 0,
-                'message' => 'PayMongo payment request failed.',
-                'qr_code' => null,
+                'message' => data_get($errors, '0.detail', 'PayMongo QR Ph payment request failed.'),
+                'errors' => $errors,
             ];
         }
 
@@ -112,6 +123,34 @@ class GcashService
 
     public function verifyPayment(string $reference): array
     {
+        $paymongoKey = config('services.paymongo.secret_key');
+
+        if (config('services.paymongo.enabled', false) && ! empty($paymongoKey) && str_starts_with($reference, 'pi_')) {
+            $response = Http::withHeaders([
+                'Authorization' => 'Basic ' . base64_encode($paymongoKey . ':'),
+                'Accept' => 'application/json',
+            ])->get(config('services.paymongo.base_url') . '/payment_intents/' . $reference);
+
+            if ($response->failed()) {
+                return [
+                    'status' => 'failed',
+                    'verified' => false,
+                    'reference' => $reference,
+                    'message' => 'Unable to verify PayMongo payment.',
+                ];
+            }
+
+            $status = strtolower((string) $response->json('data.attributes.status', 'unknown'));
+            $verified = $status === 'succeeded';
+
+            return [
+                'status' => $status,
+                'verified' => $verified,
+                'reference' => $reference,
+                'message' => $verified ? 'Payment verified.' : 'Payment not yet verified.',
+            ];
+        }
+
         if (! config('services.gcash.enabled', false) || empty(config('services.gcash.api_key'))) {
             return [
                 'status' => 'sandbox',
