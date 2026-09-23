@@ -36,18 +36,10 @@ body::before {
     opacity: 0.28;
 }
 
-body::after {
-    width: 520px;
-    height: 520px;
-    background: rgba(255, 215, 0, 0.07);
-    right: -140px;
-    bottom: -220px;
-}
-
 .homepage-container {
     width: 100%;
     min-height: 100vh;
-    padding: 6px 48px 40px;
+    padding: 18px 48px 24px;
     position: relative;
     z-index: 1;
 }
@@ -455,8 +447,8 @@ body::after {
     display: flex;
     justify-content: space-between;
     gap: 30px;
-    margin-top: 38px;
-    padding: 30px 0 18px;
+    margin-top: 28px;
+    padding: 24px 0 8px;
     border-top: 1px solid rgba(212, 160, 23, 0.2);
 }
 
@@ -466,7 +458,6 @@ body::after {
 
 .homepage-footer-logo {
     margin-bottom: 12px;
-    color: #d4a017;
     font-size: 30px;
     font-weight: 900;
     letter-spacing: 0.04em;
@@ -642,7 +633,7 @@ body::after {
 }
 
 @media (max-width: 768px) {
-    .homepage-container { padding: 15px; }
+    .homepage-container { padding: 14px 15px 20px; }
     .homepage-navbar { flex-direction: column; align-items: center; }
     .homepage-nav-links { justify-content: center; }
     .homepage-welcome { width: 100%; margin: 0; text-align: center; }

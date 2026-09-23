@@ -20,15 +20,6 @@
             ['name' => 'Lights & Sound', 'icon' => 'fa-music', 'desc' => 'Audio & lighting setup', 'image' => 'ledlights.jpg'],
         ];
 
-        $browseServices = [
-            ['key' => 'venue', 'label' => 'Venues', 'icon' => 'fa-building', 'desc' => 'Find the perfect place for weddings, birthdays, and corporate events.', 'href' => route('services.index', ['service' => 'venue'])],
-            ['key' => 'catering', 'label' => 'Catering', 'icon' => 'fa-utensils', 'desc' => 'Explore catering packages, menu options, and food experiences.', 'href' => route('services.index', ['service' => 'catering'])],
-            ['key' => 'host', 'label' => 'Host / MC', 'icon' => 'fa-microphone', 'desc' => 'Book professional hosts, emcees, and event anchors.', 'href' => route('services.index', ['service' => 'host'])],
-            ['key' => 'photographer', 'label' => 'Photographer', 'icon' => 'fa-camera', 'desc' => 'Browse photography and videography teams for your event.', 'href' => route('services.index', ['service' => 'photographer'])],
-            ['key' => 'sounds_lights', 'label' => 'Lights & Sound', 'icon' => 'fa-music', 'desc' => 'Compare AV teams, sound systems, and stage lighting providers.', 'href' => route('services.index', ['service' => 'sounds_lights'])],
-            ['key' => 'clothes', 'label' => 'Styling & Attire', 'icon' => 'fa-wand-magic-sparkles', 'desc' => 'Discover designers, stylists, and event attire providers.', 'href' => route('services.index', ['service' => 'clothes'])],
-            ['key' => 'packages', 'label' => 'Packages', 'icon' => 'fa-box-open', 'desc' => 'Compare pre-arranged package offers and bundled event services.', 'href' => route('packages')],
-        ];
     @endphp
 
     <div class="homepage-container">
@@ -73,47 +64,11 @@
                 </div>
             </section>
 
-            <section class="homepage-browse-section">
-                <div class="homepage-browse-header">
-                    <div>
-                        <span class="homepage-browse-tag">Before you create</span>
-                        <h2>Browse all services and packages</h2>
-                    </div>
-                    <div class="homepage-browse-tools">
-                        <label for="serviceCategoryFilter" class="sr-only">Filter service categories</label>
-                        <select id="serviceCategoryFilter" aria-label="Choose a service category">
-                            <option value="all">All categories</option>
-                            <option value="venue">Venues</option>
-                            <option value="catering">Catering</option>
-                            <option value="host">Host / MC</option>
-                            <option value="photographer">Photographer</option>
-                            <option value="sounds_lights">Lights & Sound</option>
-                            <option value="clothes">Styling & Attire</option>
-                            <option value="packages">Packages</option>
-                        </select>
-                        <a href="{{ route('services.index', ['service' => 'venue']) }}">Browse all services</a>
-                    </div>
-                </div>
-
-                <div class="homepage-browse-grid" id="browseGrid">
-                    @foreach ($browseServices as $service)
-                        <article class="homepage-browse-card" data-category="{{ $service['key'] }}">
-                            <div class="homepage-browse-icon"><i class="fas {{ $service['icon'] }}" aria-hidden="true"></i></div>
-                            <h3>{{ $service['label'] }}</h3>
-                            <p>{{ $service['desc'] }}</p>
-                            <div class="homepage-browse-meta">
-                                <span>{{ $service['key'] === 'packages' ? 'Bundle offers' : 'Verified suppliers' }}</span>
-                                <a href="{{ $service['href'] }}">Explore</a>
-                            </div>
-                        </article>
-                    @endforeach
-                </div>
-            </section>
         </main>
 
         <footer class="homepage-footer">
             <div class="homepage-footer-brand">
-                <div class="homepage-footer-logo">EventIntel</div>
+                <div class="homepage-footer-logo" aria-label="EventIntel"><span class="brand-event">Event</span><span class="brand-intel">Intel</span></div>
                 <p>Streamlining event planning so clients can discover suppliers, compare packages, and build events faster without the usual back-and-forth.</p>
             </div>
             <div class="homepage-footer-links">
@@ -175,17 +130,6 @@
             cards.forEach((card, index) => {
                 card.classList.toggle('visible', index >= serviceIndex && index < serviceIndex + visibleCards);
                 card.classList.toggle('active', index === serviceIndex + Math.floor(visibleCards / 2));
-            });
-        }
-
-        const serviceCategoryFilter = document.getElementById('serviceCategoryFilter');
-        if (serviceCategoryFilter) {
-            serviceCategoryFilter.addEventListener('change', function () {
-                const selected = this.value;
-                document.querySelectorAll('.homepage-browse-card').forEach((card) => {
-                    const shouldShow = selected === 'all' || card.dataset.category === selected;
-                    card.style.display = shouldShow ? '' : 'none';
-                });
             });
         }
 

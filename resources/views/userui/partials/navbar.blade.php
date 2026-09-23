@@ -12,7 +12,7 @@
 @endphp
 
 <nav class="userui-navbar">
-    <div class="userui-logo">EventIntel</div>
+    <div class="userui-logo" aria-label="EventIntel"><span class="brand-event">Event</span><span class="brand-intel">Intel</span></div>
     <div class="userui-nav-links">
         @if (request()->routeIs('home'))
             <span class="userui-welcome">Welcome, {{ Auth::user()->full_name ?? Auth::user()->name ?? 'User' }}!</span>

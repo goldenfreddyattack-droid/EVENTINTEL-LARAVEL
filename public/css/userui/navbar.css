@@ -17,11 +17,20 @@
 
 .userui-logo {
     position: relative;
-    color: #f6c84c;
     font-size: 24px;
     font-weight: 800;
     letter-spacing: 0;
     line-height: 1;
+}
+
+.userui-logo .brand-event,
+.homepage-footer-logo .brand-event {
+    color: #d09b16;
+}
+
+.userui-logo .brand-intel,
+.homepage-footer-logo .brand-intel {
+    color: #d09b16;
 }
 
 .userui-nav-links {
