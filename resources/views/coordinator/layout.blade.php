@@ -28,7 +28,7 @@
             <li class="{{ request()->routeIs('coordinator.reports') ? 'active' : '' }}"><a href="{{ route('coordinator.reports') }}">REPORTS</a></li>
             <li class="{{ request()->routeIs('coordinator.settings') ? 'active' : '' }}"><a href="{{ route('coordinator.settings') }}">SETTINGS</a></li>
             <li>
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to logout?');">
                     @csrf
                     <button class="logout-btn" type="submit">LOGOUT</button>
                 </form>

@@ -72,7 +72,7 @@
             </li>
 
             <li class="nav-item mt-3 border-top">
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to logout?');">
                     @csrf
                     <button type="submit" class="nav-link btn btn-link text-left w-100" style="border: none; background: transparent; color: inherit;">
                         <i class="nav-icon fas fa-sign-out-alt"></i>

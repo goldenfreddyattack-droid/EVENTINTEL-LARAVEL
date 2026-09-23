@@ -32,15 +32,17 @@ class RecommendationController extends Controller
             : collect();
 
         $savedFlow = null;
+        $savedAiFlow = null;
         if ((int) request('event_id') === (int) session('recommendation_flow_event_id')) {
             $savedFlow = session('recommendation_flow_html');
+            $savedAiFlow = session('recommendation_flow_text');
         }
 
         $view = Auth::user()->role === 'coordinator'
             ? 'coordinator.recommendation'
             : 'userui.recommendation';
 
-        return view($view, compact('userEvents', 'bookmarkedServices', 'savedFlow'));
+        return view($view, compact('userEvents', 'bookmarkedServices', 'savedFlow', 'savedAiFlow'));
     }
 
     public function generate(Request $request)
@@ -127,14 +129,16 @@ class RecommendationController extends Controller
         }
 
         $flowHtml = $html . '</div>';
+        $timelineText = $this->timelineText($aiFlow['timeline']);
         if (!empty($data['event_id'])) {
             session([
                 'recommendation_flow_event_id' => (int) $data['event_id'],
                 'recommendation_flow_html' => $flowHtml,
+                'recommendation_flow_text' => $timelineText,
             ]);
         }
 
-        return response()->json(['html' => $flowHtml]);
+        return response()->json(['html' => $flowHtml, 'flow' => $timelineText]);
     }
 
     public function useRecommendation(Request $request)
@@ -158,17 +162,8 @@ class RecommendationController extends Controller
             ]);
         }
 
-        $messageBody = "AI event flow for {$event->title}:\n"
-            . "Type: {$event->event_type}\n"
-            . "Theme: {$event->theme}\n"
-            . "Date: {$event->event_date}\n"
-            . "Time: {$event->event_time} - {$event->event_end_time}\n"
-            . "Venue: {$event->venue_name}" . ($event->venue_address ? " ({$event->venue_address})" : '') . "\n"
-            . "Guests: {$event->guest_count}\n"
-            . "Budget: PHP " . number_format((float) $event->budget, 2) . "\n"
-            . "Status: {$event->status}\n\n"
-            . "Generated flow:\n{$data['flow']}\n\n"
-            . 'Please review this event and confirm your availability for any services you provide.';
+        $flow = $this->timelineOnlyText($data['flow']);
+        $messageBody = $flow ?: 'AI Event Flow\n\nNo timeline steps were generated.';
 
         $supplierIds = DB::table('users')
             ->where('role', 'supplier')
@@ -333,6 +328,37 @@ class RecommendationController extends Controller
             $html .= '<div class="recommendation-timeline-item"><strong class="recommendation-timeline-time">' . e($time) . '</strong><span class="recommendation-timeline-event"><strong>' . e($activity) . '</strong><br><small>' . e($prep) . '</small></span></div>';
         }
         return $html;
+    }
+
+    private function timelineText(?array $timeline): string
+    {
+        $blocks = collect($timeline ?? [])->map(function (array $step): string {
+            [$time, $activity, $prep] = array_pad($step, 3, '');
+
+            return trim("{$time}\n{$activity}\n{$prep}");
+        })->filter()->values();
+
+        return 'AI Event Flow\n\n' . $blocks->implode("\n\n");
+    }
+
+    private function timelineOnlyText(string $flow): string
+    {
+        $blocks = preg_split("/\R\s*\R/", trim($flow)) ?: [];
+        $timeline = [];
+
+        foreach ($blocks as $block) {
+            $block = trim($block);
+            if ($block === '' || strcasecmp($block, 'AI Event Flow') === 0) {
+                continue;
+            }
+
+            $timeline[] = $block;
+            if (preg_match('/farewell\s*&\s*departure|guest\s*(exit|departure)/i', $block)) {
+                break;
+            }
+        }
+
+        return $timeline === [] ? '' : 'AI Event Flow\n\n' . implode("\n\n", $timeline);
     }
 
     private function budgetHtml(float $budget): string

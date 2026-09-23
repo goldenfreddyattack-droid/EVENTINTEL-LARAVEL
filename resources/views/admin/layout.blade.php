@@ -47,7 +47,7 @@
             <li class="{{ request()->routeIs('admin.requests') ? 'active' : '' }}"><a href="{{ route('admin.requests') }}">VERIFICATION REQUESTS</a></li>
             <li class="{{ request()->routeIs('admin.suppliers') ? 'active' : '' }}"><a href="{{ route('admin.suppliers') }}">SUPPLIERS</a></li>
             <li>
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to logout?');">
                     @csrf
                     <button class="logout-btn" type="submit">LOGOUT</button>
                 </form>

@@ -35,7 +35,7 @@
 
     /* Message History Stream */
     .chat-stream { flex: 1; min-height: 0; overflow-y: auto; padding: 20px; background: #fdfdfd; display: flex; flex-direction: column; gap: 8px; }
-    .msg-bubble { max-width: 68%; padding: 10px 14px; border-radius: 18px; font-size: 13.5px; line-height: 1.45; position: relative; word-wrap: break-word; }
+    .msg-bubble { max-width: 68%; padding: 10px 14px; border-radius: 18px; font-size: 13.5px; line-height: 1.45; position: relative; word-wrap: break-word; white-space: pre-wrap; }
     .msg-bubble.sent { align-self: flex-end; background: linear-gradient(135deg, #fff1a8, #f3c547, #c99208); color: #111; border-bottom-right-radius: 4px; font-weight: 500; }
     .msg-bubble.received { align-self: flex-start; background: #f0f0f0; color: var(--text); border-bottom-left-radius: 4px; }
     .msg-sender { display: block; font-size: 11px; font-weight: 700; margin-bottom: 2px; opacity: 0.75; }

@@ -32,7 +32,7 @@
                     <a href="{{ route('home') }}">Back to Home</a>
                     <a href="{{ route('recommendation') }}">Recommendations</a>
                     <a href="{{ route('supplier.feed') }}">Newsfeed</a>
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to logout?');">
                         @csrf
                         <button type="submit" class="profile-logout">Logout</button>
                     </form>

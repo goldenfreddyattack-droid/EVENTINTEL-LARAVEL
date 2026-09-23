@@ -73,6 +73,7 @@
     const useRecommendationEndpoint = @json(route('recommendation.use'));
     const initialEventId = @json(request('event_id'));
     const savedFlow = @json($savedFlow);
+    let currentAiFlow = @json($savedAiFlow);
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
     async function generateCoordinatorFlow(regenerate = false) {
@@ -95,6 +96,7 @@
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Unable to generate the AI flow.');
             resultText.innerHTML = data.html;
+            currentAiFlow = data.flow || '';
         } catch (error) {
             resultText.innerHTML = `<p class="flow-status">${error.message}</p>`;
         }
@@ -102,7 +104,7 @@
 
     async function useCoordinatorFlow() {
         const eventId = document.getElementById('eventSelect').value;
-        const flow = document.getElementById('resultText').innerText.trim();
+        const flow = currentAiFlow;
         if (!eventId || !flow) {
             alert('Generate the AI flow first.');
             return;

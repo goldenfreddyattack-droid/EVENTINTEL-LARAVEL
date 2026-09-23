@@ -73,6 +73,7 @@
         const useRecommendationEndpoint = @json(route('recommendation.use'));
         const initialEventId = @json(request('event_id'));
         const savedFlow = @json($savedFlow);
+        let currentAiFlow = @json($savedAiFlow);
 
         async function generateRecommendation(regenerate = false) {
             const eventId = document.getElementById('eventSelect').value;
@@ -94,12 +95,13 @@
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Unable to generate recommendations.');
             resultText.innerHTML = data.html;
+            currentAiFlow = data.flow || '';
             result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         async function useRecommendationFlow() {
             const eventId = document.getElementById('eventSelect').value;
-            const flow = document.getElementById('resultText').innerText.trim();
+            const flow = currentAiFlow;
 
             if (!eventId || !flow) {
                 alert('Generate the event flow first.');
