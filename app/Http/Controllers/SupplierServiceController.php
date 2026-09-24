@@ -246,7 +246,7 @@ class SupplierServiceController extends Controller
     public function image($id, $pic = 'service_pic'): Response
     {
         // Validate pic parameter to prevent injection
-        if (!in_array($pic, ['service_pic', 'service_pic1', 'service_pic2', 'service_pic3', 'service_pic4'], true)) {
+        if (!in_array($pic, ['service_pic', 'service_pic1', 'service_pic2', 'service_pic3', 'service_pic4', 'service_pic5'], true)) {
             abort(404);
         }
 

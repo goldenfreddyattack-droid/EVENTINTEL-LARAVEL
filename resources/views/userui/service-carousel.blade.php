@@ -6,6 +6,9 @@
     <title>EventIntel - {{ $serviceLabel }}</title>
     <link rel="stylesheet" href="{{ asset('css/fontawesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/userui/navbar.css') }}">
+    @php
+        $imageMap = ['venue' => 'venue.avif', 'catering' => 'catering.jpg', 'clothes' => 'clothing_stylist.jpg', 'host' => 'images.jpg', 'photographer' => 'photographer.avif', 'sounds_lights' => 'ledlights.jpg', 'church' => 'venue.avif', 'rental_car' => 'images.jpg'];
+    @endphp
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; background: #f8f8f8; color: #111; font-family: 'Segoe UI', sans-serif; }
@@ -16,7 +19,8 @@
         .back { color: #a77700; text-decoration: none; font-weight: 700; }
         .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
         .card { height: 420px; display: flex; flex-direction: column; background: #fff; border: 1px solid #eee2b7; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 24px #0000000b; }
-        .card-image { height: 150px; flex: 0 0 150px; background: #f3c547; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 42px; }
+        .card-image { height: 150px; flex: 0 0 150px; background: #f3c547; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 42px; overflow: hidden; }
+        .card-image img { width: 100%; height: 100%; object-fit: cover; }
         .card-body { min-height: 0; flex: 1; display: flex; flex-direction: column; padding: 18px; }
         .card h2 { height: 46px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 19px; margin: 0 0 5px; }
         .supplier { height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #777; font-size: 13px; }
@@ -45,7 +49,13 @@
             <main class="grid">
                 @foreach ($services as $serviceRecord)
                     <article class="card">
-                        <div class="card-image"><i class="fas fa-{{ $serviceKey === 'venue' ? 'location-dot' : ($serviceKey === 'photographer' ? 'camera' : ($serviceKey === 'host' ? 'microphone' : 'briefcase')) }}"></i></div>
+                        <div class="card-image">
+                            @if ($serviceRecord->service_pic)
+                                <img src="{{ route('supplier.services.image', $serviceRecord->service_id) }}" alt="{{ $serviceRecord->name }}">
+                            @else
+                                <img src="{{ asset('images/userui/' . ($imageMap[$serviceKey] ?? 'venue.avif')) }}" alt="{{ $serviceRecord->name }}">
+                            @endif
+                        </div>
                         <div class="card-body">
                             <h2>{{ $serviceRecord->name }}</h2>
                             <div class="supplier">{{ $serviceRecord->business_name ?: ($serviceRecord->supplier_name ?: 'EventIntel supplier') }}</div>

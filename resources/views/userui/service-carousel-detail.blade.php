@@ -1,6 +1,19 @@
 @php
     $imageMap = ['venue' => 'venue.avif', 'catering' => 'catering.jpg', 'clothes' => 'clothing_stylist.jpg', 'host' => 'images.jpg', 'photographer' => 'photographer.avif', 'sounds_lights' => 'ledlights.jpg', 'church' => 'venue.avif', 'rental_car' => 'images.jpg'];
     $image = asset('images/userui/' . ($imageMap[$serviceKey] ?? 'venue.avif'));
+    $serviceImage = $serviceRecord->service_pic
+        ? route('supplier.services.image', $serviceRecord->service_id)
+        : $image;
+    $galleryImages = [];
+    for ($pictureNumber = 1; $pictureNumber <= 5; $pictureNumber++) {
+        $pictureColumn = 'service_pic' . $pictureNumber;
+        if ($serviceRecord->{$pictureColumn}) {
+            $galleryImages[] = route('supplier.services.image', ['id' => $serviceRecord->service_id, 'pic' => $pictureColumn]);
+        }
+    }
+    if (!$galleryImages && $serviceRecord->service_pic) {
+        $galleryImages[] = route('supplier.services.image', $serviceRecord->service_id);
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -14,8 +27,12 @@
         body { margin: 0; background: #f8f6f0; color: #171717; font-family: 'Segoe UI', sans-serif; }
         .page { width: min(1320px, 100%); margin: auto; padding: 28px 40px 42px; }
         .detail { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(360px, .8fr); gap: 28px; background: #fffdf8; border: 1px solid #eee2b7; border-radius: 24px; padding: 40px; box-shadow: 0 18px 45px #00000012; }
+        .gallery { min-width: 0; }
         .main-image { height: 510px; border-radius: 22px; overflow: hidden; background: #f3c547; }
         .main-image img { width: 100%; height: 100%; object-fit: cover; }
+        .thumbnails { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 14px; }
+        .thumbnail { height: 90px; border: 0; border-radius: 14px; overflow: hidden; padding: 0; background: #f3c547; cursor: pointer; }
+        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
         .back { display: inline-block; color: #a77700; text-decoration: none; font-weight: 700; margin-bottom: 24px; }
         .badge { display: inline-block; padding: 8px 14px; border-radius: 18px; background: #fff1b8; color: #916b00; font-size: 13px; font-weight: 800; }
         .info h1 { font-size: clamp(32px, 4vw, 54px); line-height: 1.08; margin: 18px 0 12px; }
@@ -28,13 +45,22 @@
         .offers-title { font-size: 18px; font-weight: 800; margin: 26px 0 12px; }
         .offer { display: flex; align-items: center; gap: 12px; padding: 13px 16px; margin-bottom: 10px; border: 1px solid #f0e3bc; border-radius: 15px; background: #fff8e8; color: #555; }
         .offer i { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 10px; background: #fff1c9; color: #987100; }
-        @media (max-width: 800px) { .page { padding: 20px; } .detail { grid-template-columns: 1fr; padding: 22px; } .main-image { height: 340px; } }
+        @media (max-width: 800px) { .page { padding: 20px; } .detail { grid-template-columns: 1fr; padding: 22px; } .main-image { height: 340px; } .thumbnails { grid-template-columns: repeat(4, 1fr); } }
     </style>
 </head>
 <body>
     <div class="page">
         <article class="detail">
-            <section><div class="main-image"><img src="{{ $image }}" alt="{{ $serviceRecord->name }}"></div></section>
+            <section class="gallery">
+                <div class="main-image"><img src="{{ $serviceImage }}" alt="{{ $serviceRecord->name }}"></div>
+                @if ($galleryImages)
+                    <div class="thumbnails">
+                        @foreach ($galleryImages as $galleryImage)
+                            <button class="thumbnail" type="button" data-image="{{ $galleryImage }}"><img src="{{ $galleryImage }}" alt=""></button>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
             <section class="info">
                 <a class="back" href="{{ route('carousel.services.index', $serviceKey) }}">&larr; Back to {{ $serviceLabel }} Services</a>
                 <span class="badge">{{ $serviceLabel }}</span>
@@ -54,5 +80,12 @@
             </section>
         </article>
     </div>
+    <script>
+        document.querySelectorAll('.thumbnail').forEach((thumbnail) => {
+            thumbnail.addEventListener('click', () => {
+                document.querySelector('.main-image img').src = thumbnail.dataset.image;
+            });
+        });
+    </script>
 </body>
 </html>
